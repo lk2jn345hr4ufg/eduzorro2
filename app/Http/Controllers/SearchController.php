@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
-use App\Models\Company;
+use App\Models\Business;
 use App\Models\Language;
+use App\Models\Listing;
 use App\Models\Region;
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
 {
-    /** AJAX autocomplete: returns a small JSON list of matching companies + categories. */
+    /** AJAX autocomplete: returns a small JSON list of matching listings + businesses. */
     public function suggest(Request $request, Region $region, Language $language)
     {
         $term = trim((string) $request->query('q', ''));
@@ -19,34 +19,36 @@ class SearchController extends Controller
             return response()->json([]);
         }
 
-        $locale = app()->getLocale();
-        $like   = '%' . $term . '%';
+        $like = '%' . $term . '%';
+        $urlSlugByVertical = array_flip(array_map(fn ($v) => $v[0], DirectoryController::VERTICALS));
 
-        $companies = Company::active()
-            ->inRegion($region)
+        $listings = Listing::query()
+            ->active()
+            ->where('region_id', $region->id)
             ->where('name', 'like', $like)
             ->orderBy('name')
             ->limit(6)
             ->get()
-            ->map(fn (Company $c) => [
-                'type'  => 'company',
-                'label' => $c->name,
-                'url'   => route('company.show', [$region, $language, $c]),
+            ->map(fn (Listing $l) => [
+                'type'  => 'listing',
+                'label' => $l->name,
+                'url'   => route('directory.show', [$region, $language, $urlSlugByVertical[$l->vertical], $l]),
             ]);
 
-        // Categories store names as JSON; query the current locale via JSON path.
-        $categories = Category::active()
-            ->where("name->{$locale}", 'like', $like)
-            ->with('industry')
+        $businesses = Business::query()
+            ->active()
+            ->where('region_id', $region->id)
+            ->where('name', 'like', $like)
+            ->orderBy('name')
             ->limit(4)
             ->get()
-            ->map(fn (Category $cat) => [
-                'type'  => 'category',
-                'label' => $cat->translate('name'),
-                'url'   => route('category.show', [$region, $language, $cat->industry, $cat]),
+            ->map(fn (Business $b) => [
+                'type'  => 'business',
+                'label' => $b->name,
+                'url'   => route('business.show', [$region, $language, $b]),
             ]);
 
-        return response()->json($companies->concat($categories)->values());
+        return response()->json($listings->concat($businesses)->values());
     }
 
     /** Full search results page. */
@@ -54,15 +56,26 @@ class SearchController extends Controller
     {
         $term = trim((string) $request->query('q', ''));
 
-        $companies = collect();
+        $listings = collect();
+        $businesses = collect();
+
         if (mb_strlen($term) >= 2) {
-            $companies = Company::active()
-                ->inRegion($region)
+            $listings = Listing::query()
+                ->active()
+                ->where('region_id', $region->id)
                 ->where('name', 'like', '%' . $term . '%')
                 ->withRatingSummary()
                 ->orderByDesc('average_rating')
-                ->paginate(12)
-                ->withQueryString();
+                ->limit(24)
+                ->get();
+
+            $businesses = Business::query()
+                ->active()
+                ->where('region_id', $region->id)
+                ->where('name', 'like', '%' . $term . '%')
+                ->orderBy('name')
+                ->limit(24)
+                ->get();
         }
 
         $breadcrumbs = [
@@ -72,7 +85,8 @@ class SearchController extends Controller
 
         return view('search', [
             'term'        => $term,
-            'companies'   => $companies,
+            'listings'    => $listings,
+            'businesses'  => $businesses,
             'breadcrumbs' => $breadcrumbs,
         ]);
     }

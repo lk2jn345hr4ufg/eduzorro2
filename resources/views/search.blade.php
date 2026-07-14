@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@php($language = request()->route('language'))
+
 @section('title', __('messages.search_results') . ' · ' . __('messages.site_name'))
 @section('meta_description', __('messages.tagline'))
 {{-- Search result pages should not be indexed. --}}
@@ -17,15 +19,30 @@
 
     @include('partials.quick-search')
 
-    <div class="company-list">
-        @forelse ($companies as $company)
-            @include('partials.company-card')
-        @empty
-            <p class="empty">{{ __('messages.no_results') }}</p>
-        @endforelse
-    </div>
+    @if ($term !== '' && $listings->isEmpty() && $businesses->isEmpty())
+        <p class="empty">{{ __('messages.no_results') }}</p>
+    @endif
 
-    @if ($companies instanceof \Illuminate\Contracts\Pagination\Paginator || $companies instanceof \Illuminate\Pagination\LengthAwarePaginator)
-        <div class="pagination-wrap">{{ $companies->links('pagination.simple') }}</div>
+    @if ($listings->isNotEmpty())
+        <section class="home-section">
+            <h2>{{ __('messages.listings') }}</h2>
+            <div class="company-list">
+                @foreach ($listings as $listing)
+                    @php($urlSlug = array_flip(array_map(fn ($v) => $v[0], \App\Http\Controllers\DirectoryController::VERTICALS))[$listing->vertical])
+                    @include('partials.listing-card', ['listing' => $listing, 'region' => $currentRegion, 'language' => $language, 'vertical' => $urlSlug])
+                @endforeach
+            </div>
+        </section>
+    @endif
+
+    @if ($businesses->isNotEmpty())
+        <section class="home-section">
+            <h2>{{ __('messages.all_businesses') }}</h2>
+            <div class="company-list">
+                @foreach ($businesses as $business)
+                    @include('partials.business-card', ['business' => $business, 'region' => $currentRegion, 'language' => $language])
+                @endforeach
+            </div>
+        </section>
     @endif
 @endsection

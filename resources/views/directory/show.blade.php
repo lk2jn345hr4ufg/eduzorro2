@@ -104,6 +104,22 @@
             @endif
         </div>
 
+        @php($topicalCategories = $listing->taxonomyTerms->where('taxonomy', \App\Http\Controllers\DirectoryController::VERTICAL_TAXONOMY[$listing->vertical] ?? null))
+        @if ($topicalCategories->isNotEmpty())
+            <section class="company-section related">
+                <h2>{{ __('messages.related_categories') }}</h2>
+                <ul class="chip-list">
+                    @foreach ($topicalCategories as $term)
+                        <li>
+                            <a class="chip" href="{{ route('directory.category', [$region, request()->route('language'), $vertical, $term->slug]) }}">
+                                {{ $term->name }}
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </section>
+        @endif
+
         {{-- Reviews (migrated from the old site, read-only) --}}
         <section class="company-section" id="reviews">
             <h2>{{ __('messages.reviews') }} ({{ $listing->reviews_count ?? 0 }})</h2>

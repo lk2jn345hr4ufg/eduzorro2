@@ -26,18 +26,7 @@
 
     <div class="company-list">
         @forelse ($businesses as $business)
-            <article class="company-card">
-                <div class="company-card-head">
-                    <h3><a href="{{ route('business.show', [$region, $language, $business]) }}">{{ $business->name }}</a></h3>
-                </div>
-                @if ($business->address)
-                    <p class="company-card-address">{{ $business->address }}</p>
-                @endif
-                @if ($business->edrpou)
-                    <p class="company-card-address">EDRPOU: {{ $business->edrpou }}</p>
-                @endif
-                <a class="btn-link" href="{{ route('business.show', [$region, $language, $business]) }}">{{ __('messages.view_profile') }} →</a>
-            </article>
+            @include('partials.business-card', ['business' => $business, 'region' => $region, 'language' => $language])
         @empty
             <p class="empty">{{ __('messages.no_results') }}</p>
         @endforelse

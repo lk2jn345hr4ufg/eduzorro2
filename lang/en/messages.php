@@ -10,6 +10,7 @@ return [
     'all_languages'      => 'All languages',
     'all_industries'     => 'All industries',
     'all_businesses'     => 'All businesses',
+    'listings'           => 'Listings',
     'browse_categories'  => 'Browse categories',
     'related_categories' => 'Related categories',
     'related_companies'  => 'Related companies',

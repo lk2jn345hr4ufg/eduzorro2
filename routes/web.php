@@ -48,6 +48,7 @@ Route::prefix('{region:slug}/{language:code}')
         // business registry. Registered before the /{industry} wildcard
         // below so these literal prefixes win route matching.
         Route::get('/directory/{vertical}', [DirectoryController::class, 'index'])->name('directory.index');
+        Route::get('/directory/{vertical}/category/{categorySlug}', [DirectoryController::class, 'category'])->name('directory.category');
         Route::get('/directory/{vertical}/{listing:slug}', [DirectoryController::class, 'show'])->name('directory.show');
 
         Route::get('/businesses', [BusinessController::class, 'index'])->name('business.index');

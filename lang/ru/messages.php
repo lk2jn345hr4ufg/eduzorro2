@@ -10,6 +10,7 @@ return [
     'all_languages'      => 'Все языки',
     'all_industries'     => 'Все категории',
     'all_businesses'     => 'Реестр компаний',
+    'listings'           => 'Организации',
     'browse_categories'  => 'Категории',
     'related_categories' => 'Похожие категории',
     'related_companies'  => 'Похожие компании',

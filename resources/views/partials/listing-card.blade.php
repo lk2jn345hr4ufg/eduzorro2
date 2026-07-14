@@ -17,5 +17,10 @@
 
     @include('partials.stars', ['rating' => $listing->average_rating ?? 0, 'count' => $listing->reviews_count ?? 0])
 
-    <a class="btn-link" href="{{ route('directory.show', [$region, $language, $vertical, $listing]) }}">{{ __('messages.view_profile') }} →</a>
+    <div class="company-card-links">
+        <a class="btn-link" href="{{ route('directory.show', [$region, $language, $vertical, $listing]) }}">{{ __('messages.view_profile') }} →</a>
+        @if ($listing->website)
+            <a class="btn-link" href="{{ $listing->website }}" target="_blank" rel="nofollow noopener">{{ __('messages.website') }} ↗</a>
+        @endif
+    </div>
 </article>

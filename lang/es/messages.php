@@ -10,6 +10,7 @@ return [
     'all_languages'      => 'Todos los idiomas',
     'all_industries'     => 'Todos los sectores',
     'all_businesses'     => 'Todas las empresas',
+    'listings'           => 'Resultados',
     'browse_categories'  => 'Explorar categorías',
     'related_categories' => 'Categorías relacionadas',
     'related_companies'  => 'Empresas relacionadas',
