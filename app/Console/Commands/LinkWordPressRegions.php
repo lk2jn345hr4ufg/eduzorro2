@@ -22,8 +22,10 @@ use Illuminate\Support\Facades\DB;
  * default. That's a deliberate inference, not source data — flagged here
  * and in WORDPRESS-IMPORT.md.
  *
- * Demo regions/languages are deactivated (is_active = false), not deleted —
- * their data stays in the database in case you want it back.
+ * Demo regions/languages/industries/categories/companies (the original
+ * starter scaffold's placeholder content) are deactivated (is_active =
+ * false), not deleted — their data stays in the database in case you want
+ * it back.
  */
 class LinkWordPressRegions extends Command
 {
@@ -78,6 +80,15 @@ class LinkWordPressRegions extends Command
         $demoRegionsHidden = Region::whereNotIn('slug', ['ukraine', 'kazakhstan'])->update(['is_active' => false]);
         $demoLanguagesHidden = Language::whereNotIn('code', ['ru', 'uk'])->update(['is_active' => false]);
         $this->line("  {$demoRegionsHidden} other region(s) and {$demoLanguagesHidden} other language(s) deactivated (not deleted).");
+
+        // The starter scaffold's demo Industries/Categories/Companies (language-learning,
+        // test-prep, etc.) were only ever translated into English/Spanish. With Ukraine
+        // and Kazakhstan now the only active regions, that section would otherwise show
+        // untranslated English category names on every region page — deactivate it too.
+        $demoIndustriesHidden = DB::table('industries')->update(['is_active' => false]);
+        $demoCategoriesHidden = DB::table('categories')->update(['is_active' => false]);
+        $demoCompaniesHidden = DB::table('companies')->update(['is_active' => false]);
+        $this->line("  {$demoIndustriesHidden} demo industries, {$demoCategoriesHidden} demo categories, {$demoCompaniesHidden} demo companies deactivated.");
 
         $this->info('Linking businesses to regions (from their country taxonomy term)...');
         $linked = 0;
