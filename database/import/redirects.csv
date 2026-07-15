@@ -15691,3 +15691,9 @@ from_path,to_path,status_code,match_type,is_active,notes
 /courses/category/poshyv-obuvi,/ukraine/ru/directory/courses/category/poshyv-obuvi,301,exact,1,wp import: category archive
 /courses/category/yuridicheskie-kursy,/ukraine/ru/directory/courses/category/yuridicheskie-kursy,301,exact,1,wp import: category archive
 /courses/category/programming-language,/ukraine/ru/directory/courses/category/programming-language,301,exact,1,wp import: category archive
+/courses,/ukraine/ru/directory/courses,301,exact,1,wp import: courses root archive
+/online_courses,/ukraine/ru/directory/online-courses,301,exact,1,wp import: online_courses root archive
+/universities,/ukraine/ru/directory/universities,301,exact,1,wp import: universities root archive
+/online_business,/ukraine/ru/directory/online-business,301,exact,1,wp import: online_business root archive
+/affiliate-networks,/ukraine/ru/directory/affiliate-networks,301,exact,1,wp import: affiliate-networks root archive
+/websites,/ukraine/ru/businesses,301,exact,1,wp import: websites root archive
