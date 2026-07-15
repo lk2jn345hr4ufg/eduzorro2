@@ -6,6 +6,7 @@ use App\Filament\Resources\ListingResource\Pages;
 use App\Http\Controllers\DirectoryController;
 use App\Models\Listing;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -64,10 +65,20 @@ class ListingResource extends Resource
                 Toggle::make('is_active')->default(true),
             ]),
 
-            TextInput::make('description_title')->maxLength(255)->columnSpanFull(),
-            Textarea::make('description')->rows(4)->columnSpanFull(),
-            Textarea::make('details_description')->rows(4)->columnSpanFull()
+            TextInput::make('description_title')
+                ->maxLength(255)
+                ->columnSpanFull()
+                ->helperText('Short heading shown above the description. Inline HTML (<strong>, <em>, <a>) is rendered on the site.'),
+
+            RichEditor::make('description')
+                ->columnSpanFull()
+                ->toolbarButtons(['bold', 'italic', 'underline', 'link', 'bulletList', 'orderedList', 'h2', 'h3', 'blockquote', 'undo', 'redo']),
+
+            RichEditor::make('details_description')
+                ->columnSpanFull()
+                ->toolbarButtons(['bold', 'italic', 'underline', 'link', 'bulletList', 'orderedList', 'h2', 'h3', 'blockquote', 'undo', 'redo'])
                 ->helperText('Long-form writeup (mainly used on affiliate-network listings).'),
+
             Textarea::make('contacts_text')->rows(3)->columnSpanFull(),
         ]);
     }

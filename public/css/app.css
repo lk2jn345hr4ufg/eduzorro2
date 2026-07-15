@@ -542,6 +542,20 @@ button, input, select, textarea { font-family: inherit; font-size: 1rem; }
 }
 .company-section:first-of-type { border-top: none; padding-top: 0; }
 .prose { color: var(--ink); }
+.prose p { margin: 0 0 1em; }
+.prose ul, .prose ol { margin: 0 0 1em; padding-left: 1.4em; }
+.prose ul { list-style: disc; }
+.prose ol { list-style: decimal; }
+.prose li { list-style: inherit; margin-bottom: .35em; }
+.prose h2, .prose h3 { margin-top: 1.2em; }
+.prose blockquote {
+    margin: 1em 0;
+    padding: 8px 16px;
+    border-left: 3px solid var(--brass);
+    background: var(--paper-deep);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.prose a { text-decoration: underline; }
 
 .company-columns {
     display: grid;

@@ -28,14 +28,14 @@
         @if ($listing->description_title || $listing->description)
             <section class="company-section">
                 <h2>{{ __('messages.about') }}</h2>
-                @if ($listing->description_title)<h3>{{ $listing->description_title }}</h3>@endif
-                <div class="prose">{!! nl2br(e($listing->description)) !!}</div>
+                @if ($listing->description_title)<h3>{!! \App\Support\Sanitize::inline($listing->description_title) !!}</h3>@endif
+                <div class="prose">{!! \App\Support\Sanitize::rich($listing->description) !!}</div>
             </section>
         @endif
 
         @if ($listing->details_description)
             <section class="company-section">
-                <div class="prose">{!! nl2br(e($listing->details_description)) !!}</div>
+                <div class="prose">{!! \App\Support\Sanitize::rich($listing->details_description) !!}</div>
             </section>
         @endif
 
