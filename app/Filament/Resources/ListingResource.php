@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ListingResource\Pages;
+use App\Http\Controllers\DirectoryController;
 use App\Models\Listing;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
@@ -11,11 +12,16 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListingResource extends Resource
 {
@@ -69,9 +75,19 @@ class ListingResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('region.languages'))
             ->columns([
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('vertical')->badge()->sortable(),
+                IconColumn::make('description')
+                    ->label('Description')
+                    ->boolean()
+                    ->getStateUsing(fn (Listing $record) => filled($record->description))
+                    // Sortable by emptiness: ascending puts empty-description
+                    // rows first, descending puts filled ones first.
+                    ->sortable(query: fn (Builder $query, string $direction) => $query->orderByRaw(
+                        "(description IS NOT NULL AND description != '') {$direction}"
+                    )),
                 TextColumn::make('editorial_rating')->label('Editorial')->sortable(),
                 TextColumn::make('reviews_count')->label('Reviews')->counts('reviews')->sortable(),
                 TextColumn::make('reviews_avg_rating')
@@ -83,9 +99,47 @@ class ListingResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('vertical')->options(self::VERTICALS),
+                TernaryFilter::make('description')
+                    ->label('Description')
+                    ->placeholder('All listings')
+                    ->trueLabel('Has description')
+                    ->falseLabel('Empty description')
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereNotNull('description')->where('description', '!=', ''),
+                        false: fn (Builder $query) => $query->where(fn (Builder $q) => $q->whereNull('description')->orWhere('description', '')),
+                    ),
                 TernaryFilter::make('is_active'),
             ])
+            ->actions([
+                Action::make('viewOnSite')
+                    ->label('View on site')
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->url(fn (Listing $record) => static::publicUrl($record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Listing $record) => static::publicUrl($record) !== null),
+                EditAction::make(),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ])
             ->defaultSort('name');
+    }
+
+    /** Public profile URL for a listing, or null if it isn't routable (no region). */
+    public static function publicUrl(Listing $listing): ?string
+    {
+        if (! $listing->region) {
+            return null;
+        }
+
+        $urlSlug = array_flip(array_map(fn ($v) => $v[0], DirectoryController::VERTICALS))[$listing->vertical] ?? null;
+        $language = $listing->region->languages->first()?->code ?? 'ru';
+
+        return $urlSlug
+            ? route('directory.show', [$listing->region, $language, $urlSlug, $listing])
+            : null;
     }
 
     public static function getPages(): array
