@@ -100,10 +100,10 @@ class ImportWordPress extends Command
         }
 
         $handle = fopen($file, 'r');
-        $header = fgetcsv($handle);
+        $header = fgetcsv($handle, null, ',', '"', '');
         $chunk = [];
 
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, null, ',', '"', '')) !== false) {
             if (count($row) !== count($header)) {
                 continue; // defensively skip any malformed line
             }
@@ -162,7 +162,7 @@ class ImportWordPress extends Command
                 'description_title' => $r['description_title'] ?: null,
                 'description' => $r['description'] ?: null,
                 'specialization' => $r['specialization'] ?: null,
-                'editorial_rating' => $r['editorial_rating'] !== '' ? $r['editorial_rating'] : null,
+                'editorial_rating' => is_numeric($r['editorial_rating']) ? $r['editorial_rating'] : null,
                 'contacts_text' => $r['contacts_text'] ?: null,
                 'website' => $r['website'] ?: null,
                 'logo_url' => $r['logo_url'] ?: null,
@@ -214,7 +214,7 @@ class ImportWordPress extends Command
                 if (! $listingId) {
                     continue;
                 }
-                $createdAt = $r['created_at'] ?: now();
+                $createdAt = ($r['created_at'] && strtotime($r['created_at'])) ? $r['created_at'] : now();
                 $values[] = [
                     'listing_id' => $listingId,
                     'author_name' => $r['author_name'] ?: 'Anonymous',
@@ -271,8 +271,8 @@ class ImportWordPress extends Command
                 'phones' => $r['phones'] ?: null,
                 'email' => $r['email'] ?: null,
                 'website' => $r['website'] ?: null,
-                'latitude' => $r['latitude'] !== '' ? $r['latitude'] : null,
-                'longitude' => $r['longitude'] !== '' ? $r['longitude'] : null,
+                'latitude' => is_numeric($r['latitude']) ? $r['latitude'] : null,
+                'longitude' => is_numeric($r['longitude']) ? $r['longitude'] : null,
                 'director' => $r['director'] ?: null,
                 'registration_date' => $r['registration_date'] ?: null,
                 'kved_codes' => $r['kved_codes'] ?: null,

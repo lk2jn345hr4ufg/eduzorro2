@@ -80,7 +80,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('listing_id')->constrained()->cascadeOnDelete();
             $table->enum('kind', ['pro', 'con']);
-            $table->string('text');
+            $table->text('text');
             $table->timestamps();
         });
 
@@ -107,7 +107,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->string('edrpou')->nullable()->index();
-            $table->string('short_name')->nullable();
+            $table->string('short_name', 500)->nullable();
             $table->string('address')->nullable();
             $table->string('postal_code')->nullable();
             $table->string('phones')->nullable();
@@ -117,7 +117,7 @@ return new class extends Migration
             $table->decimal('longitude', 10, 7)->nullable();
             $table->string('director')->nullable();
             $table->string('registration_date')->nullable();
-            $table->string('kved_codes')->nullable();
+            $table->text('kved_codes')->nullable();
             $table->text('keywords')->nullable();
             $table->string('schedule')->nullable();
             $table->string('whatsapp')->nullable();

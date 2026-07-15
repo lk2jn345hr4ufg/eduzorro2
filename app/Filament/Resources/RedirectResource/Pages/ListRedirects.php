@@ -148,7 +148,7 @@ class ListRedirects extends ListRecords
     protected function parseCsv(string $content): array
     {
         $lines  = preg_split('/\r\n|\r|\n/', trim($content));
-        $header = array_map(fn ($h) => strtolower(trim($h)), str_getcsv(array_shift($lines)));
+        $header = array_map(fn ($h) => strtolower(trim($h)), str_getcsv(array_shift($lines), ',', '"', ''));
 
         $created = 0;
         $updated = 0;
@@ -159,7 +159,7 @@ class ListRedirects extends ListRecords
                 continue;
             }
 
-            $values = str_getcsv($line);
+            $values = str_getcsv($line, ',', '"', '');
             $row    = array_combine($header, array_pad($values, count($header), null));
 
             $from = $row['from_path'] ?? $row['from'] ?? null;

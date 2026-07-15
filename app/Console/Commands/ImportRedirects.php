@@ -32,7 +32,7 @@ class ImportRedirects extends Command
         }
 
         $handle = fopen($file, 'r');
-        $header = fgetcsv($handle);
+        $header = fgetcsv($handle, null, ',', '"', '');
         $chunk = [];
         $total = 0;
         $now = now();
@@ -62,7 +62,7 @@ class ImportRedirects extends Command
             $chunk = [];
         };
 
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, null, ',', '"', '')) !== false) {
             if (count($row) !== count($header)) {
                 continue;
             }
