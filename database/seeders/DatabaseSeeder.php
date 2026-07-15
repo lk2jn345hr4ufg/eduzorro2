@@ -43,6 +43,14 @@ class DatabaseSeeder extends Seeder
             'name' => ['en' => 'Spain', 'es' => 'España'],
         ]);
 
+        // The SetRegionAndLocale middleware 404s any region/language pair not
+        // linked in the language_region pivot, so demo regions must declare
+        // their languages here — otherwise a build that skips the WordPress
+        // import commands has no working localized pages at all.
+        foreach ([$global, $us, $es_region] as $region) {
+            $region->languages()->sync([$en->id, $es->id]);
+        }
+
         // ---- Industries & categories ---------------------------------------
         $blueprint = [
             'language-learning' => [
