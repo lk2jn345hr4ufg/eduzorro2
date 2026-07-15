@@ -85,7 +85,7 @@
                         <li><strong>{{ __('messages.address') }}:</strong> {{ $addr->address }}</li>
                     @endforeach
                     @if ($listing->contacts_text)
-                        <li>{!! nl2br(e(strip_tags($listing->contacts_text, '<br><a>'))) !!}</li>
+                        <li>{!! \App\Support\Sanitize::rich($listing->contacts_text) !!}</li>
                     @endif
                     @if ($listing->website)
                         <li>

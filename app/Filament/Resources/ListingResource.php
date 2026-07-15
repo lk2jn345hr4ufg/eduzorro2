@@ -8,7 +8,6 @@ use App\Models\Listing;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -79,7 +78,10 @@ class ListingResource extends Resource
                 ->toolbarButtons(['bold', 'italic', 'underline', 'link', 'bulletList', 'orderedList', 'h2', 'h3', 'blockquote', 'undo', 'redo'])
                 ->helperText('Long-form writeup (mainly used on affiliate-network listings).'),
 
-            Textarea::make('contacts_text')->rows(3)->columnSpanFull(),
+            RichEditor::make('contacts_text')
+                ->columnSpanFull()
+                ->toolbarButtons(['bold', 'italic', 'link', 'bulletList', 'undo', 'redo'])
+                ->helperText('Phones, emails, socials — links are clickable on the site.'),
         ]);
     }
 
