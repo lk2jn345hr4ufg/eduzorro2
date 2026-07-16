@@ -108,23 +108,6 @@ button, input, select, textarea { font-family: inherit; font-size: 1rem; }
 }
 .brand-logo { height: 120px; width: auto; display: block; }
 
-/* The coordinate stamp: a small postmark showing REGION · LANG */
-.coordinate-stamp {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--font-mono);
-    font-size: .72rem;
-    font-weight: 600;
-    letter-spacing: .06em;
-    color: var(--paper);
-    border: 1.5px solid rgba(239, 230, 207, .45);
-    border-radius: var(--radius-sm);
-    padding: 5px 10px;
-    margin-right: auto;
-    margin-left: 18px;
-}
-.coordinate-stamp-sep { color: var(--brass); }
 
 .switchers { display: flex; gap: 8px; }
 .switcher select {
@@ -661,7 +644,6 @@ button, input, select, textarea { font-family: inherit; font-size: 1rem; }
 /* ---------- Responsive ---------------------------------------------------*/
 @media (max-width: 640px) {
     .header-inner { flex-direction: column; align-items: flex-start; }
-    .coordinate-stamp { margin-left: 0; }
     .quick-search { flex-direction: column; }
     .quick-search button { padding: 12px; }
 }

@@ -41,12 +41,6 @@
         </a>
 
         @isset($currentRegion)
-            <span class="coordinate-stamp" aria-hidden="true">
-                <span class="coordinate-stamp-code">{{ $currentRegion->code }}</span>
-                <span class="coordinate-stamp-sep">&middot;</span>
-                <span class="coordinate-stamp-code">{{ strtoupper($currentLanguage->code) }}</span>
-            </span>
-
             <nav class="switchers">
                 {{-- Language switcher: same page, other language --}}
                 <label class="switcher">
