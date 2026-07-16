@@ -64,6 +64,7 @@ class DirectoryController extends Controller
             ->active()
             ->vertical($dbVertical)
             ->where('region_id', $region->id)
+            ->where('language_code', $language->code)
             ->when($category, fn ($q) => $q->whereHas('taxonomyTerms', fn ($t) => $t->whereKey($category->id)))
             ->withRatingSummary()
             ->when($sort === 'rating', fn ($q) => $q->orderByDesc('average_rating')->orderByDesc('reviews_count'))
@@ -77,8 +78,8 @@ class DirectoryController extends Controller
         // region, so the sidebar/chip list only ever links somewhere real.
         $categories = TaxonomyTerm::query()
             ->where('taxonomy', self::VERTICAL_TAXONOMY[$dbVertical])
-            ->whereHas('listings', fn ($q) => $q->where('vertical', $dbVertical)->where('region_id', $region->id)->where('is_active', true))
-            ->withCount(['listings' => fn ($q) => $q->where('vertical', $dbVertical)->where('region_id', $region->id)->where('is_active', true)])
+            ->whereHas('listings', fn ($q) => $q->where('vertical', $dbVertical)->where('region_id', $region->id)->where('language_code', $language->code)->where('is_active', true))
+            ->withCount(['listings' => fn ($q) => $q->where('vertical', $dbVertical)->where('region_id', $region->id)->where('language_code', $language->code)->where('is_active', true)])
             ->orderByDesc('listings_count')
             ->get();
 
@@ -96,6 +97,7 @@ class DirectoryController extends Controller
         $verticalCounts = Listing::query()
             ->active()
             ->where('region_id', $region->id)
+            ->where('language_code', $language->code)
             ->selectRaw('vertical, count(*) as total')
             ->groupBy('vertical')
             ->pluck('total', 'vertical');
@@ -129,6 +131,11 @@ class DirectoryController extends Controller
             throw new NotFoundHttpException;
         }
         if ($listing->region_id !== $region->id || ! $listing->is_active) {
+            throw new NotFoundHttpException;
+        }
+        // Only show the profile in the language its content is written in —
+        // /ukraine/uk/... 404s for a Russian-language listing (and vice versa).
+        if ($listing->language_code !== $language->code) {
             throw new NotFoundHttpException;
         }
 

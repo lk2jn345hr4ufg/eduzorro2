@@ -25,6 +25,7 @@ class RegionLanguageController extends Controller
         $verticalCounts = Listing::query()
             ->active()
             ->where('region_id', $region->id)
+            ->where('language_code', $language->code)
             ->selectRaw('vertical, count(*) as total')
             ->groupBy('vertical')
             ->pluck('total', 'vertical');

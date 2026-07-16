@@ -157,6 +157,7 @@ class ImportWordPress extends Command
             $values = array_map(fn ($r) => [
                 'wp_post_id' => (int) $r['wp_post_id'],
                 'vertical' => $r['vertical'],
+                'language_code' => 'ru',
                 'name' => $r['name'],
                 'slug' => $r['slug'],
                 'description_title' => $r['description_title'] ?: null,
@@ -177,7 +178,7 @@ class ImportWordPress extends Command
             DB::table('listings')->upsert(
                 $values,
                 ['wp_post_id'],
-                ['vertical', 'name', 'slug', 'description_title', 'description', 'specialization',
+                ['vertical', 'language_code', 'name', 'slug', 'description_title', 'description', 'specialization',
                     'editorial_rating', 'contacts_text', 'website', 'logo_url', 'year_of_founded',
                     'details_description', 'old_link', 'updated_at']
             );

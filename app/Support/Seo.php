@@ -38,6 +38,13 @@ class Seo
             ? $region->languages()->active()->ordered()->get()
             : Language::active()->ordered()->get();
 
+        // A listing profile only exists in its content language — don't
+        // advertise alternates that would 404.
+        $listing = $params['listing'] ?? null;
+        if ($listing instanceof \App\Models\Listing) {
+            $languages = $languages->where('code', $listing->language_code)->values();
+        }
+
         foreach ($languages as $lang) {
             $p             = $params;
             $p['language'] = $lang; // getRouteKeyName() = 'code'

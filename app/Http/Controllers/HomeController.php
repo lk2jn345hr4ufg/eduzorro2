@@ -18,8 +18,8 @@ class HomeController extends Controller
 
         $verticalCountsByRegion = Listing::query()
             ->active()
-            ->selectRaw('region_id, vertical, count(*) as total')
-            ->groupBy('region_id', 'vertical')
+            ->selectRaw('region_id, vertical, language_code, count(*) as total')
+            ->groupBy('region_id', 'vertical', 'language_code')
             ->get()
             ->groupBy('region_id');
 
@@ -34,7 +34,9 @@ class HomeController extends Controller
                 ->map(fn ($v, $urlSlug) => [
                     'slug' => $urlSlug,
                     'label' => $v[1],
-                    'count' => $verticalCountsByRegion->get($region->id)?->firstWhere('vertical', $v[0])?->total ?? 0,
+                    'count' => $verticalCountsByRegion->get($region->id)
+                        ?->first(fn ($row) => $row->vertical === $v[0] && $row->language_code === ($region->languages->first()?->code))
+                        ?->total ?? 0,
                 ])
                 ->filter(fn ($v) => $v['count'] > 0)
                 ->values();

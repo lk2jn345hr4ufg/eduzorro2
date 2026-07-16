@@ -48,6 +48,12 @@ class ListingResource extends Resource
 
                 Select::make('vertical')->options(self::VERTICALS)->required(),
 
+                Select::make('language_code')
+                    ->label('Content language')
+                    ->options(fn () => \App\Models\Language::query()->orderBy('sort_order')->pluck('native_name', 'code'))
+                    ->required()
+                    ->helperText('The listing only appears on pages in this language.'),
+
                 TextInput::make('specialization')->maxLength(255),
 
                 TextInput::make('editorial_rating')
@@ -92,6 +98,7 @@ class ListingResource extends Resource
             ->columns([
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('vertical')->badge()->sortable(),
+                TextColumn::make('language_code')->label('Lang')->badge()->sortable(),
                 IconColumn::make('description')
                     ->label('Description')
                     ->boolean()
@@ -112,6 +119,9 @@ class ListingResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('vertical')->options(self::VERTICALS),
+                SelectFilter::make('language_code')
+                    ->label('Content language')
+                    ->options(fn () => \App\Models\Language::query()->orderBy('sort_order')->pluck('native_name', 'code')->toArray()),
                 TernaryFilter::make('description')
                     ->label('Description')
                     ->placeholder('All listings')
