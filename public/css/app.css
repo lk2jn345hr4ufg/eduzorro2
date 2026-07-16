@@ -654,3 +654,6 @@ button, input, select, textarea { font-family: inherit; font-size: 1rem; }
     .rating-stamp-ring { transform: none !important; }
     .company-card:hover { transform: none !important; }
 }
+
+/* Honeypot field: visually removed, still in the DOM for bots to trip on */
+.hp-field { position: absolute; left: -9999px; top: -9999px; height: 0; overflow: hidden; }

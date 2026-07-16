@@ -31,6 +31,19 @@ class ListingReviewResource extends Resource
     protected static ?string $navigationLabel = 'Listing Reviews';
     protected static ?int $navigationSort = 2;
 
+    /** Sidebar badge: how many reviews are waiting for approval. */
+    public static function getNavigationBadge(): ?string
+    {
+        $pending = static::getModel()::where('is_approved', false)->count();
+
+        return $pending > 0 ? (string) $pending : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([

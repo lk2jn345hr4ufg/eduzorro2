@@ -148,6 +148,7 @@ class DirectoryController extends Controller
             'verticalLabel' => self::VERTICALS[$vertical][1],
             'listing' => $listing,
             'breadcrumbs' => $breadcrumbs,
+            'captchaQuestion' => \App\Support\MathCaptcha::question(),
         ]);
     }
 }

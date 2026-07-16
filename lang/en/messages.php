@@ -37,6 +37,8 @@ return [
     'review_body'        => 'Your review',
     'submit_review'      => 'Submit review',
     'review_submitted'   => 'Thank you! Your review was submitted and will appear after moderation.',
+    'captcha_label'      => 'Spam check: how much is',
+    'captcha_error'      => 'Wrong answer to the spam check — please try again.',
     'verified'           => 'Verified',
     'digital'            => 'Digital',
     'local'              => 'Local',

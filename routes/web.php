@@ -6,6 +6,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\IndustryController;
+use App\Http\Controllers\ListingReviewController;
 use App\Http\Controllers\RegionLanguageController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
@@ -50,6 +51,7 @@ Route::prefix('{region:slug}/{language:code}')
         Route::get('/directory/{vertical}', [DirectoryController::class, 'index'])->name('directory.index');
         Route::get('/directory/{vertical}/category/{categorySlug}', [DirectoryController::class, 'category'])->name('directory.category');
         Route::get('/directory/{vertical}/{listing:slug}', [DirectoryController::class, 'show'])->name('directory.show');
+        Route::post('/directory/{vertical}/{listing:slug}/reviews', [ListingReviewController::class, 'store'])->name('directory.review.store');
 
         Route::get('/businesses', [BusinessController::class, 'index'])->name('business.index');
         Route::get('/businesses/{business:slug}', [BusinessController::class, 'show'])->name('business.show');

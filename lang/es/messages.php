@@ -37,6 +37,8 @@ return [
     'review_body'        => 'Tu reseña',
     'submit_review'      => 'Enviar reseña',
     'review_submitted'   => '¡Gracias! Tu reseña se envió y aparecerá tras la moderación.',
+    'captcha_label'      => 'Comprobación anti-spam: cuánto es',
+    'captcha_error'      => 'Respuesta incorrecta — inténtalo de nuevo.',
     'verified'           => 'Verificada',
     'digital'            => 'Digital',
     'local'              => 'Local',

@@ -137,5 +137,61 @@
                 <p class="empty">{{ __('messages.no_reviews') }}</p>
             @endforelse
         </section>
+
+        {{-- Leave a review (moderated: appears after admin approval) --}}
+        <section class="company-section" id="review-form">
+            <h2>{{ __('messages.write_review') }}</h2>
+
+            @if (session('status'))
+                <div class="alert alert-success">{{ session('status') }}</div>
+            @endif
+
+            @if ($errors->any())
+                <div class="alert alert-error">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form class="review-form" method="post"
+                  action="{{ route('directory.review.store', [$region, request()->route('language'), $vertical, $listing]) }}">
+                @csrf
+
+                {{-- Honeypot: hidden from humans; bots that fill it are dropped silently --}}
+                <div class="hp-field" aria-hidden="true">
+                    <label>Website <input type="text" name="website_url" tabindex="-1" autocomplete="off" value=""></label>
+                </div>
+
+                <div class="form-row">
+                    <label>{{ __('messages.your_name') }}
+                        <input type="text" name="author_name" value="{{ old('author_name') }}" required maxlength="255">
+                    </label>
+                    <label>{{ __('messages.your_email') }}
+                        <input type="email" name="author_email" value="{{ old('author_email') }}" maxlength="255">
+                    </label>
+                </div>
+
+                <label class="rating-field">{{ __('messages.rating') }}
+                    <select name="rating" required>
+                        @for ($i = 5; $i >= 1; $i--)
+                            <option value="{{ $i }}" @selected(old('rating') == $i)>{{ str_repeat('★', $i) }}</option>
+                        @endfor
+                    </select>
+                </label>
+
+                <label>{{ __('messages.review_body') }}
+                    <textarea name="body" rows="5" required minlength="10" maxlength="5000">{{ old('body') }}</textarea>
+                </label>
+
+                <label>{{ __('messages.captcha_label') }} {{ $captchaQuestion }} = ?
+                    <input type="text" name="captcha" inputmode="numeric" required autocomplete="off" style="max-width:120px;">
+                </label>
+
+                <button type="submit" class="btn btn-primary">{{ __('messages.submit_review') }}</button>
+            </form>
+        </section>
     </article>
 @endsection
