@@ -37,7 +37,7 @@
 <header class="site-header">
     <div class="container header-inner">
         <a class="brand" href="{{ isset($currentRegion) ? route('region.home', [$currentRegion, $currentLanguage]) : route('home') }}">
-            <img class="brand-logo" src="{{ asset('images/logo-mark.png') }}" alt="" width="52" height="40">
+            <img class="brand-logo" src="{{ asset('images/logo-mark.png') }}" alt="" width="77" height="60">
             {{ __('messages.site_name') }}
         </a>
 
