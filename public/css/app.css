@@ -106,7 +106,7 @@ button, input, select, textarea { font-family: inherit; font-size: 1rem; }
     letter-spacing: -.01em;
     text-decoration: none !important;
 }
-.brand-logo { height: 60px; width: auto; display: block; }
+.brand-logo { height: 120px; width: auto; display: block; }
 
 /* The coordinate stamp: a small postmark showing REGION · LANG */
 .coordinate-stamp {
