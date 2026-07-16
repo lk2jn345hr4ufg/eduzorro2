@@ -96,6 +96,9 @@ button, input, select, textarea { font-family: inherit; font-size: 1rem; }
     flex-wrap: wrap;
 }
 .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     font-family: var(--font-display);
     font-weight: 650;
     font-size: 1.35rem;
@@ -103,6 +106,7 @@ button, input, select, textarea { font-family: inherit; font-size: 1rem; }
     letter-spacing: -.01em;
     text-decoration: none !important;
 }
+.brand-logo { height: 40px; width: auto; display: block; }
 
 /* The coordinate stamp: a small postmark showing REGION · LANG */
 .coordinate-stamp {

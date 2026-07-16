@@ -25,6 +25,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,560;9..144,650&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="48x48">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon-32.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/apple-touch-icon.png') }}">
+    <meta property="og:image" content="{{ asset('images/logo-full.png') }}">
+
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     @stack('head')
 </head>
@@ -32,6 +37,7 @@
 <header class="site-header">
     <div class="container header-inner">
         <a class="brand" href="{{ isset($currentRegion) ? route('region.home', [$currentRegion, $currentLanguage]) : route('home') }}">
+            <img class="brand-logo" src="{{ asset('images/logo-mark.png') }}" alt="" width="52" height="40">
             {{ __('messages.site_name') }}
         </a>
 
