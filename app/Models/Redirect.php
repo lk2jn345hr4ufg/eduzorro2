@@ -44,6 +44,10 @@ class Redirect extends Model
             $path = $m[1] ?? '/';
         }
 
+        // Old WordPress slugs percent-encode Cyrillic (%d1%94 = "є");
+        // browsers send them encoded. Compare everything decoded.
+        $path = rawurldecode($path);
+
         $path = '/' . ltrim($path, '/');
         $path = preg_replace('#/{2,}#', '/', $path);
 
