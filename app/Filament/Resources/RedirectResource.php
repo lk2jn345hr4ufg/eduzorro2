@@ -48,12 +48,13 @@ class RedirectResource extends Resource
 
                 Select::make('match_type')
                     ->options([
-                        'exact'  => 'Exact match',
-                        'prefix' => 'Prefix (matches anything under this path)',
+                        'exact'   => 'Exact match',
+                        'prefix'  => 'Prefix (keeps the sub-path, appends it onto "To")',
+                        'subtree' => 'Subtree (this page + everything under it → one "To" page)',
                     ])
                     ->default('exact')
                     ->required()
-                    ->helperText('Prefix rules append whatever comes after the matched path onto "To".'),
+                    ->helperText('Prefix appends whatever comes after the matched path onto "To" (moving a section elsewhere). Subtree sends the whole section to the exact "To" page (e.g. retiring it to the home page).'),
 
                 Select::make('status_code')
                     ->options([
@@ -89,7 +90,7 @@ class RedirectResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                SelectFilter::make('match_type')->options(['exact' => 'Exact', 'prefix' => 'Prefix']),
+                SelectFilter::make('match_type')->options(['exact' => 'Exact', 'prefix' => 'Prefix', 'subtree' => 'Subtree']),
                 TernaryFilter::make('is_active'),
             ]);
     }

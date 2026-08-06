@@ -63,17 +63,44 @@ class HandleRedirects
             return $exact;
         }
 
-        // Prefix rules: longest matching prefix wins, so a more specific
-        // rule (e.g. /old-region/en/language-learning) beats a broader one
-        // (e.g. /old-region) when both match.
+        // Prefix & subtree rules: longest matching prefix wins, so a more
+        // specific rule (e.g. /old-region/en/language-learning) beats a
+        // broader one (e.g. /old-region) when both match.
+        //
+        //  - prefix : loose match (kept as-is for backwards compatibility);
+        //             the sub-path is later appended onto the target.
+        //  - subtree: segment-aware match — the path itself or anything
+        //             genuinely nested under it (…/from/…), but NOT a sibling
+        //             like "/from-archive". The whole subtree is later sent
+        //             to the exact target, discarding the sub-path.
         return $redirects
-            ->filter(fn (array $r) => $r['match_type'] === 'prefix' && str_starts_with($path, $r['from_path']))
+            ->filter(function (array $r) use ($path) {
+                if ($r['match_type'] === 'prefix') {
+                    return str_starts_with($path, $r['from_path']);
+                }
+
+                if ($r['match_type'] === 'subtree') {
+                    return $path === $r['from_path']
+                        || str_starts_with($path, rtrim($r['from_path'], '/') . '/');
+                }
+
+                return false;
+            })
             ->sortByDesc(fn (array $r) => strlen($r['from_path']))
             ->first();
     }
 
     protected function buildTarget(array $redirect, string $path): string
     {
+        // Subtree: the matched page AND everything beneath it collapse onto a
+        // single target page — the remainder of the path is deliberately
+        // dropped (e.g. retire a whole section straight to the home page).
+        if ($redirect['match_type'] === 'subtree') {
+            return $redirect['to_path'];
+        }
+
+        // Prefix: preserve the sub-path, appending it onto the target so a
+        // whole section can move to another section keeping its structure.
         if ($redirect['match_type'] === 'prefix') {
             $remainder = substr($path, strlen($redirect['from_path']));
 
