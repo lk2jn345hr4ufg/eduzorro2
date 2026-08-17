@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Artisan;
@@ -31,12 +32,18 @@ class DataSync extends Page
                         ->numeric()
                         ->placeholder((string) config('football.season'))
                         ->helperText('Leave empty to use the configured season.'),
+                    Toggle::make('create_countries')
+                        ->label('Create missing countries')
+                        ->helperText('Off (default): only import teams for countries you already created. On: auto-create any new country found.'),
                 ])
                 ->action(function (array $data) {
                     @set_time_limit(0);
                     $params = [];
                     if (! empty($data['season'])) {
                         $params['--season'] = (int) $data['season'];
+                    }
+                    if (! empty($data['create_countries'])) {
+                        $params['--create-countries'] = true;
                     }
                     $code = Artisan::call('sport:sync-football', $params);
                     $this->result('API-Football import', $code, Artisan::output());

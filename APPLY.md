@@ -1,37 +1,27 @@
-# General sports news section (feed of all team news)
+# Import only for countries already created
 
-Adds a central sports-news feed that aggregates news from every team, plus a
-dedicated page per article.
+Changes the football import so it imports teams ONLY for countries that already
+exist in the admin. Countries are no longer auto-created by default.
 
-## URLs (localized)
-- /{region}/{lang}/sport/news            all sports news, newest first, paginated
-- /{region}/{lang}/sport/news/{slug}     single article page (indexable)
+## Behaviour
+- sport:sync-football now looks up each team's country in sport_countries
+  (matched by "API name", then slug). If the country was not created in the
+  admin, its teams are skipped. At the end it lists the skipped countries so you
+  know which to create.
+- If NO countries exist yet, the command stops with a hint (nothing to import).
+- Opt back into the old behaviour with --create-countries (CLI) or the new
+  "Create missing countries" toggle on the Data sync button.
 
-Links to the feed are added on: the Sport index page, the localized home Sport
-section, and each region card on the global home. Team News-tab items and feed
-items now link to the internal article page.
+## Workflow
+1. Admin -> Sport -> Countries -> create the countries you want. Set each one's
+   "API name" to the API-Football country name (e.g. England, Spain, Ukraine).
+2. Admin -> Sport -> Data sync -> "Import teams & countries" (toggle OFF).
+   Only teams for your created countries are imported.
 
 ## Files (extract over project root, keep paths)
-- app/Http/Controllers/SportNewsController.php   (new)
-- routes/web.php                                 (modified: news routes before the sport wildcard)
-- resources/views/sport/news/index.blade.php     (new: feed)
-- resources/views/sport/news/show.blade.php      (new: article)
-- resources/views/sport/partials/news.blade.php  (modified: titles link to article page)
-- resources/views/sport/index.blade.php          (modified: news link)
-- resources/views/region-language.blade.php      (modified: news chip)
-- resources/views/home.blade.php                 (modified: news chip per region)
-- public/css/sport.css                           (modified: feed/pager/article styles)
-- lang/{en,uk,ru,es}/sport.php                   (modified: news labels)
+- app/Console/Commands/SyncFootball.php   (modified)
+- app/Filament/Pages/DataSync.php         (modified: create-countries toggle)
 
-Depends on the sport module + team_news already installed. No migration.
-
-## Apply
-1. Unzip over the project root (overwrite).
+No migration. Apply:
+1. Unzip over project root (overwrite).
 2. php artisan optimize:clear
-3. Visit /{region}/{lang}/sport/news.
-
-## Notes
-- The feed reads team_news (active + published), so once you sync/rewrite news it
-  shows up automatically, in the visitor language (Gemini translations included).
-- Article slugs already carry a short URL hash, so they are effectively unique for
-  the global /sport/news/{slug} route.
