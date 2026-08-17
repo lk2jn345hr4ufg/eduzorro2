@@ -21,11 +21,6 @@
                 </a>
             </li>
             <li>
-                <a class="chip" href="{{ route('sport.news.index', [$currentRegion, $currentLanguage]) }}">
-                    {{ __('sport.sports_news') }}
-                </a>
-            </li>
-            <li>
                 <a class="chip" href="{{ route('sport.football.countries', [$currentRegion, $currentLanguage]) }}">
                     {{ __('sport.football') }}
                 </a>
