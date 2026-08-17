@@ -96,3 +96,92 @@
 .link-list { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 8px; }
 .link-list a { color: var(--teal-deep); text-decoration: none; }
 .link-list a:hover { text-decoration: underline; }
+
+/* ---- Transfers ---- */
+.transfer-season {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm, 8px);
+    background: var(--card);
+    margin: 0 0 12px;
+    overflow: hidden;
+}
+.transfer-season > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-weight: 600;
+    background: var(--paper-deep);
+    list-style: none;
+}
+.transfer-season > summary::-webkit-details-marker { display: none; }
+.transfer-season > summary::before {
+    content: '▸';
+    margin-right: 8px;
+    color: var(--ink-faint);
+    transition: transform .15s ease;
+}
+.transfer-season[open] > summary::before { content: '▾'; }
+.transfer-season-title { flex: 1; }
+.transfer-season-counts { display: inline-flex; gap: 6px; }
+
+.transfer-list { list-style: none; margin: 0; padding: 0; }
+.transfer-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line-soft);
+}
+.transfer-row:first-child { border-top: 0; }
+
+.t-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.t-in  { background: var(--teal-tint);  color: var(--teal-deep); }
+.t-out { background: var(--brick-tint); color: var(--brick); }
+
+.transfer-player { font-weight: 600; overflow-wrap: anywhere; }
+.transfer-club {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-soft);
+    overflow-wrap: anywhere;
+}
+.transfer-club img { border-radius: 3px; flex: 0 0 auto; }
+.transfer-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    justify-self: end;
+    color: var(--ink-faint);
+    font-size: .85rem;
+    white-space: nowrap;
+}
+.transfer-type {
+    padding: 2px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-soft);
+}
+
+@media (max-width: 720px) {
+    .transfer-row {
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 6px 10px;
+        padding: 12px 14px;
+    }
+    .transfer-club  { grid-column: 2; }
+    .transfer-meta  { grid-column: 2; justify-self: start; }
+}

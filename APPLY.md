@@ -1,27 +1,29 @@
-# Import only for countries already created
+# Transfers tab — proper layout
 
-Changes the football import so it imports teams ONLY for countries that already
-exist in the admin. Countries are no longer auto-created by default.
+Reworks the transfers tab (e.g. /ukraine/ru/sport/football/ukraine/dynamo-kyiv/transfers),
+which previously dumped ~700 undifferentiated table rows.
 
-## Behaviour
-- sport:sync-football now looks up each team's country in sport_countries
-  (matched by "API name", then slug). If the country was not created in the
-  admin, its teams are skipped. At the end it lists the skipped countries so you
-  know which to create.
-- If NO countries exist yet, the command stops with a hint (nothing to import).
-- Opt back into the old behaviour with --create-countries (CLI) or the new
-  "Create missing countries" toggle on the Data sync button.
-
-## Workflow
-1. Admin -> Sport -> Countries -> create the countries you want. Set each one's
-   "API name" to the API-Football country name (e.g. England, Spain, Ukraine).
-2. Admin -> Sport -> Data sync -> "Import teams & countries" (toggle OFF).
-   Only teams for your created countries are imported.
+## What changed
+- **Grouped by transfer season** (Jul-Jun, e.g. "2025/26"), newest season open by
+  default, older ones collapsed - so the page opens short instead of endless.
+- **Direction badges**: each move is marked as arrival or departure, resolved
+  against this team's API id (not by string matching), with in/out counts per season.
+- **Only the other club is shown** (with its crest) instead of repeating
+  "Dynamo Kyiv" in every row - much better use of width.
+- **Deduplicated**: API-Football repeats the same move across windows; rows are
+  now unique per player+date+clubs, and self-to-self noise rows are dropped.
+- **Transfer type** (loan / fee / free) shown when provided.
+- **Readable localized dates** instead of raw 2026-08-12.
+- **Mobile layout**: rows reflow into stacked cards under 720px instead of a
+  horizontally squeezed 4-column table.
 
 ## Files (extract over project root, keep paths)
-- app/Console/Commands/SyncFootball.php   (modified)
-- app/Filament/Pages/DataSync.php         (modified: create-countries toggle)
+- resources/views/sport/partials/transfers.blade.php  (rewritten)
+- public/css/sport.css                                (transfer styles appended)
 
-No migration. Apply:
-1. Unzip over project root (overwrite).
-2. php artisan optimize:clear
+No migration, no controller change - same data, better presentation.
+
+## Apply
+1. Unzip over the project root (overwrite).
+2. php artisan view:clear
+3. Hard-refresh the transfers page (the CSS file is cached by the browser).
