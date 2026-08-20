@@ -1,29 +1,33 @@
-# Transfers tab — proper layout
+# Sync team news by country
 
-Reworks the transfers tab (e.g. /ukraine/ru/sport/football/ukraine/dynamo-kyiv/transfers),
-which previously dumped ~700 undifferentiated table rows.
+Adds a Country filter to the news tools, so you can sync (or rewrite) news for
+just one country's teams instead of all of them.
 
 ## What changed
-- **Grouped by transfer season** (Jul-Jun, e.g. "2025/26"), newest season open by
-  default, older ones collapsed - so the page opens short instead of endless.
-- **Direction badges**: each move is marked as arrival or departure, resolved
-  against this team's API id (not by string matching), with in/out counts per season.
-- **Only the other club is shown** (with its crest) instead of repeating
-  "Dynamo Kyiv" in every row - much better use of width.
-- **Deduplicated**: API-Football repeats the same move across windows; rows are
-  now unique per player+date+clubs, and self-to-self noise rows are dropped.
-- **Transfer type** (loan / fee / free) shown when provided.
-- **Readable localized dates** instead of raw 2026-08-12.
-- **Mobile layout**: rows reflow into stacked cards under 720px instead of a
-  horizontally squeezed 4-column table.
+- Admin -> Sport -> Data sync -> **Sync team news**: new **Country** dropdown
+  (searchable, lists your existing countries; leave empty for all countries).
+- Same Country dropdown added to **Rewrite & translate news (Gemini)**.
+- CLI gains a matching option on both commands:
+    php artisan sport:sync-news --country=ukraine
+    php artisan sport:sync-news --country=england --limit=10 --sleep=1
+    php artisan sport:rewrite-news --country=ukraine --limit=20
+- Country is matched on the country **slug** (as shown in Sport -> Countries).
+- Filters combine: country + team + limit + sleep all apply together.
+- The "no teams" warning now hints at the likely cause (wrong slug, or teams
+  not imported yet).
 
 ## Files (extract over project root, keep paths)
-- resources/views/sport/partials/transfers.blade.php  (rewritten)
-- public/css/sport.css                                (transfer styles appended)
+- app/Console/Commands/SyncTeamNews.php   (modified: --country)
+- app/Console/Commands/RewriteNews.php    (modified: --country)
+- app/Filament/Pages/DataSync.php         (modified: Country selects)
 
-No migration, no controller change - same data, better presentation.
+No migration.
 
 ## Apply
 1. Unzip over the project root (overwrite).
-2. php artisan view:clear
-3. Hard-refresh the transfers page (the CSS file is cached by the browser).
+2. php artisan optimize:clear
+
+## Why this helps
+News API free tiers are rate-limited, so syncing 118 teams in one go burns the
+quota. Running country by country (e.g. ukraine today, england tomorrow) keeps
+each run small and predictable.

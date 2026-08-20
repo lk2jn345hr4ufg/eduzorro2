@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\SportCountry;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -54,6 +56,16 @@ class DataSync extends Page
                 ->icon('heroicon-o-newspaper')
                 ->color('primary')
                 ->form([
+                    Select::make('country')
+                        ->label('Country')
+                        ->options(fn () => SportCountry::query()
+                            ->orderBy('slug')
+                            ->pluck('slug', 'slug')
+                            ->all())
+                        ->searchable()
+                        ->native(false)
+                        ->placeholder('All countries')
+                        ->helperText('Limit the sync to the teams of one country.'),
                     TextInput::make('team')->label('Team slug')->placeholder('all teams (leave empty)'),
                     TextInput::make('limit')->numeric()->default(25)
                         ->helperText('Max teams this run (0 = all). Keep small to respect news API limits.'),
@@ -69,6 +81,9 @@ class DataSync extends Page
                     if (! empty($data['team'])) {
                         $params['--team'] = $data['team'];
                     }
+                    if (! empty($data['country'])) {
+                        $params['--country'] = $data['country'];
+                    }
                     $code = Artisan::call('sport:sync-news', $params);
                     $this->result('News sync', $code, Artisan::output());
                 }),
@@ -78,6 +93,15 @@ class DataSync extends Page
                 ->icon('heroicon-o-sparkles')
                 ->color('primary')
                 ->form([
+                    Select::make('country')
+                        ->label('Country')
+                        ->options(fn () => SportCountry::query()
+                            ->orderBy('slug')
+                            ->pluck('slug', 'slug')
+                            ->all())
+                        ->searchable()
+                        ->native(false)
+                        ->placeholder('All countries'),
                     TextInput::make('team')->label('Team slug')->placeholder('all teams (leave empty)'),
                     TextInput::make('limit')->numeric()->default(20)
                         ->helperText('Max news rows this run. Each row = one Gemini call.'),
@@ -92,6 +116,9 @@ class DataSync extends Page
                     ];
                     if (! empty($data['team'])) {
                         $params['--team'] = $data['team'];
+                    }
+                    if (! empty($data['country'])) {
+                        $params['--country'] = $data['country'];
                     }
                     $code = Artisan::call('sport:rewrite-news', $params);
                     $this->result('Gemini rewrite', $code, Artisan::output());

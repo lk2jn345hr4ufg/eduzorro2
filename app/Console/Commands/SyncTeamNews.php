@@ -14,6 +14,7 @@ class SyncTeamNews extends Command
 {
     protected $signature = 'sport:sync-news
                             {--team= : Limit to a single team slug}
+                            {--country= : Limit to one country (slug, e.g. ukraine)}
                             {--limit=0 : Max number of teams to process this run (0 = all)}
                             {--sleep=0 : Seconds to wait between teams (helps with API rate limits)}';
 
@@ -36,6 +37,10 @@ class SyncTeamNews extends Command
             $query->where('slug', $slug);
         }
 
+        if ($countrySlug = $this->option('country')) {
+            $query->whereHas('country', fn ($q) => $q->where('slug', $countrySlug));
+        }
+
         if (($limit = (int) $this->option('limit')) > 0) {
             $query->limit($limit);
         }
@@ -43,7 +48,7 @@ class SyncTeamNews extends Command
         $teams = $query->get();
 
         if ($teams->isEmpty()) {
-            $this->warn('No matching teams.');
+            $this->warn('No matching teams. Check the team/country slug, or import teams first (sport:sync-football).');
             return self::SUCCESS;
         }
 

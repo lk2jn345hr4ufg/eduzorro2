@@ -11,6 +11,7 @@ class RewriteNews extends Command
 {
     protected $signature = 'sport:rewrite-news
                             {--team= : Limit to a single team slug}
+                            {--country= : Limit to one country (slug, e.g. ukraine)}
                             {--limit=0 : Max news rows to process this run (0 = all)}
                             {--all : Re-process every row, even ones already multilingual}
                             {--sleep=0 : Seconds to wait between articles}';
@@ -34,6 +35,10 @@ class RewriteNews extends Command
 
         if ($slug = $this->option('team')) {
             $query->whereHas('team', fn ($q) => $q->where('slug', $slug));
+        }
+
+        if ($countrySlug = $this->option('country')) {
+            $query->whereHas('team.country', fn ($q) => $q->where('slug', $countrySlug));
         }
 
         if (($limit = (int) $this->option('limit')) > 0) {
