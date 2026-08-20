@@ -11,6 +11,18 @@
         </x-filament::section>
 
         <x-filament::section>
+            <x-slot name="heading">Fixtures, standings & transfers</x-slot>
+            <x-slot name="description">
+                These are stored in your database, so team pages render from local data
+                instead of calling the API on every view. Re-run the sync to refresh —
+                fixtures after each matchday, standings weekly, transfers during the
+                windows. Each team costs 1&ndash;2 API calls, so use the per-run limit
+                and the country filter to stay inside your quota. If a team has never
+                been synced, its tab falls back to a live API read.
+            </x-slot>
+        </x-filament::section>
+
+        <x-filament::section>
             <x-slot name="heading">Team news</x-slot>
             <x-slot name="description">
                 Pulls recent articles per team from the news API into the Team news table.

@@ -51,6 +51,60 @@ class DataSync extends Page
                     $this->result('API-Football import', $code, Artisan::output());
                 }),
 
+            Action::make('syncStats')
+                ->label('Sync fixtures, standings & transfers')
+                ->icon('heroicon-o-table-cells')
+                ->color('primary')
+                ->form([
+                    Select::make('type')
+                        ->label('What to sync')
+                        ->options([
+                            'all'       => 'Everything',
+                            'fixtures'  => 'Fixtures only',
+                            'standings' => 'Standings only',
+                            'transfers' => 'Transfers only',
+                        ])
+                        ->default('all')
+                        ->native(false),
+                    Select::make('country')
+                        ->label('Country')
+                        ->options(fn () => SportCountry::query()
+                            ->orderBy('slug')
+                            ->pluck('slug', 'slug')
+                            ->all())
+                        ->searchable()
+                        ->native(false)
+                        ->placeholder('All countries'),
+                    TextInput::make('team')->label('Team slug')->placeholder('all teams (leave empty)'),
+                    TextInput::make('season')
+                        ->numeric()
+                        ->placeholder((string) config('football.season'))
+                        ->helperText('Leave empty to use the configured season.'),
+                    TextInput::make('limit')->numeric()->default(20)
+                        ->helperText('Max teams this run (0 = all). Each team costs 1-2 API calls.'),
+                    TextInput::make('sleep')->numeric()->default(0)
+                        ->helperText('Seconds to wait between teams.'),
+                ])
+                ->action(function (array $data) {
+                    @set_time_limit(0);
+                    $params = [
+                        '--type'  => $data['type'] ?? 'all',
+                        '--limit' => (int) ($data['limit'] ?? 0),
+                        '--sleep' => (int) ($data['sleep'] ?? 0),
+                    ];
+                    if (! empty($data['team'])) {
+                        $params['--team'] = $data['team'];
+                    }
+                    if (! empty($data['country'])) {
+                        $params['--country'] = $data['country'];
+                    }
+                    if (! empty($data['season'])) {
+                        $params['--season'] = (int) $data['season'];
+                    }
+                    $code = Artisan::call('sport:sync-stats', $params);
+                    $this->result('Fixtures / standings / transfers sync', $code, Artisan::output());
+                }),
+
             Action::make('syncNews')
                 ->label('Sync team news')
                 ->icon('heroicon-o-newspaper')

@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Fixture;
 use App\Models\Language;
 use App\Models\Region;
 use App\Models\SportCountry;
+use App\Models\Standing;
 use App\Models\Team;
+use App\Models\Transfer;
 use App\Services\Football\ApiFootballClient;
 
 class TeamController extends Controller
@@ -43,7 +46,14 @@ class TeamController extends Controller
         ], $data));
     }
 
-    /** Fetch just the payload the active tab needs (keeps API calls minimal). */
+    /**
+     * Fetch just the payload the active tab needs.
+     *
+     * Data is served from the local DB (populated by sport:sync-stats) and
+     * re-shaped into the API-Football payload the views expect. If nothing has
+     * been synced yet for this team, we fall back to a live API read so the
+     * page still works before the first sync.
+     */
     protected function tabData(string $tab, Team $team, ApiFootballClient $api, int $season): array
     {
         // News is local; everything else needs the team's API id.
@@ -57,23 +67,57 @@ class TeamController extends Controller
 
         return match ($tab) {
             'fixtures' => (function () use ($api, $team, $season) {
-                $all = $api->teamFixtures($team->api_id, $season);
+                $all = $this->storedFixtures($team, $season) ?: $api->teamFixtures($team->api_id, $season);
                 [$upcoming, $results] = $this->splitFixtures($all);
                 return ['upcoming' => $upcoming, 'results' => $results];
             })(),
 
-            'euro-cups' => ['euroFixtures' => $api->teamEuroFixtures($team->api_id, $season)],
+            'euro-cups' => (function () use ($api, $team, $season) {
+                $euroIds = array_keys(config('football.euro_competitions', []));
+                $stored  = $this->storedFixtures($team, $season, $euroIds);
 
-            'transfers' => ['transfers' => $api->transfers($team->api_id)],
+                return ['euroFixtures' => $stored ?: $api->teamEuroFixtures($team->api_id, $season)];
+            })(),
 
-            'standings' => [
-                'standings' => $team->primary_league_api_id
-                    ? $api->standings($team->primary_league_api_id, $season)
-                    : [],
-            ],
+            'transfers' => (function () use ($api, $team) {
+                $rows = Transfer::where('team_api_id', $team->api_id)
+                    ->orderByDesc('transfer_date')
+                    ->get();
+
+                return ['transfers' => $rows->isNotEmpty()
+                    ? Transfer::toApiShapeCollection($rows)
+                    : $api->transfers($team->api_id)];
+            })(),
+
+            'standings' => (function () use ($api, $team, $season) {
+                if (! $team->primary_league_api_id) {
+                    return ['standings' => []];
+                }
+
+                $rows = Standing::where('league_api_id', $team->primary_league_api_id)
+                    ->where('season', $season)
+                    ->orderBy('rank')
+                    ->get();
+
+                return ['standings' => $rows->isNotEmpty()
+                    ? $rows->map->toApiShape()->all()
+                    : $api->standings($team->primary_league_api_id, $season)];
+            })(),
 
             default => [],
         };
+    }
+
+    /** Stored fixtures for a team, optionally limited to certain leagues. */
+    protected function storedFixtures(Team $team, int $season, array $leagueIds = []): array
+    {
+        $query = Fixture::forTeam($team->api_id)->season($season);
+
+        if (! empty($leagueIds)) {
+            $query->whereIn('league_api_id', $leagueIds);
+        }
+
+        return $query->orderBy('kickoff_at')->get()->map->toApiShape()->all();
     }
 
     /** Partition fixtures into upcoming (not finished) and results (finished). */
