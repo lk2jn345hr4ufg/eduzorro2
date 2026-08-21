@@ -1,45 +1,38 @@
-# 50 more math calculators (total: 84)
+# Tools move to language-only URLs
 
-Extends the Mathematics category with 50 additional calculators. Same
-config-driven engine — no new Blade files, no migration, no API calls.
+Study tools now live at /{language}/tools instead of /{region}/{language}/tools,
+because a calculator is identical in every region — one canonical URL per
+language instead of one per region/language pair (better for SEO: no duplicate
+content across regions).
 
-Requires the tools module and the first math batch to be installed.
+```
+before:  https://eduzorro.com/ukraine/ru/tools
+after:   https://eduzorro.com/ru/tools
+         https://eduzorro.com/ru/tools/percentage-calculator
+```
 
-## What's new
-Plane geometry: square, parallelogram, rhombus, regular polygon, ellipse,
-circle sector
-Solids: cube, cuboid, square pyramid, prism, hemisphere, torus
-Sequences: arithmetic progression, geometric progression, Fibonacci
-Statistics & probability: weighted average, mode & range, z-score, probability,
-binomial probability, exponential growth, half-life
-Everyday math: percent error, discount, VAT, tip, markup & margin, unit price,
-speed-distance-time
-Fractions & numbers: mixed to improper, decimal to fraction, fraction to percent,
-modulo, division with remainder, significant figures, divisors
-Algebra & trigonometry: parabola vertex, line through two points, triangle angles
-(law of cosines), law of sines, sin/cos/tan, inverse trig, degrees to radians
-Vectors & matrices: vector magnitude, dot product, cross product, 2x2 matrix
-(determinant/trace/inverse), 3x3 determinant
-Converters: length units, mass units
-
-Each gets its own indexable URL, e.g.
-/{region}/{lang}/tools/binomial-probability-calculator
+Old URLs are kept and **301-redirect** to the new ones, so anything already
+indexed or linked keeps working.
 
 ## Files (extract over project root, keep paths)
-- config/math_tools.php                        (replaced: now 84 tools)
-- database/seeders/MathToolExtraSeeder.php     (new: registers the 50)
-- lang/{en,uk,ru,es}/math.php                  (replaced: +137 field labels)
+- app/Http/Middleware/SetLocale.php        (new) language-only middleware
+- bootstrap/app.php                        (modified) registers the `locale` alias
+- routes/web.php                           (modified) new routes + legacy 301s
+- app/Http/Controllers/ToolController.php  (modified) no region parameter
+- resources/views/tools/index.blade.php    (modified) links drop the region
+- resources/views/region-language.blade.php, home.blade.php (modified) same
+
+No migration.
 
 ## Apply — local
 ```
-unzip -o ~/Downloads/math-tools-50.zip -d /tmp/math50-unzip
-cp -a /tmp/math50-unzip/math-tools-50/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/math50-unzip
+unzip -o ~/Downloads/tools-language-url.zip -d /tmp/toolsurl-unzip
+cp -a /tmp/toolsurl-unzip/tools-language-url/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/toolsurl-unzip
 cd /Users/olegmishyn/HERD/eduzorro
 php artisan optimize:clear
-php artisan db:seed --class=Database\\Seeders\\MathToolExtraSeeder
 git add .
-git commit -m "Add 50 more math calculators (84 total)"
+git commit -m "Move study tools to language-only URLs with 301s from region URLs"
 git push
 ```
 
@@ -48,16 +41,24 @@ git push
 cd ~/laravel-app
 git pull origin main
 php artisan optimize:clear
-php artisan db:seed --class=Database\\Seeders\\MathToolExtraSeeder --force
 ```
 
-## Notes
-- config/math_tools.php REPLACES the previous file — it contains all 84 tools
-  (the original 34 are unchanged).
-- The language files are replaced too: they keep the existing labels and add 137
-  new ones. Labels are shared across tools, so the files stay compact.
-- The first batch's seeder (MathToolSeeder) does not need re-running; the two
-  seeders cover different slugs and never overlap.
-- All calculations run in the browser; invalid input shows "—" instead of an error.
-- Ellipse perimeter uses the Ramanujan approximation (accurate to ~1e-5 for
-  typical shapes), since there is no closed form.
+Check:
+```
+curl -sI https://eduzorro.com/ukraine/ru/tools | head -3   # expect 301 -> /ru/tools
+curl -sI https://eduzorro.com/ru/tools | head -3           # expect 200
+```
+
+## How it works / notes
+- The language-only group is registered BEFORE the region group, so `/ru/tools`
+  matches it instead of being read as region=ru, language=tools.
+- No slug collision risk: region slugs are words (ukraine, spain, global) while
+  language params bind on two-letter codes.
+- `SetLocale` deliberately does not share `$currentRegion`. The layout already
+  guards with `@isset($currentRegion)`, so on tool pages the brand link points to
+  the global home and the region switcher is hidden — nothing breaks.
+- hreflang still works: `Seo::hreflangAlternates()` keys off the `language` route
+  parameter and falls back to all active languages when there is no region, so
+  each tool page advertises one alternate per language.
+- If you later want the same treatment for another region-independent section,
+  wrap it in the same `Route::prefix('{language:code}')->middleware('locale')` group.

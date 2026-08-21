@@ -37,12 +37,12 @@
         <h2>{{ __('tools.tools') }}</h2>
         <ul class="chip-list">
             <li>
-                <a class="chip" href="{{ route('tools.index', [$currentRegion, $currentLanguage]) }}">
+                <a class="chip" href="{{ route('tools.index', [$currentLanguage]) }}">
                     {{ __('tools.tools') }}
                 </a>
             </li>
             <li>
-                <a class="chip" href="{{ route('tools.show', [$currentRegion, $currentLanguage, 'gpa-calculator']) }}">
+                <a class="chip" href="{{ route('tools.show', [$currentLanguage, 'gpa-calculator']) }}">
                     {{ __('tools.your_gpa') }}
                 </a>
             </li>

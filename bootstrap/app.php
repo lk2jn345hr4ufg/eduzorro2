@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\HandleRedirects;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetRegionAndLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Alias used by the localized route group in routes/web.php.
         $middleware->alias([
             'region.locale' => SetRegionAndLocale::class,
+            // Language-only pages (e.g. /{language}/tools) that aren't region-specific.
+            'locale'        => SetLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

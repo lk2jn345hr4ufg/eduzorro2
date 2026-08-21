@@ -37,6 +37,18 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap')
  * relationship on the previous model (Region::languages()), which doesn't
  * exist — region and language are independent, not parent/child.
  */
+/*
+ * Study tools are identical everywhere, so they live under a language-only
+ * prefix: /{language}/tools. Registered BEFORE the region group so that
+ * /ru/tools matches here instead of being read as region=ru, language=tools.
+ */
+Route::prefix('{language:code}')
+    ->middleware('locale')
+    ->group(function () {
+        Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
+        Route::get('/tools/{tool:slug}', [ToolController::class, 'show'])->name('tools.show');
+    });
+
 Route::prefix('{region:slug}/{language:code}')
     ->middleware('region.locale')
     ->withoutScopedBindings()
@@ -80,11 +92,16 @@ Route::prefix('{region:slug}/{language:code}')
         Route::get('/sport/{sport:slug}', [SportController::class, 'show'])->name('sport.show');
 
         /*
-         * Study tools (calculators & converters). Registered before the
-         * /{industry} wildcard so the literal "tools" prefix wins matching.
+         * Legacy region-scoped tool URLs. Tools moved to /{language}/tools,
+         * so these 301 to the new location to keep any indexed links alive.
          */
-        Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
-        Route::get('/tools/{tool:slug}', [ToolController::class, 'show'])->name('tools.show');
+        Route::get('/tools', function ($region, $language) {
+            return redirect()->route('tools.index', [$language], 301);
+        })->name('tools.index.legacy');
+
+        Route::get('/tools/{tool:slug}', function ($region, $language, $tool) {
+            return redirect()->route('tools.show', [$language, $tool], 301);
+        })->name('tools.show.legacy');
 
         Route::get('/{industry:slug}', [IndustryController::class, 'show'])->name('industry.show');
         Route::get('/{industry:slug}/{category:slug}', [CategoryController::class, 'show'])->name('category.show');

@@ -20,7 +20,7 @@
             <h2>{{ __('tools.category.' . ($category ?: 'other')) }}</h2>
             <div class="tool-grid">
                 @foreach ($items as $tool)
-                    <a class="tool-card" href="{{ route('tools.show', [$currentRegion, $currentLanguage, $tool]) }}">
+                    <a class="tool-card" href="{{ route('tools.show', [$currentLanguage, $tool]) }}">
                         <h3>{{ $tool->translate('name') }}</h3>
                         @if ($d = $tool->translate('description'))
                             <p>{{ $d }}</p>

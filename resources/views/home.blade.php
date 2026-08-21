@@ -51,7 +51,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="chip" href="{{ route('tools.index', [$region, $sportLang]) }}">
+                                    <a class="chip" href="{{ route('tools.index', [$sportLang]) }}">
                                         {{ __('tools.tools') }}
                                     </a>
                                 </li>
