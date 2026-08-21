@@ -44,6 +44,7 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap')
  */
 Route::prefix('{language:code}')
     ->middleware('locale')
+    ->withoutScopedBindings()
     ->group(function () {
         Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
         Route::get('/tools/{tool:slug}', [ToolController::class, 'show'])->name('tools.show');
