@@ -4,7 +4,7 @@ return [
     'tools'        => 'Herramientas de estudio',
     'tagline'      => 'Calculadoras y conversores gratuitos para estudiantes',
     'open'         => 'Abrir',
-    'category'     => ['grades' => 'Notas y puntuaciones', 'tests' => 'Exámenes', 'planning' => 'Planificación', 'other' => 'Otros'],
+    'category'     => ['grades' => 'Notas y puntuaciones', 'tests' => 'Exámenes', 'planning' => 'Planificación', 'math' => 'Matemáticas', 'other' => 'Otros'],
 
     'course'       => 'Asignatura',
     'grade'        => 'Nota',

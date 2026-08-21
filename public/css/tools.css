@@ -82,3 +82,20 @@
     .tool-table .w-grade, .tool-table .w-credits { width: 84px; }
     .tool-table th, .tool-table td { padding: 6px 4px; }
 }
+
+/* Math tool engine: fields laid out in a responsive grid */
+.math-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 6px;
+}
+.math-fields .tool-field { margin-bottom: 0; }
+.math-fields .inp { max-width: none; }
+.math-results { margin-top: 18px; border-top: 1px solid var(--line); }
+.math-results td { padding: 9px 8px; }
+.math-results strong { color: var(--teal-deep); font-size: 1.05rem; }
+
+@media (max-width: 480px) {
+    .math-fields { grid-template-columns: 1fr 1fr; }
+}

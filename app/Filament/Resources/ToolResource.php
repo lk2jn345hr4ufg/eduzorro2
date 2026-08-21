@@ -36,6 +36,7 @@ class ToolResource extends Resource
                     'grades'   => 'Grades & scores',
                     'tests'    => 'Tests',
                     'planning' => 'Planning',
+                    'math'     => 'Mathematics',
                     'other'    => 'Other',
                 ])
                 ->default('grades')

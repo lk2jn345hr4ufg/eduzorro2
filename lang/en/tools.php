@@ -4,7 +4,7 @@ return [
     'tools'        => 'Study tools',
     'tagline'      => 'Free calculators and converters for students',
     'open'         => 'Open',
-    'category'     => ['grades' => 'Grades & scores', 'tests' => 'Tests', 'planning' => 'Planning', 'other' => 'Other'],
+    'category'     => ['grades' => 'Grades & scores', 'tests' => 'Tests', 'planning' => 'Planning', 'math' => 'Mathematics', 'other' => 'Other'],
 
     // GPA calculator
     'course'       => 'Course',

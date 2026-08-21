@@ -35,11 +35,18 @@ class Tool extends Model
 
     /**
      * Each tool renders its own Blade partial, resolved from the slug, so a new
-     * tool = one view + one row. Rows without a view fall back to their text.
+     * tool = one view + one row. Tools defined in config/math_tools.php instead
+     * share the generic engine view, which builds itself from that config.
      */
     public function viewName(): string
     {
-        return 'tools.partials.'.$this->slug;
+        $own = 'tools.partials.'.$this->slug;
+
+        if (view()->exists($own)) {
+            return $own;
+        }
+
+        return config('math_tools.'.$this->slug) ? 'tools.partials.math' : $own;
     }
 
     public function hasView(): bool
