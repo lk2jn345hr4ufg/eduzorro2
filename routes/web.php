@@ -13,6 +13,7 @@ use App\Http\Controllers\FootballController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SportController;
+use App\Http\Controllers\ToolController;
 use App\Http\Controllers\SportNewsController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
@@ -77,6 +78,13 @@ Route::prefix('{region:slug}/{language:code}')
             ->whereIn('tab', TeamController::TABS)
             ->name('sport.team.tab');
         Route::get('/sport/{sport:slug}', [SportController::class, 'show'])->name('sport.show');
+
+        /*
+         * Study tools (calculators & converters). Registered before the
+         * /{industry} wildcard so the literal "tools" prefix wins matching.
+         */
+        Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
+        Route::get('/tools/{tool:slug}', [ToolController::class, 'show'])->name('tools.show');
 
         Route::get('/{industry:slug}', [IndustryController::class, 'show'])->name('industry.show');
         Route::get('/{industry:slug}/{category:slug}', [CategoryController::class, 'show'])->name('category.show');

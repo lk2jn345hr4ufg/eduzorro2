@@ -1,0 +1,84 @@
+/* Study tools — reuses the site's design tokens (see app.css :root). */
+
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.tool-card {
+    display: block;
+    padding: 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm, 8px);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color .15s ease, transform .15s ease;
+}
+.tool-card:hover { border-color: var(--teal); transform: translateY(-1px); }
+.tool-card h3 { margin: 0 0 6px; }
+.tool-card p { margin: 0 0 10px; color: var(--ink-soft); font-size: .92rem; }
+.tool-card-cta { color: var(--teal-deep); font-weight: 600; font-size: .9rem; }
+
+.tool-hint, .tool-intro p { color: var(--ink-soft); margin: 0 0 16px; }
+
+.tool-panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm, 8px);
+    padding: 18px;
+    max-width: 760px;
+}
+
+.tool-table { width: 100%; border-collapse: collapse; }
+.tool-table th, .tool-table td { padding: 8px 8px; border-bottom: 1px solid var(--line-soft); text-align: left; }
+.tool-table th { color: var(--ink-soft); font-size: .85rem; font-weight: 600; }
+.tool-table tr:last-child td { border-bottom: 0; }
+.tool-table .w-grade { width: 110px; }
+.tool-table .w-credits { width: 110px; }
+.tool-table-result td:first-child { color: var(--ink-soft); }
+.tool-table-result strong { font-size: 1.05rem; }
+
+.inp {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--paper, #fff);
+    font: inherit;
+    color: inherit;
+}
+.inp:focus { outline: 2px solid var(--teal); outline-offset: -1px; }
+.inp-lg { max-width: 220px; font-size: 1.1rem; }
+
+.tool-field { margin-bottom: 18px; }
+.tool-field label { display: block; margin-bottom: 6px; color: var(--ink-soft); font-size: .9rem; }
+
+.tool-actions { display: flex; gap: 8px; margin: 14px 0 4px; flex-wrap: wrap; }
+.btn {
+    padding: 8px 14px;
+    border: 1px solid var(--teal);
+    border-radius: 6px;
+    background: var(--teal-tint);
+    color: var(--teal-deep);
+    font: inherit; font-weight: 600;
+    cursor: pointer;
+}
+.btn:hover { background: var(--teal); color: #fff; }
+.btn-ghost { background: transparent; border-color: var(--line); color: var(--ink-soft); }
+.btn-ghost:hover { background: var(--paper-deep); color: inherit; }
+.btn-icon {
+    border: 0; background: transparent; cursor: pointer;
+    color: var(--ink-faint); font-size: 1.2rem; line-height: 1; padding: 4px 8px;
+}
+.btn-icon:hover { color: var(--brick); }
+
+.tool-result {
+    margin-top: 18px; padding-top: 16px;
+    border-top: 1px solid var(--line);
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.tool-result-label { color: var(--ink-soft); margin-right: 10px; }
+.tool-result-value { font-size: 2rem; font-weight: 700; color: var(--teal-deep); }
+.tool-result-sub { color: var(--ink-faint); font-size: .9rem; }
+
+@media (max-width: 640px) {
+    .tool-table .w-grade, .tool-table .w-credits { width: 84px; }
+    .tool-table th, .tool-table td { padding: 6px 4px; }
+}

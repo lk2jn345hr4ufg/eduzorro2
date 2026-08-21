@@ -1,64 +1,63 @@
-# Store fixtures, standings & transfers in the database
+# Study tools section (/tools)
 
-Until now fixtures, standings and transfers were fetched live from API-Football
-on every page view (cached only). Now they are stored in your database and
-synced on demand from the admin, so pages render from local data.
+Adds a localized study-tools section with two working calculators, built so new
+tools are one view + one admin row.
 
-## New admin button
-Admin -> Sport -> Data sync -> **Sync fixtures, standings & transfers**, with:
-- What to sync: Everything / Fixtures / Standings / Transfers
-- Country (dropdown), Team slug, Season, Limit, Sleep
-
-CLI equivalent:
+## URLs
 ```
-php artisan sport:sync-stats                                  # everything, all teams
-php artisan sport:sync-stats --country=ukraine --limit=20
-php artisan sport:sync-stats --type=standings --season=2023
-php artisan sport:sync-stats --type=transfers --team=dynamo-kyiv
+/{region}/{lang}/tools                   list of tools, grouped by category
+/{region}/{lang}/tools/gpa-calculator    weighted GPA calculator (4.0 scale)
+/{region}/{lang}/tools/grade-converter   % -> US letter / GPA / UK / ECTS / UA-12 / 5-point
 ```
+
+Links added on the localized home ("Study tools" section) and on each region card
+of the global home.
 
 ## Files (extract over project root, keep paths)
-- database/migrations/2025_08_06_000007_create_fixtures_table.php   (new)
-- database/migrations/2025_08_06_000008_create_standings_table.php  (new)
-- database/migrations/2025_08_06_000009_create_transfers_table.php  (new)
-- app/Models/Fixture.php, Standing.php, Transfer.php                (new)
-- app/Console/Commands/SyncFootballStats.php                        (new)
-- app/Http/Controllers/TeamController.php                           (modified: reads DB)
-- app/Filament/Pages/DataSync.php                                   (modified: new button)
-- resources/views/filament/pages/data-sync.blade.php                (modified: docs)
+- database/migrations/2025_08_06_000010_create_tools_table.php  (new)
+- database/seeders/ToolSeeder.php                               (new)
+- app/Models/Tool.php                                           (new)
+- app/Http/Controllers/ToolController.php                       (new)
+- app/Filament/Resources/ToolResource.php + Pages/              (new)
+- routes/web.php                                                (modified: /tools before the {industry} wildcard)
+- resources/views/tools/**                                      (new)
+- resources/views/region-language.blade.php, home.blade.php     (modified: nav links)
+- public/css/tools.css                                          (new)
+- lang/{en,uk,ru,es}/tools.php                                  (new)
 
-## Apply — local
+## Apply - local
 ```
-unzip -o ~/Downloads/store-football-stats.zip -d /tmp/stats-unzip
-cp -a /tmp/stats-unzip/store-football-stats/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/stats-unzip
+unzip -o ~/Downloads/tools-module.zip -d /tmp/tools-unzip
+cp -a /tmp/tools-unzip/tools-module/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/tools-unzip
 cd /Users/olegmishyn/HERD/eduzorro
 php artisan migrate
+php artisan db:seed --class=Database\\Seeders\\ToolSeeder
 php artisan optimize:clear
 git add .
-git commit -m "Store fixtures, standings and transfers in DB with admin sync"
+git commit -m "Add study tools section with GPA calculator and grade converter"
 git push
 ```
 
-## Apply — server
+## Apply - server
 ```
 cd ~/laravel-app
 git pull origin main
 php artisan migrate --force
+php artisan db:seed --class=Database\\Seeders\\ToolSeeder --force
 php artisan optimize:clear
 ```
-Then: admin -> Sport -> Data sync -> Sync fixtures, standings & transfers.
+
+## Adding a new tool later
+1. Create resources/views/tools/partials/{slug}.blade.php with the tool markup.
+2. Admin -> Tools -> Study tools -> New, set slug to the same {slug},
+   fill the translated name/description, pick a category, save.
+That is all - it appears in the list and gets its own indexable URL.
 
 ## Notes
-- **Views are unchanged.** DB rows are re-shaped into the same payload the
-  templates already expect, so the transfers layout and the other tabs keep working.
-- **Graceful fallback**: a team with nothing synced yet still falls back to a live
-  API read, so no page breaks before the first sync.
-- **Standings are per league**, not per team, so each league is fetched once per
-  run no matter how many of its teams you sync.
-- **Quota safety**: the command stops after 5 consecutive empty API responses
-  (dead key, wrong season, or exhausted quota) instead of burning the rest.
-- **Season matters**: standings/fixtures are stored per season. Make sure
-  Settings -> Season matches a season your API plan covers (2023 on the free tier).
-- Refresh cadence: fixtures after each matchday, standings weekly, transfers during
-  the transfer windows.
+- Both tools run entirely in the browser (no API calls, no quota, instant results),
+  and work without JS frameworks.
+- Names/descriptions are translatable JSON like the rest of the site, so pages are
+  localized per region/language and fit the existing SEO setup.
+- Grade mappings are indicative and the UI says so - scales vary by institution.
+- Tools are toggled on/off and reordered from the admin (is_active, sort_order).

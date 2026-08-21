@@ -50,6 +50,11 @@
                                         {{ __('sport.football') }}
                                     </a>
                                 </li>
+                                <li>
+                                    <a class="chip" href="{{ route('tools.index', [$region, $sportLang]) }}">
+                                        {{ __('tools.tools') }}
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     @endif
