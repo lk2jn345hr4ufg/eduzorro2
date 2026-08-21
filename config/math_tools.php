@@ -525,4 +525,754 @@ return [
                  var A=p*Math.pow(1+(r/100)/n, n*t);
                  return {a:A, i:A-p};',
     ],
+
+    // ============================ extra set: plane geometry ==================
+
+    'square-calculator' => [
+        'fields'  => [['id' => 'a', 'label' => 'side', 'default' => 6]],
+        'outputs' => [
+            ['id' => 's', 'label' => 'area'],
+            ['id' => 'p', 'label' => 'perimeter'],
+            ['id' => 'd', 'label' => 'diagonal'],
+        ],
+        'js' => 'return {s: a*a, p: 4*a, d: a*Math.SQRT2};',
+    ],
+
+    'parallelogram-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'side_a', 'default' => 8],
+            ['id' => 'b', 'label' => 'side_b', 'default' => 5],
+            ['id' => 'h', 'label' => 'height', 'default' => 4],
+        ],
+        'outputs' => [
+            ['id' => 's', 'label' => 'area'],
+            ['id' => 'p', 'label' => 'perimeter'],
+        ],
+        'js' => 'return {s: a*h, p: 2*(a+b)};',
+    ],
+
+    'rhombus-calculator' => [
+        'fields'  => [
+            ['id' => 'd1', 'label' => 'diagonal_1', 'default' => 10],
+            ['id' => 'd2', 'label' => 'diagonal_2', 'default' => 6],
+        ],
+        'outputs' => [
+            ['id' => 's', 'label' => 'area'],
+            ['id' => 'a', 'label' => 'side'],
+            ['id' => 'p', 'label' => 'perimeter'],
+        ],
+        'js' => 'var side = Math.sqrt((d1/2)*(d1/2) + (d2/2)*(d2/2));
+                 return {s: d1*d2/2, a: side, p: 4*side};',
+    ],
+
+    'regular-polygon-calculator' => [
+        'fields'  => [
+            ['id' => 'n', 'label' => 'sides_count', 'default' => 6],
+            ['id' => 'a', 'label' => 'side', 'default' => 5],
+        ],
+        'outputs' => [
+            ['id' => 's', 'label' => 'area'],
+            ['id' => 'p', 'label' => 'perimeter'],
+            ['id' => 'i', 'label' => 'interior_angle'],
+            ['id' => 'ap', 'label' => 'apothem'],
+        ],
+        'js' => 'n = Math.floor(n);
+                 if (n < 3) return {};
+                 var ap = a / (2*Math.tan(Math.PI/n));
+                 return {s: n*a*ap/2, p: n*a, i: (n-2)*180/n, ap: ap};',
+    ],
+
+    'ellipse-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'semi_major', 'default' => 6],
+            ['id' => 'b', 'label' => 'semi_minor', 'default' => 4],
+        ],
+        'outputs' => [
+            ['id' => 's', 'label' => 'area'],
+            ['id' => 'p', 'label' => 'perimeter'],
+        ],
+        'js' => 'var h = Math.pow(a-b, 2) / Math.pow(a+b, 2);
+                 return {s: Math.PI*a*b,
+                         p: Math.PI*(a+b)*(1 + 3*h/(10 + Math.sqrt(4 - 3*h)))};',
+    ],
+
+    'circle-sector-calculator' => [
+        'fields'  => [
+            ['id' => 'r', 'label' => 'radius', 'default' => 5],
+            ['id' => 'ang', 'label' => 'angle_deg', 'default' => 60],
+        ],
+        'outputs' => [
+            ['id' => 'l', 'label' => 'arc_length'],
+            ['id' => 's', 'label' => 'sector_area'],
+            ['id' => 'c', 'label' => 'chord'],
+        ],
+        'js' => 'var rad = ang*Math.PI/180;
+                 return {l: r*rad, s: r*r*rad/2, c: 2*r*Math.sin(rad/2)};',
+    ],
+
+    // ============================ extra set: solids ==========================
+
+    'cube-calculator' => [
+        'fields'  => [['id' => 'a', 'label' => 'edge', 'default' => 4]],
+        'outputs' => [
+            ['id' => 'v', 'label' => 'volume'],
+            ['id' => 's', 'label' => 'surface'],
+            ['id' => 'd', 'label' => 'space_diagonal'],
+        ],
+        'js' => 'return {v: a*a*a, s: 6*a*a, d: a*Math.sqrt(3)};',
+    ],
+
+    'cuboid-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'length', 'default' => 5],
+            ['id' => 'b', 'label' => 'width', 'default' => 4],
+            ['id' => 'c', 'label' => 'height', 'default' => 3],
+        ],
+        'outputs' => [
+            ['id' => 'v', 'label' => 'volume'],
+            ['id' => 's', 'label' => 'surface'],
+            ['id' => 'd', 'label' => 'space_diagonal'],
+        ],
+        'js' => 'return {v: a*b*c, s: 2*(a*b + b*c + a*c), d: Math.sqrt(a*a + b*b + c*c)};',
+    ],
+
+    'square-pyramid-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'base_side', 'default' => 6],
+            ['id' => 'h', 'label' => 'height', 'default' => 4],
+        ],
+        'outputs' => [
+            ['id' => 'v', 'label' => 'volume'],
+            ['id' => 'l', 'label' => 'slant'],
+            ['id' => 's', 'label' => 'surface'],
+        ],
+        'js' => 'var l = Math.sqrt(h*h + (a/2)*(a/2));
+                 return {v: a*a*h/3, l: l, s: a*a + 2*a*l};',
+    ],
+
+    'prism-calculator' => [
+        'fields'  => [
+            ['id' => 'ba', 'label' => 'base_area', 'default' => 12],
+            ['id' => 'bp', 'label' => 'base_perimeter', 'default' => 14],
+            ['id' => 'h', 'label' => 'height', 'default' => 10],
+        ],
+        'outputs' => [
+            ['id' => 'v', 'label' => 'volume'],
+            ['id' => 's', 'label' => 'surface'],
+        ],
+        'js' => 'return {v: ba*h, s: 2*ba + bp*h};',
+    ],
+
+    'hemisphere-calculator' => [
+        'fields'  => [['id' => 'r', 'label' => 'radius', 'default' => 5]],
+        'outputs' => [
+            ['id' => 'v', 'label' => 'volume'],
+            ['id' => 's', 'label' => 'surface'],
+        ],
+        'js' => 'return {v: 2/3*Math.PI*r*r*r, s: 3*Math.PI*r*r};',
+    ],
+
+    'torus-calculator' => [
+        'fields'  => [
+            ['id' => 'R', 'label' => 'major_radius', 'default' => 10],
+            ['id' => 'r', 'label' => 'minor_radius', 'default' => 3],
+        ],
+        'outputs' => [
+            ['id' => 'v', 'label' => 'volume'],
+            ['id' => 's', 'label' => 'surface'],
+        ],
+        'js' => 'return {v: 2*Math.PI*Math.PI*R*r*r, s: 4*Math.PI*Math.PI*R*r};',
+    ],
+
+    // ============================ extra set: sequences ========================
+
+    'arithmetic-sequence-calculator' => [
+        'fields'  => [
+            ['id' => 'a1', 'label' => 'first_term', 'default' => 2],
+            ['id' => 'd', 'label' => 'common_difference', 'default' => 3],
+            ['id' => 'n', 'label' => 'term_number', 'default' => 10],
+        ],
+        'outputs' => [
+            ['id' => 'an', 'label' => 'nth_term'],
+            ['id' => 's', 'label' => 'sum_n'],
+        ],
+        'js' => 'n = Math.floor(n);
+                 if (n < 1) return {};
+                 var an = a1 + (n-1)*d;
+                 return {an: an, s: n*(a1 + an)/2};',
+    ],
+
+    'geometric-sequence-calculator' => [
+        'fields'  => [
+            ['id' => 'a1', 'label' => 'first_term', 'default' => 3],
+            ['id' => 'q', 'label' => 'common_ratio', 'default' => 2],
+            ['id' => 'n', 'label' => 'term_number', 'default' => 8],
+        ],
+        'outputs' => [
+            ['id' => 'an', 'label' => 'nth_term'],
+            ['id' => 's', 'label' => 'sum_n'],
+        ],
+        'js' => 'n = Math.floor(n);
+                 if (n < 1) return {};
+                 var an = a1*Math.pow(q, n-1);
+                 return {an: an, s: q === 1 ? a1*n : a1*(Math.pow(q, n) - 1)/(q - 1)};',
+    ],
+
+    'fibonacci-calculator' => [
+        'fields'  => [['id' => 'n', 'label' => 'term_number', 'default' => 20]],
+        'outputs' => [
+            ['id' => 'f', 'label' => 'nth_term'],
+            ['id' => 's', 'label' => 'sum_n'],
+        ],
+        'js' => 'n = Math.floor(n);
+                 if (n < 1 || n > 78) return {};
+                 var a = 0, b = 1, sum = 0;
+                 for (var i = 1; i <= n; i++) { sum += b; var t = a + b; a = b; b = t; }
+                 return {f: a, s: sum};',
+    ],
+
+    // ============================ extra set: statistics =======================
+
+    'weighted-average-calculator' => [
+        'fields'  => [
+            ['id' => 'vals', 'label' => 'values_list', 'type' => 'text', 'default' => '90, 75, 60'],
+            ['id' => 'wts', 'label' => 'weights_list', 'type' => 'text', 'default' => '3, 2, 1'],
+        ],
+        'outputs' => [
+            ['id' => 'w', 'label' => 'weighted_mean'],
+            ['id' => 'tw', 'label' => 'total_weight'],
+        ],
+        'js' => 'function nums(s){return String(s).split(/[^0-9eE+\-.]+/).map(Number).filter(function(x){return !isNaN(x);});}
+                 var v = nums(vals), w = nums(wts);
+                 var k = Math.min(v.length, w.length);
+                 if (!k) return {};
+                 var sp = 0, sw = 0;
+                 for (var i = 0; i < k; i++) { sp += v[i]*w[i]; sw += w[i]; }
+                 return {w: sw ? sp/sw : null, tw: sw};',
+    ],
+
+    'mode-range-calculator' => [
+        'fields'  => [['id' => 'list', 'label' => 'numbers_list', 'type' => 'text', 'default' => '3, 7, 7, 2, 9, 7, 2']],
+        'outputs' => [
+            ['id' => 'mo', 'label' => 'mode', 'text' => true],
+            ['id' => 'rg', 'label' => 'range'],
+            ['id' => 'mn', 'label' => 'min'],
+            ['id' => 'mx', 'label' => 'max'],
+        ],
+        'js' => 'var v = String(list).split(/[^0-9eE+\-.]+/).map(Number).filter(function(x){return !isNaN(x);});
+                 if (!v.length) return {};
+                 var c = {}, best = 0;
+                 v.forEach(function(x){ c[x] = (c[x]||0) + 1; if (c[x] > best) best = c[x]; });
+                 var modes = Object.keys(c).filter(function(k){ return c[k] === best; });
+                 var srt = v.slice().sort(function(p,q){ return p-q; });
+                 return {mo: best > 1 ? modes.join(", ") : "—",
+                         rg: srt[srt.length-1] - srt[0], mn: srt[0], mx: srt[srt.length-1]};',
+    ],
+
+    'z-score-calculator' => [
+        'fields'  => [
+            ['id' => 'x', 'label' => 'value', 'default' => 85],
+            ['id' => 'm', 'label' => 'mean', 'default' => 70],
+            ['id' => 's', 'label' => 'sd_input', 'default' => 10],
+        ],
+        'outputs' => [['id' => 'z', 'label' => 'z_score']],
+        'js' => 'return {z: s ? (x - m)/s : null};',
+    ],
+
+    'probability-calculator' => [
+        'fields'  => [
+            ['id' => 'f', 'label' => 'favorable', 'default' => 3],
+            ['id' => 't', 'label' => 'total_outcomes', 'default' => 10],
+        ],
+        'outputs' => [
+            ['id' => 'p', 'label' => 'probability'],
+            ['id' => 'pc', 'label' => 'probability_percent'],
+            ['id' => 'o', 'label' => 'odds', 'text' => true],
+        ],
+        'js' => 'if (!t || f < 0 || f > t) return {};
+                 return {p: f/t, pc: f/t*100, o: f + " : " + (t - f)};',
+    ],
+
+    'binomial-probability-calculator' => [
+        'fields'  => [
+            ['id' => 'n', 'label' => 'trials', 'default' => 10],
+            ['id' => 'k', 'label' => 'successes', 'default' => 3],
+            ['id' => 'p', 'label' => 'prob_success', 'default' => 0.5],
+        ],
+        'outputs' => [
+            ['id' => 'r', 'label' => 'probability'],
+            ['id' => 'rc', 'label' => 'probability_percent'],
+        ],
+        'js' => 'n = Math.floor(n); k = Math.floor(k);
+                 if (k < 0 || k > n || p < 0 || p > 1) return {};
+                 var C = 1;
+                 for (var i = 0; i < k; i++) C = C*(n-i)/(i+1);
+                 var r = C*Math.pow(p, k)*Math.pow(1-p, n-k);
+                 return {r: r, rc: r*100};',
+    ],
+
+    'exponential-growth-calculator' => [
+        'fields'  => [
+            ['id' => 'p0', 'label' => 'initial', 'default' => 1000],
+            ['id' => 'r', 'label' => 'growth_rate', 'default' => 7],
+            ['id' => 't', 'label' => 'time_periods', 'default' => 10],
+        ],
+        'outputs' => [
+            ['id' => 'f', 'label' => 'final_amount'],
+            ['id' => 'g', 'label' => 'difference'],
+        ],
+        'js' => 'var f = p0*Math.pow(1 + r/100, t);
+                 return {f: f, g: f - p0};',
+    ],
+
+    'half-life-calculator' => [
+        'fields'  => [
+            ['id' => 'n0', 'label' => 'initial', 'default' => 100],
+            ['id' => 'hl', 'label' => 'half_life', 'default' => 5],
+            ['id' => 't', 'label' => 'elapsed', 'default' => 15],
+        ],
+        'outputs' => [
+            ['id' => 'n', 'label' => 'remaining'],
+            ['id' => 'pc', 'label' => 'remaining_percent'],
+        ],
+        'js' => 'if (!hl) return {};
+                 var n = n0*Math.pow(0.5, t/hl);
+                 return {n: n, pc: n0 ? n/n0*100 : null};',
+    ],
+
+    // ============================ extra set: everyday math ====================
+
+    'percent-error-calculator' => [
+        'fields'  => [
+            ['id' => 'e', 'label' => 'exact_value', 'default' => 50],
+            ['id' => 'a', 'label' => 'approx_value', 'default' => 47],
+        ],
+        'outputs' => [
+            ['id' => 'p', 'label' => 'error_percent'],
+            ['id' => 'd', 'label' => 'difference'],
+        ],
+        'js' => 'if (!e) return {};
+                 return {p: Math.abs((a-e)/e)*100, d: a-e};',
+    ],
+
+    'discount-calculator' => [
+        'fields'  => [
+            ['id' => 'p', 'label' => 'price', 'default' => 1200],
+            ['id' => 'd', 'label' => 'discount_percent', 'default' => 25],
+        ],
+        'outputs' => [
+            ['id' => 'f', 'label' => 'final_price'],
+            ['id' => 's', 'label' => 'saved'],
+        ],
+        'js' => 'var s = p*d/100;
+                 return {f: p - s, s: s};',
+    ],
+
+    'vat-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'amount', 'default' => 1000],
+            ['id' => 'r', 'label' => 'vat_rate', 'default' => 20],
+        ],
+        'outputs' => [
+            ['id' => 'tax', 'label' => 'tax'],
+            ['id' => 'gross', 'label' => 'gross'],
+            ['id' => 'net', 'label' => 'net_from_gross'],
+        ],
+        'js' => 'return {tax: a*r/100, gross: a*(1 + r/100), net: a/(1 + r/100)};',
+    ],
+
+    'tip-calculator' => [
+        'fields'  => [
+            ['id' => 'b', 'label' => 'bill', 'default' => 800],
+            ['id' => 'p', 'label' => 'tip_percent', 'default' => 10],
+            ['id' => 'n', 'label' => 'people', 'default' => 4],
+        ],
+        'outputs' => [
+            ['id' => 't', 'label' => 'tip'],
+            ['id' => 'tot', 'label' => 'total'],
+            ['id' => 'pp', 'label' => 'per_person'],
+        ],
+        'js' => 'var t = b*p/100, tot = b + t;
+                 return {t: t, tot: tot, pp: n > 0 ? tot/n : null};',
+    ],
+
+    'markup-margin-calculator' => [
+        'fields'  => [
+            ['id' => 'c', 'label' => 'cost', 'default' => 60],
+            ['id' => 'p', 'label' => 'price', 'default' => 100],
+        ],
+        'outputs' => [
+            ['id' => 'pr', 'label' => 'profit'],
+            ['id' => 'mu', 'label' => 'markup_percent'],
+            ['id' => 'mg', 'label' => 'margin_percent'],
+        ],
+        'js' => 'var pr = p - c;
+                 return {pr: pr, mu: c ? pr/c*100 : null, mg: p ? pr/p*100 : null};',
+    ],
+
+    'unit-price-calculator' => [
+        'fields'  => [
+            ['id' => 'p', 'label' => 'price', 'default' => 150],
+            ['id' => 'q', 'label' => 'quantity', 'default' => 2.5],
+        ],
+        'outputs' => [['id' => 'u', 'label' => 'unit_price']],
+        'js' => 'return {u: q ? p/q : null};',
+    ],
+
+    'speed-distance-time-calculator' => [
+        'fields'  => [
+            ['id' => 'd', 'label' => 'distance', 'default' => 120],
+            ['id' => 't', 'label' => 'time_hours', 'default' => 1.5],
+        ],
+        'outputs' => [
+            ['id' => 's', 'label' => 'speed'],
+            ['id' => 'ms', 'label' => 'speed_ms'],
+        ],
+        'js' => 'if (!t) return {};
+                 var s = d/t;
+                 return {s: s, ms: s*1000/3600};',
+    ],
+
+    // ============================ extra set: fractions & numbers ==============
+
+    'improper-fraction-converter' => [
+        'fields'  => [
+            ['id' => 'w', 'label' => 'whole', 'default' => 2],
+            ['id' => 'n', 'label' => 'numerator', 'default' => 3],
+            ['id' => 'd', 'label' => 'denominator', 'default' => 4],
+        ],
+        'outputs' => [
+            ['id' => 'f', 'label' => 'improper', 'text' => true],
+            ['id' => 'v', 'label' => 'decimal'],
+        ],
+        'js' => 'if (!d) return {};
+                 var sign = w < 0 ? -1 : 1;
+                 var num = Math.abs(w)*Math.abs(d) + Math.abs(n);
+                 return {f: (sign*num) + "/" + Math.abs(d), v: sign*num/Math.abs(d)};',
+    ],
+
+    'decimal-to-fraction-converter' => [
+        'fields'  => [['id' => 'x', 'label' => 'decimal', 'default' => 0.375]],
+        'outputs' => [
+            ['id' => 'f', 'label' => 'result_fraction', 'text' => true],
+            ['id' => 'm', 'label' => 'mixed', 'text' => true],
+        ],
+        'js' => 'if (!isFinite(x)) return {};
+                 var sign = x < 0 ? -1 : 1, v = Math.abs(x);
+                 var d = 1;
+                 while (Math.abs(v*d - Math.round(v*d)) > 1e-9 && d < 1e9) d *= 10;
+                 var n = Math.round(v*d);
+                 function g(p,q){while(q){var t=q;q=p%q;p=t;}return p||1;}
+                 var k = g(n,d); n/=k; d/=k;
+                 var whole = Math.floor(n/d), rem = n - whole*d;
+                 return {f: (sign*n) + "/" + d,
+                         m: rem === 0 ? String(sign*whole) : (sign*whole) + " " + rem + "/" + d};',
+    ],
+
+    'fraction-to-percent-converter' => [
+        'fields'  => [
+            ['id' => 'n', 'label' => 'numerator', 'default' => 3],
+            ['id' => 'd', 'label' => 'denominator', 'default' => 8],
+        ],
+        'outputs' => [
+            ['id' => 'p', 'label' => 'percent'],
+            ['id' => 'v', 'label' => 'decimal'],
+        ],
+        'js' => 'if (!d) return {};
+                 return {p: n/d*100, v: n/d};',
+    ],
+
+    'modulo-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'dividend', 'default' => 17],
+            ['id' => 'b', 'label' => 'divisor', 'default' => 5],
+        ],
+        'outputs' => [
+            ['id' => 'q', 'label' => 'quotient'],
+            ['id' => 'r', 'label' => 'remainder'],
+        ],
+        'js' => 'if (!b) return {};
+                 return {q: Math.floor(a/b), r: a - Math.floor(a/b)*b};',
+    ],
+
+    'long-division-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'dividend', 'default' => 745],
+            ['id' => 'b', 'label' => 'divisor', 'default' => 12],
+        ],
+        'outputs' => [
+            ['id' => 'q', 'label' => 'quotient'],
+            ['id' => 'r', 'label' => 'remainder'],
+            ['id' => 'd', 'label' => 'decimal'],
+        ],
+        'js' => 'if (!b) return {};
+                 var q = Math.trunc(a/b);
+                 return {q: q, r: a - q*b, d: a/b};',
+    ],
+
+    'significant-figures-calculator' => [
+        'fields'  => [
+            ['id' => 'x', 'label' => 'value', 'default' => 12345.678],
+            ['id' => 'n', 'label' => 'sig_figs', 'default' => 3],
+        ],
+        'outputs' => [['id' => 'r', 'label' => 'rounded', 'text' => true]],
+        'js' => 'n = Math.floor(n);
+                 if (n < 1 || n > 21 || x === 0) return {r: x === 0 ? "0" : "—"};
+                 return {r: Number(x.toPrecision(n)).toString()};',
+    ],
+
+    'divisor-calculator' => [
+        'fields'  => [['id' => 'n', 'label' => 'number', 'default' => 60]],
+        'outputs' => [
+            ['id' => 'c', 'label' => 'divisors_count'],
+            ['id' => 's', 'label' => 'divisors_sum'],
+            ['id' => 'l', 'label' => 'divisors_list', 'text' => true],
+        ],
+        'js' => 'n = Math.floor(Math.abs(n));
+                 if (n < 1 || n > 1e7) return {};
+                 var ds = [];
+                 for (var i = 1; i*i <= n; i++) {
+                     if (n % i === 0) { ds.push(i); if (i !== n/i) ds.push(n/i); }
+                 }
+                 ds.sort(function(p,q){ return p-q; });
+                 return {c: ds.length, s: ds.reduce(function(p,q){return p+q;}, 0), l: ds.join(", ")};',
+    ],
+
+    // ============================ extra set: algebra & trig ===================
+
+    'quadratic-vertex-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'a', 'default' => 1],
+            ['id' => 'b', 'label' => 'b', 'default' => -4],
+            ['id' => 'c', 'label' => 'c', 'default' => 7],
+        ],
+        'outputs' => [
+            ['id' => 'vx', 'label' => 'vertex_x'],
+            ['id' => 'vy', 'label' => 'vertex_y'],
+            ['id' => 'ax', 'label' => 'axis', 'text' => true],
+        ],
+        'js' => 'if (!a) return {};
+                 var vx = -b/(2*a);
+                 return {vx: vx, vy: a*vx*vx + b*vx + c,
+                         ax: "x = " + (Math.round(vx*1e6)/1e6)};',
+    ],
+
+    'line-equation-calculator' => [
+        'fields'  => [
+            ['id' => 'x1', 'label' => 'x1', 'default' => 1],
+            ['id' => 'y1', 'label' => 'y1', 'default' => 2],
+            ['id' => 'x2', 'label' => 'x2', 'default' => 4],
+            ['id' => 'y2', 'label' => 'y2', 'default' => 11],
+        ],
+        'outputs' => [
+            ['id' => 'eq', 'label' => 'equation', 'text' => true],
+            ['id' => 'k', 'label' => 'slope'],
+            ['id' => 'b', 'label' => 'intercept'],
+        ],
+        'js' => 'if (x1 === x2) return {eq: "x = " + x1, k: null, b: null};
+                 var k = (y2-y1)/(x2-x1), b = y1 - k*x1;
+                 var kr = Math.round(k*1e4)/1e4, br = Math.round(b*1e4)/1e4;
+                 return {eq: "y = " + kr + "x " + (br < 0 ? "− " + Math.abs(br) : "+ " + br), k: k, b: b};',
+    ],
+
+    'triangle-angles-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'side_a', 'default' => 5],
+            ['id' => 'b', 'label' => 'side_b', 'default' => 6],
+            ['id' => 'c', 'label' => 'side_c', 'default' => 7],
+        ],
+        'outputs' => [
+            ['id' => 'A', 'label' => 'angle_a'],
+            ['id' => 'B', 'label' => 'angle_b'],
+            ['id' => 'C', 'label' => 'angle_c'],
+        ],
+        'js' => 'if (a+b<=c || a+c<=b || b+c<=a) return {};
+                 var deg = 180/Math.PI;
+                 var A = Math.acos((b*b + c*c - a*a)/(2*b*c))*deg;
+                 var B = Math.acos((a*a + c*c - b*b)/(2*a*c))*deg;
+                 return {A: A, B: B, C: 180 - A - B};',
+    ],
+
+    'law-of-sines-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'side_a', 'default' => 10],
+            ['id' => 'A', 'label' => 'angle_a', 'default' => 30],
+            ['id' => 'B', 'label' => 'angle_b', 'default' => 45],
+        ],
+        'outputs' => [
+            ['id' => 'b', 'label' => 'side_b'],
+            ['id' => 'C', 'label' => 'angle_c'],
+            ['id' => 'c', 'label' => 'side_c'],
+        ],
+        'js' => 'var rad = Math.PI/180;
+                 if (A <= 0 || B <= 0 || A + B >= 180) return {};
+                 var k = a/Math.sin(A*rad), C = 180 - A - B;
+                 return {b: k*Math.sin(B*rad), C: C, c: k*Math.sin(C*rad)};',
+    ],
+
+    'trigonometry-calculator' => [
+        'fields'  => [['id' => 'ang', 'label' => 'angle_deg', 'default' => 30]],
+        'outputs' => [
+            ['id' => 's', 'label' => 'sin'],
+            ['id' => 'c', 'label' => 'cos'],
+            ['id' => 't', 'label' => 'tan'],
+        ],
+        'js' => 'var r = ang*Math.PI/180;
+                 var cs = Math.cos(r);
+                 return {s: Math.sin(r), c: cs,
+                         t: Math.abs(cs) < 1e-12 ? null : Math.tan(r)};',
+    ],
+
+    'inverse-trigonometry-calculator' => [
+        'fields'  => [['id' => 'x', 'label' => 'value', 'default' => 0.5]],
+        'outputs' => [
+            ['id' => 'as', 'label' => 'asin'],
+            ['id' => 'ac', 'label' => 'acos'],
+            ['id' => 'at', 'label' => 'atan'],
+        ],
+        'js' => 'var deg = 180/Math.PI;
+                 return {as: Math.abs(x) <= 1 ? Math.asin(x)*deg : null,
+                         ac: Math.abs(x) <= 1 ? Math.acos(x)*deg : null,
+                         at: Math.atan(x)*deg};',
+    ],
+
+    'degrees-radians-converter' => [
+        'fields'  => [['id' => 'd', 'label' => 'degrees', 'default' => 180]],
+        'outputs' => [
+            ['id' => 'r', 'label' => 'radians'],
+            ['id' => 'p', 'label' => 'in_pi', 'text' => true],
+        ],
+        'js' => 'return {r: d*Math.PI/180, p: (Math.round((d/180)*1e4)/1e4) + "π"};',
+    ],
+
+    // ============================ extra set: vectors & matrices ===============
+
+    'vector-magnitude-calculator' => [
+        'fields'  => [
+            ['id' => 'x', 'label' => 'vx', 'default' => 3],
+            ['id' => 'y', 'label' => 'vy', 'default' => 4],
+            ['id' => 'z', 'label' => 'vz', 'default' => 0],
+        ],
+        'outputs' => [
+            ['id' => 'm', 'label' => 'magnitude'],
+            ['id' => 'u', 'label' => 'unit_vector', 'text' => true],
+        ],
+        'js' => 'var m = Math.sqrt(x*x + y*y + z*z);
+                 if (!m) return {m: 0, u: "—"};
+                 var f = function(v){ return Math.round(v/m*1e4)/1e4; };
+                 return {m: m, u: "(" + f(x) + "; " + f(y) + "; " + f(z) + ")"};',
+    ],
+
+    'dot-product-calculator' => [
+        'fields'  => [
+            ['id' => 'ax', 'label' => 'ax', 'default' => 1],
+            ['id' => 'ay', 'label' => 'ay', 'default' => 2],
+            ['id' => 'az', 'label' => 'az', 'default' => 3],
+            ['id' => 'bx', 'label' => 'bx', 'default' => 4],
+            ['id' => 'by', 'label' => 'by', 'default' => -5],
+            ['id' => 'bz', 'label' => 'bz', 'default' => 6],
+        ],
+        'outputs' => [
+            ['id' => 'd', 'label' => 'dot'],
+            ['id' => 'ang', 'label' => 'angle_between'],
+        ],
+        'js' => 'var d = ax*bx + ay*by + az*bz;
+                 var ma = Math.sqrt(ax*ax + ay*ay + az*az);
+                 var mb = Math.sqrt(bx*bx + by*by + bz*bz);
+                 var cs = (ma && mb) ? Math.max(-1, Math.min(1, d/(ma*mb))) : null;
+                 return {d: d, ang: cs === null ? null : Math.acos(cs)*180/Math.PI};',
+    ],
+
+    'cross-product-calculator' => [
+        'fields'  => [
+            ['id' => 'ax', 'label' => 'ax', 'default' => 1],
+            ['id' => 'ay', 'label' => 'ay', 'default' => 2],
+            ['id' => 'az', 'label' => 'az', 'default' => 3],
+            ['id' => 'bx', 'label' => 'bx', 'default' => 4],
+            ['id' => 'by', 'label' => 'by', 'default' => 5],
+            ['id' => 'bz', 'label' => 'bz', 'default' => 6],
+        ],
+        'outputs' => [
+            ['id' => 'v', 'label' => 'cross_vector', 'text' => true],
+            ['id' => 'm', 'label' => 'magnitude'],
+        ],
+        'js' => 'var cx = ay*bz - az*by, cy = az*bx - ax*bz, cz = ax*by - ay*bx;
+                 return {v: "(" + cx + "; " + cy + "; " + cz + ")",
+                         m: Math.sqrt(cx*cx + cy*cy + cz*cz)};',
+    ],
+
+    'matrix-2x2-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'm11', 'default' => 4],
+            ['id' => 'b', 'label' => 'm12', 'default' => 7],
+            ['id' => 'c', 'label' => 'm21', 'default' => 2],
+            ['id' => 'd', 'label' => 'm22', 'default' => 6],
+        ],
+        'outputs' => [
+            ['id' => 'det', 'label' => 'determinant'],
+            ['id' => 'tr', 'label' => 'trace'],
+            ['id' => 'inv', 'label' => 'inverse', 'text' => true],
+        ],
+        'js' => 'var det = a*d - b*c;
+                 if (!det) return {det: 0, tr: a + d, inv: "—"};
+                 var f = function(v){ return Math.round(v/det*1e4)/1e4; };
+                 return {det: det, tr: a + d,
+                         inv: "[" + f(d) + " " + f(-b) + "; " + f(-c) + " " + f(a) + "]"};',
+    ],
+
+    'matrix-3x3-determinant-calculator' => [
+        'fields'  => [
+            ['id' => 'a', 'label' => 'm11', 'default' => 1],
+            ['id' => 'b', 'label' => 'm12', 'default' => 2],
+            ['id' => 'c', 'label' => 'm13', 'default' => 3],
+            ['id' => 'd', 'label' => 'm21', 'default' => 4],
+            ['id' => 'e', 'label' => 'm22', 'default' => 5],
+            ['id' => 'f', 'label' => 'm23', 'default' => 6],
+            ['id' => 'g', 'label' => 'm31', 'default' => 7],
+            ['id' => 'h', 'label' => 'm32', 'default' => 8],
+            ['id' => 'i', 'label' => 'm33', 'default' => 10],
+        ],
+        'outputs' => [
+            ['id' => 'det', 'label' => 'determinant'],
+            ['id' => 'tr', 'label' => 'trace'],
+        ],
+        'js' => 'return {det: a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g), tr: a + e + i};',
+    ],
+
+    // ============================ extra set: unit converters ==================
+
+    'length-unit-converter' => [
+        'fields'  => [
+            ['id' => 'v', 'label' => 'value', 'default' => 100],
+            ['id' => 'f', 'label' => 'from_unit', 'type' => 'select', 'default' => 'm',
+             'options' => ['mm' => 'mm', 'cm' => 'cm', 'm' => 'm', 'km' => 'km', 'in' => 'in', 'ft' => 'ft', 'yd' => 'yd', 'mi' => 'mi']],
+        ],
+        'outputs' => [
+            ['id' => 'm', 'label' => 'meters'],
+            ['id' => 'km', 'label' => 'kilometers'],
+            ['id' => 'ft', 'label' => 'feet'],
+            ['id' => 'mi', 'label' => 'miles'],
+        ],
+        'js' => 'var k = {mm:0.001, cm:0.01, m:1, km:1000, "in":0.0254, ft:0.3048, yd:0.9144, mi:1609.344};
+                 var meters = v*(k[f] || 1);
+                 return {m: meters, km: meters/1000, ft: meters/0.3048, mi: meters/1609.344};',
+    ],
+
+    'mass-unit-converter' => [
+        'fields'  => [
+            ['id' => 'v', 'label' => 'value', 'default' => 70],
+            ['id' => 'f', 'label' => 'from_unit', 'type' => 'select', 'default' => 'kg',
+             'options' => ['g' => 'g', 'kg' => 'kg', 't' => 't', 'oz' => 'oz', 'lb' => 'lb']],
+        ],
+        'outputs' => [
+            ['id' => 'kg', 'label' => 'kilograms'],
+            ['id' => 'g', 'label' => 'grams'],
+            ['id' => 'lb', 'label' => 'pounds'],
+            ['id' => 'oz', 'label' => 'ounces'],
+        ],
+        'js' => 'var k = {g:0.001, kg:1, t:1000, oz:0.028349523125, lb:0.45359237};
+                 var kg = v*(k[f] || 1);
+                 return {kg: kg, g: kg*1000, lb: kg/0.45359237, oz: kg/0.028349523125};',
+    ],
+
 ];
