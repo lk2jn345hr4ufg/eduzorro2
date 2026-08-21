@@ -47,7 +47,7 @@ Route::prefix('{language:code}')
     ->withoutScopedBindings()
     ->group(function () {
         Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
-        Route::get('/tools/{tool:slug}', [ToolController::class, 'show'])->name('tools.show');
+        Route::get('/tools/{tool}', [ToolController::class, 'show'])->name('tools.show');
     });
 
 Route::prefix('{region:slug}/{language:code}')
@@ -100,7 +100,7 @@ Route::prefix('{region:slug}/{language:code}')
             return redirect()->route('tools.index', [$language], 301);
         })->name('tools.index.legacy');
 
-        Route::get('/tools/{tool:slug}', function ($region, $language, $tool) {
+        Route::get('/tools/{tool}', function ($region, $language, $tool) {
             return redirect()->route('tools.show', [$language, $tool], 301);
         })->name('tools.show.legacy');
 
