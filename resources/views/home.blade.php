@@ -9,6 +9,25 @@
         <p class="lead">{{ __('messages.tagline') }}</p>
     </section>
 
+    {{-- Study tools are region-independent (/{language}/tools), so they get
+         their own section instead of being repeated inside every region card. --}}
+    @if ($languages->isNotEmpty())
+        <section class="home-section">
+            <h2>{{ __('tools.tools') }}</h2>
+            <p class="lead">{{ __('tools.tagline') }}</p>
+            <ul class="chip-list">
+                @foreach ($languages as $language)
+                    <li>
+                        <a class="chip" href="{{ route('tools.index', [$language]) }}">
+                            {{ $language->native_name ?? $language->name }}
+                            <small>({{ strtoupper($language->code) }})</small>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
+
     {{-- Regions: each region links to every available language (crawlable hub),
          plus a direct shortcut into each industry so visitors can skip
          straight past the language-picker step if they don't need it. --}}
@@ -48,11 +67,6 @@
                                 <li>
                                     <a class="chip" href="{{ route('sport.football.countries', [$region, $sportLang]) }}">
                                         {{ __('sport.football') }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="chip" href="{{ route('tools.index', [$sportLang]) }}">
-                                        {{ __('tools.tools') }}
                                     </a>
                                 </li>
                             </ul>

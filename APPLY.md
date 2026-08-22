@@ -1,30 +1,27 @@
-# Fix #2: Language::tools() still thrown on tool pages
+# Home page: Study tools moved out of the regions section
 
-The previous fix added `->withoutScopedBindings()` to the tools group, but the
-error persisted. Root cause is the explicit route key: writing `{tool:slug}`
-after another bound parameter is what switches Laravel into implicit *child
-scoping*, and it then looks for a `tools()` relationship on the parent model
-(`Language`).
+Tools now live at /{language}/tools, so repeating the link inside every region
+card made no sense — the same URL was printed once per region. It is now its own
+section, directly under the hero, with one link per language.
 
-Fix: drop the explicit key and use `{tool}`. The `Tool` model already declares
-`getRouteKeyName() = 'slug'`, so binding by slug is unchanged — the URLs stay
-exactly the same — but the scoping behaviour is never triggered.
+Before: a "Study tools" chip inside each region card (duplicated N times).
+After:  a standalone "Study tools" section listing each active language once.
 
-`->withoutScopedBindings()` is kept on the group as a second line of defence.
+The sport chips stay inside the region cards, since those URLs *are*
+region-specific.
 
 ## Files
-- routes/web.php  (modified: `{tool:slug}` -> `{tool}` in both the new route and
-  the legacy 301 route)
+- resources/views/home.blade.php  (modified)
 
 ## Apply — local
 ```
-unzip -o ~/Downloads/tools-binding-fix-2.zip -d /tmp/fix2-unzip
-cp -a /tmp/fix2-unzip/tools-binding-fix-2/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/fix2-unzip
+unzip -o ~/Downloads/home-tools-section.zip -d /tmp/hometools-unzip
+cp -a /tmp/hometools-unzip/home-tools-section/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/hometools-unzip
 cd /Users/olegmishyn/HERD/eduzorro
-php artisan optimize:clear
+php artisan view:clear
 git add .
-git commit -m "Bind tool by model route key to avoid implicit scoping"
+git commit -m "Move study tools out of the regions section on the home page"
 git push
 ```
 
@@ -32,18 +29,7 @@ git push
 ```
 cd ~/laravel-app
 git pull origin main
-php artisan optimize:clear
+php artisan view:clear
 ```
 
-Check:
-```
-curl -sI https://eduzorro.com/ru/tools/gpa-calculator | head -3        # 200
-curl -sI https://eduzorro.com/ukraine/ru/tools/gpa-calculator | head -3 # 301
-```
-
-If it still 500s, confirm the deployed file actually changed:
-```
-grep -n "tools/{tool" routes/web.php
-```
-It must show `{tool}` and not `{tool:slug}`. Also make sure no route cache is
-stale — `optimize:clear` covers that.
+No migration, no controller change.
