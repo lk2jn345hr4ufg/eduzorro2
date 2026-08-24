@@ -12,6 +12,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -59,7 +63,10 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->getStateUsing(fn (Category $record) => $record->translate('name')),
+                    ->getStateUsing(fn (Category $record) => $record->translate('name'))
+                    // JSON column: search inside the translations blob so a
+                    // Ukrainian/Russian name is findable too, not just English.
+                    ->searchable(query: fn ($query, string $search) => $query->where('name', 'like', "%{$search}%")),
                 TextColumn::make('industry.name')
                     ->label('Industry')
                     ->getStateUsing(fn (Category $record) => $record->industry?->translate('name')),
@@ -77,6 +84,15 @@ class CategoryResource extends Resource
                     ->options(fn () => Industry::query()->orderBy('sort_order')->get()
                         ->mapWithKeys(fn (Industry $i) => [$i->id => $i->translate('name')])),
             ])
+            ->actions([
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([DeleteBulkAction::make()]),
+            ])
+            ->paginated([25, 50, 100, 'all'])
+            ->defaultPaginationPageOption(50)
             ->defaultSort('sort_order');
     }
 

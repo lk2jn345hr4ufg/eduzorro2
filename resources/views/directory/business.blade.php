@@ -66,7 +66,7 @@
                 <h2>{{ __('messages.related_categories') }}</h2>
                 <ul class="chip-list">
                     @foreach ($business->taxonomyTerms as $term)
-                        <li><span class="chip">{{ $term->name }}</span></li>
+                        <li><span class="chip">{{ $term->label() }}</span></li>
                     @endforeach
                 </ul>
             </section>

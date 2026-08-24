@@ -112,7 +112,7 @@
                     @foreach ($topicalCategories as $term)
                         <li>
                             <a class="chip" href="{{ route('directory.category', [$region, request()->route('language'), $vertical, $term->slug]) }}">
-                                {{ $term->name }}
+                                {{ $term->label() }}
                             </a>
                         </li>
                     @endforeach

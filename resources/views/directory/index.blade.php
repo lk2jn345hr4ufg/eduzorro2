@@ -3,14 +3,14 @@
 @php($regionName = $region->translate('name'))
 @php($language = request()->route('language'))
 
-@section('title', ($category ? $category->name . ' · ' : '') . $verticalLabel . ' · ' . $regionName . ' · ' . __('messages.site_name'))
+@section('title', ($category ? $category->label() . ' · ' : '') . $verticalLabel . ' · ' . $regionName . ' · ' . __('messages.site_name'))
 @section('meta_description', $verticalLabel . ' — ' . $regionName . '. ' . __('messages.tagline'))
 
 @section('content')
     @include('partials.breadcrumbs')
 
     <header class="page-head">
-        <h1>{{ $category ? $category->name : $verticalLabel }} · {{ $regionName }}</h1>
+        <h1>{{ $category ? $category->label() : $verticalLabel }} · {{ $regionName }}</h1>
         @if ($category)
             <p class="lead">{{ $verticalLabel }}</p>
         @endif
@@ -54,7 +54,7 @@
                 @foreach ($categories as $cat)
                     <li>
                         <a class="chip @if ($category && $category->id === $cat->id) chip-active @endif" href="{{ route('directory.category', [$region, $language, $vertical, $cat->slug]) }}">
-                            {{ $cat->name }} <small>({{ number_format($cat->listings_count) }})</small>
+                            {{ $cat->label() }} <small>({{ number_format($cat->listings_count) }})</small>
                         </a>
                     </li>
                 @endforeach
@@ -69,7 +69,7 @@
     @endif
 
     <div class="listing-toolbar">
-        <span class="result-count">{{ $listings->total() }} {{ __('messages.results_for') }} “{{ $category ? $category->name : $verticalLabel }}”</span>
+        <span class="result-count">{{ $listings->total() }} {{ __('messages.results_for') }} “{{ $category ? $category->label() : $verticalLabel }}”</span>
 
         <form method="get" class="sort-form">
             <label for="sort">{{ __('messages.sort_by') }}</label>

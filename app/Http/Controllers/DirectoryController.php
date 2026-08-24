@@ -88,7 +88,7 @@ class DirectoryController extends Controller
             ['label' => $label, 'url' => route('directory.index', [$region, $language, $vertical])],
         ];
         if ($category) {
-            $breadcrumbs[] = ['label' => $category->name];
+            $breadcrumbs[] = ['label' => $category->label()];
         }
 
         // Every vertical (courses, universities, ...) that has active listings
