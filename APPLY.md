@@ -1,79 +1,65 @@
-# Switch from api-sports to football-data.org
+# Fix: duplicate teams after the provider switch
 
-Replaces API-Football (api-sports.io) with football-data.org (v4) as the source
-for teams, fixtures and standings.
+Symptom: `sport:sync-football --competition=PL` reported "20 team(s) upserted",
+but Manchester United still had `api_id: 33 | code: none`, and fixtures kept
+failing with 403 on /teams/33/matches.
 
-## Read this first — two things you lose
+Cause: football-data spells clubs with a suffix ("Manchester United FC") while
+the rows imported from api-sports did not ("Manchester United"). The importer
+matched on the exact slug, so instead of updating the existing rows it created
+20 near-duplicates (manchester-united-fc, arsenal-fc, ...). The stats sync then
+picked the OLD rows, which still carried api-sports ids - hence the 403s, since
+those ids point at restricted competitions on football-data.
 
-1. **No Ukrainian Premier League.** football-data.org covers 12 competitions
-   (PL, PD, SA, BL1, FL1, DED, PPL, BSA, ELC, CL, EC, WC). The UPL is not among
-   them, so your 18 Ukrainian clubs will get no new fixtures or standings.
-   Their already-synced data stays in the database and keeps rendering.
-2. **No transfers endpoint.** football-data.org does not expose transfers at
-   all. The transfers tab keeps showing the ~3,100 rows already imported from
-   api-sports, but they will no longer refresh. `sport:sync-stats --type=transfers`
-   now prints a notice and skips.
+## What this package changes
+- `sport:sync-football` now matches an existing team on a suffix-stripped slug,
+  in both prefix directions (old "newcastle" <-> new "newcastle-united"), and
+  updates that row while KEEPING its slug - so URLs, sort order and attached
+  news survive. No more duplicates on future syncs.
+- New `sport:merge-teams` command cleans up the duplicates already created: for
+  each new row it finds the matching old one, copies the new api_id, competition
+  code, crest, venue and founded year into it, moves any news across, and deletes
+  the duplicate.
 
-What you gain: the **current season** instead of being stuck on 2023.
-
-## What changed
-- `config/football.php` — token, base URL, competitions keyed by code, euro cups.
-- `ApiFootballClient` — rewritten against football-data.org, but it **normalises
-  responses into the same internal shape** the app already used, so the views,
-  the fixtures calendar and the controllers needed almost no changes.
-- `sport:sync-football` — imports teams per competition code, with `--competition`
-  and a `--sleep` default of 7s (free tier allows ~10 requests/minute).
-- `sport:sync-stats` — fixtures and standings via the new API; standings are
-  fetched by competition code.
-- New columns: `teams.primary_league_code`, `fixtures.league_code`,
-  `standings.league_code` — the API addresses competitions by code while our
-  tables join on numeric ids, so both are stored.
-- Admin Settings — the API-Football section became **football-data.org** with an
-  `X-Auth-Token` field.
-
-## Apply — local
+## Apply - local
 ```
-unzip -o ~/Downloads/football-data-migration.zip -d /tmp/fd-unzip
-cp -a /tmp/fd-unzip/football-data-migration/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/fd-unzip
+unzip -o ~/Downloads/football-data-team-merge.zip -d /tmp/merge-unzip
+cp -a /tmp/merge-unzip/football-data-team-merge/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/merge-unzip
 cd /Users/olegmishyn/HERD/eduzorro
-php artisan migrate
 php artisan optimize:clear
 git add .
-git commit -m "Switch football data source to football-data.org"
+git commit -m "Match teams on normalised slug and merge provider duplicates"
 git push
 ```
 
-## Apply — server
+## Apply - server, then clean up and load data
 ```
 cd ~/laravel-app
 git pull origin main
-php artisan migrate --force
 php artisan optimize:clear
-```
 
-## Configure and load data
-1. Get a free token: https://www.football-data.org/client/register
-2. Admin → Sport → Settings → **football-data.org** → paste the token, leave
-   Season empty (or set the current start year, e.g. 2025). Save.
-   Or in .env: `FOOTBALL_DATA_TOKEN=...` then `php artisan config:clear`.
-3. Import teams (one competition at a time is gentlest on the rate limit):
+# see what would be merged, without touching anything
+php artisan sport:merge-teams --dry-run
+
+# do it
+php artisan sport:merge-teams
+
+# check a team now carries football-data ids
+php artisan tinker --execute="\$t=App\Models\Team::where('slug','manchester-united')->first(); echo \$t->api_id.' / '.\$t->primary_league_code.PHP_EOL;"
 ```
-php artisan sport:sync-football --competition=PL --create-countries
-php artisan sport:sync-football --competition=PD --create-countries
+Manchester United should read `66 / PL`.
+
+Then drop the stale fixtures/standings keyed to the old ids and reload:
 ```
-4. Load fixtures and standings:
-```
+php artisan tinker --execute="App\Models\Fixture::truncate(); App\Models\Standing::truncate(); echo 'cleared';"
 php artisan sport:sync-stats --type=fixtures --country=england --limit=10 --sleep=7
 php artisan sport:sync-stats --type=standings --country=england --limit=1
 ```
 
 ## Notes
-- Team `api_id` values are football-data ids, which differ from api-sports ids.
-  Re-running `sport:sync-football` updates existing rows (matched on country +
-  slug), so teams keep their URLs but point at the new ids. Old fixtures keyed to
-  api-sports ids stay in the table but stop matching — clear them if you want a
-  clean slate: `php artisan tinker --execute="App\Models\Fixture::truncate();"`
-- Rate limit is ~10 requests/minute: always use `--sleep` and a small `--limit`.
-- The season fallback added earlier still applies: if the configured season has
-  no rows, the fixtures tab shows the newest season that does.
+- Leave Settings -> Season EMPTY. The free tier only serves the current season,
+  and passing an explicit season often returns 403.
+- Transfers are untouched: they are still keyed to the old api-sports ids, but
+  that data has no other source now, so the merge deliberately leaves it alone.
+- Ukrainian teams have no competition code and are not affected by the merge.

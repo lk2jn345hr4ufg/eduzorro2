@@ -78,9 +78,25 @@ class SyncFootball extends Command
                     continue;
                 }
 
+                // football-data spells clubs "Manchester United FC" while our
+                // rows came from api-sports as "Manchester United". Match on a
+                // suffix-stripped slug and keep the existing row (and its URL,
+                // news and sort order) instead of creating a near-duplicate.
+                $slug = $this->slugFor($t['name']);
+
+                $existing = Team::where('sport_country_id', $country->id)
+                    ->where(fn ($q) => $q
+                        ->where('slug', $slug)
+                        ->orWhere('slug', 'like', $slug.'%')
+                        ->orWhereRaw('? like concat(slug, \'%\')', [$slug]))
+                    ->orderByRaw('char_length(slug) desc')
+                    ->first();
+
                 Team::updateOrCreate(
-                    ['sport_country_id' => $country->id, 'slug' => Str::slug($t['name'])],
+                    ['id' => $existing?->id],
                     [
+                        'sport_country_id'      => $country->id,
+                        'slug'                  => $existing?->slug ?: $slug,
                         'sport_id'              => $sport->id,
                         'api_id'                => $t['id'],
                         'primary_league_api_id' => $t['competition_id'],
@@ -117,6 +133,22 @@ class SyncFootball extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Slug from a club name with the usual legal/club suffixes removed, so
+     * "Manchester United FC", "Manchester United" and "FC Manchester United"
+     * all collapse to the same slug.
+     */
+    protected function slugFor(string $name): string
+    {
+        $clean = preg_replace(
+            '/\b(fc|cf|afc|sc|ac|as|ss|ssc|bk|if|sk|vfl|vfb|tsv|fsv|rc|cd|ud|sd)\b/iu',
+            ' ',
+            $name
+        );
+
+        return Str::slug(trim(preg_replace('/\s+/u', ' ', $clean)));
     }
 
     protected function resolveCountry(Sport $sport, string $name, bool $create): ?SportCountry
