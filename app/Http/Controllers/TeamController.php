@@ -93,8 +93,8 @@ class TeamController extends Controller
             })(),
 
             'euro-cups' => (function () use ($api, $team, $season) {
-                $euroIds = array_keys(config('football.euro_competitions', []));
-                $stored  = $this->storedFixtures($team, $season, $euroIds);
+                $codes  = array_keys(config('football.euro_competitions', []));
+                $stored = $this->storedFixtures($team, $season, $codes);
 
                 return ['euroFixtures' => $stored ?: $api->teamEuroFixtures($team->api_id, $season)];
             })(),
@@ -121,20 +121,22 @@ class TeamController extends Controller
 
                 return ['standings' => $rows->isNotEmpty()
                     ? $rows->map->toApiShape()->all()
-                    : $api->standings($team->primary_league_api_id, $season)];
+                    : ($team->primary_league_code
+                        ? $api->standings($team->primary_league_code, $season)
+                        : [])];
             })(),
 
             default => [],
         };
     }
 
-    /** Stored fixtures for a team, optionally limited to certain leagues. */
-    protected function storedFixtures(Team $team, int $season, array $leagueIds = []): array
+    /** Stored fixtures for a team, optionally limited to certain competitions. */
+    protected function storedFixtures(Team $team, int $season, array $leagueCodes = []): array
     {
         $query = Fixture::forTeam($team->api_id)->season($season);
 
-        if (! empty($leagueIds)) {
-            $query->whereIn('league_api_id', $leagueIds);
+        if (! empty($leagueCodes)) {
+            $query->whereIn('league_code', $leagueCodes);
         }
 
         return $query->orderBy('kickoff_at')->get()->map->toApiShape()->all();

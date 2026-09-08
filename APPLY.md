@@ -1,62 +1,79 @@
-# Fixtures: calendar + automatic season fallback
+# Switch from api-sports to football-data.org
 
-Two changes to the Fixtures tab.
+Replaces API-Football (api-sports.io) with football-data.org (v4) as the source
+for teams, fixtures and standings.
 
-## 1. Why it was empty (fixed)
-The page asks for the season set in Settings (2025), but the matches were synced
-under 2023 — so the query found nothing, and the live-API fallback also returned
-nothing for 2025.
+## Read this first — two things you lose
 
-Now the controller checks which seasons actually exist in the database for that
-team and, if the configured season has no data, falls back to the newest season
-that does. The page stops depending on the setting being in sync.
+1. **No Ukrainian Premier League.** football-data.org covers 12 competitions
+   (PL, PD, SA, BL1, FL1, DED, PPL, BSA, ELC, CL, EC, WC). The UPL is not among
+   them, so your 18 Ukrainian clubs will get no new fixtures or standings.
+   Their already-synced data stays in the database and keeps rendering.
+2. **No transfers endpoint.** football-data.org does not expose transfers at
+   all. The transfers tab keeps showing the ~3,100 rows already imported from
+   api-sports, but they will no longer refresh. `sport:sync-stats --type=transfers`
+   now prints a notice and skips.
 
-You should still set Settings -> Season = 2023 so future syncs and the standings
-tab agree, but the fixtures page no longer breaks if they drift.
+What you gain: the **current season** instead of being stuck on 2023.
 
-## 2. Calendar
-The tab now shows a month calendar next to the match list:
-- days with matches are highlighted (upcoming vs played get different shading),
-  today is outlined, and a dot marks match days;
-- click a day to filter the list to it, click again to clear;
-- month arrows navigate; the calendar opens on the month of the next upcoming
-  match, or the last played one if the season is over;
-- filter buttons: All matches / Upcoming / Results;
-- each row shows date, H/A badge, teams, score (or kick-off time) and competition;
-- weekday names and month titles are localised from the page language, Monday-first.
+## What changed
+- `config/football.php` — token, base URL, competitions keyed by code, euro cups.
+- `ApiFootballClient` — rewritten against football-data.org, but it **normalises
+  responses into the same internal shape** the app already used, so the views,
+  the fixtures calendar and the controllers needed almost no changes.
+- `sport:sync-football` — imports teams per competition code, with `--competition`
+  and a `--sleep` default of 7s (free tier allows ~10 requests/minute).
+- `sport:sync-stats` — fixtures and standings via the new API; standings are
+  fetched by competition code.
+- New columns: `teams.primary_league_code`, `fixtures.league_code`,
+  `standings.league_code` — the API addresses competitions by code while our
+  tables join on numeric ids, so both are stored.
+- Admin Settings — the API-Football section became **football-data.org** with an
+  `X-Auth-Token` field.
 
-Everything runs client-side on data already loaded — no extra API calls.
-
-## Files (extract over project root, keep paths)
-- app/Http/Controllers/TeamController.php            (modified: season fallback + payload)
-- resources/views/sport/partials/fixtures.blade.php  (rewritten: calendar UI)
-- public/css/sport.css                               (modified: calendar styles)
-- lang/{en,uk,ru,es}/sport.php                       (modified: 3 new keys)
-
-## Apply - local
+## Apply — local
 ```
-unzip -o ~/Downloads/fixtures-calendar.zip -d /tmp/fx-unzip
-cp -a /tmp/fx-unzip/fixtures-calendar/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/fx-unzip
+unzip -o ~/Downloads/football-data-migration.zip -d /tmp/fd-unzip
+cp -a /tmp/fd-unzip/football-data-migration/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/fd-unzip
 cd /Users/olegmishyn/HERD/eduzorro
+php artisan migrate
 php artisan optimize:clear
 git add .
-git commit -m "Add fixtures calendar and fall back to a season with data"
+git commit -m "Switch football data source to football-data.org"
 git push
 ```
 
-## Apply - server
+## Apply — server
 ```
 cd ~/laravel-app
 git pull origin main
+php artisan migrate --force
 php artisan optimize:clear
 ```
 
-Then hard-refresh the page (sport.css is browser-cached), and remember the
-stylesheet still needs to be reachable at /css/sport.css - if it 404s, the
-calendar will render unstyled.
+## Configure and load data
+1. Get a free token: https://www.football-data.org/client/register
+2. Admin → Sport → Settings → **football-data.org** → paste the token, leave
+   Season empty (or set the current start year, e.g. 2025). Save.
+   Or in .env: `FOOTBALL_DATA_TOKEN=...` then `php artisan config:clear`.
+3. Import teams (one competition at a time is gentlest on the rate limit):
+```
+php artisan sport:sync-football --competition=PL --create-countries
+php artisan sport:sync-football --competition=PD --create-countries
+```
+4. Load fixtures and standings:
+```
+php artisan sport:sync-stats --type=fixtures --country=england --limit=10 --sleep=7
+php artisan sport:sync-stats --type=standings --country=england --limit=1
+```
 
 ## Notes
-- No migration; reads the fixtures already in your database.
-- Teams with no synced fixtures still show the "no fixtures" message - sync them:
-  `php artisan sport:sync-stats --type=fixtures --country=england --season=2023 --limit=10 --sleep=1`
+- Team `api_id` values are football-data ids, which differ from api-sports ids.
+  Re-running `sport:sync-football` updates existing rows (matched on country +
+  slug), so teams keep their URLs but point at the new ids. Old fixtures keyed to
+  api-sports ids stay in the table but stop matching — clear them if you want a
+  clean slate: `php artisan tinker --execute="App\Models\Fixture::truncate();"`
+- Rate limit is ~10 requests/minute: always use `--sleep` and a small `--limit`.
+- The season fallback added earlier still applies: if the configured season has
+  no rows, the fixtures tab shows the newest season that does.

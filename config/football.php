@@ -4,62 +4,48 @@ return [
 
     /*
      |--------------------------------------------------------------------------
-     | API-Football (api-sports.io)
+     | football-data.org (v4)
      |--------------------------------------------------------------------------
-     | Direct api-sports.io host uses the "x-apisports-key" header.
-     | If you subscribe through RapidAPI instead, set FOOTBALL_API_HOST to the
-     | RapidAPI host and the client will send the x-rapidapi-* headers.
+     | Auth is a single header, X-Auth-Token. The free tier covers the 12
+     | competitions listed below and the CURRENT season; it is rate limited to
+     | ~10 requests/minute, so syncs use --sleep and per-run limits.
      */
     'api' => [
-        'key'      => env('API_FOOTBALL_KEY'),
-        'base_url' => rtrim(env('API_FOOTBALL_BASE_URL', 'https://v3.football.api-sports.io'), '/'),
-        'host'     => env('API_FOOTBALL_HOST'), // set only for RapidAPI, e.g. api-football-v1.p.rapidapi.com
-        'timeout'  => (int) env('API_FOOTBALL_TIMEOUT', 12),
+        'token'    => env('FOOTBALL_DATA_TOKEN'),
+        'base_url' => rtrim(env('FOOTBALL_DATA_BASE_URL', 'https://api.football-data.org/v4'), '/'),
+        'timeout'  => (int) env('FOOTBALL_DATA_TIMEOUT', 15),
     ],
 
     /*
-     | The season synced/queried. API-Football keys seasons by their start year
-     | (e.g. the 2024/25 season is "2024").
+     | Season = starting year. Leave FOOTBALL_DATA_SEASON empty to let the API
+     | use the competition's current season, which is what the free tier allows.
      */
-    'season' => (int) env('API_FOOTBALL_SEASON', 2024),
+    'season' => (int) env('FOOTBALL_DATA_SEASON', (int) date('Y') - (date('n') < 7 ? 1 : 0)),
 
     /*
-     |--------------------------------------------------------------------------
-     | Leagues to build the taxonomy from
-     |--------------------------------------------------------------------------
-     | The sync command walks these league IDs and imports their countries and
-     | teams. Keep this list bounded — the free API plan is rate-limited, and
-     | importing "every league" would exhaust the daily quota. IDs are
-     | API-Football league IDs. A team's first league here becomes its primary
-     | (domestic) league, used for the standings tab.
+     | Domestic competitions to import teams from, keyed by football-data code.
+     | NOTE: the Ukrainian Premier League is NOT available on football-data.org.
      */
     'leagues' => [
-        39  => 'Premier League',   // England
-        140 => 'La Liga',          // Spain
-        135 => 'Serie A',          // Italy
-        78  => 'Bundesliga',       // Germany
-        61  => 'Ligue 1',          // France
-        333 => 'Premier League',   // Ukraine
+        'PL'  => 'Premier League (England)',
+        'PD'  => 'La Liga (Spain)',
+        'SA'  => 'Serie A (Italy)',
+        'BL1' => 'Bundesliga (Germany)',
+        'FL1' => 'Ligue 1 (France)',
+        'DED' => 'Eredivisie (Netherlands)',
+        'PPL' => 'Primeira Liga (Portugal)',
     ],
 
     /*
-     | European cups — used for the team "euro-cups" tab (fixtures + standings
-     | filtered to these competitions). API-Football league IDs.
+     | European competitions — the "euro cups" tab filters fixtures to these codes.
      */
     'euro_competitions' => [
-        2   => 'UEFA Champions League',
-        3   => 'UEFA Europa League',
-        848 => 'UEFA Europa Conference League',
+        'CL' => 'UEFA Champions League',
     ],
 
-    /*
-     | Cache TTLs (seconds) for on-demand API reads. Taxonomy (countries/teams)
-     | is persisted in the DB by the sync command; the tabs below are fetched
-     | live and cached.
-     */
     'cache' => [
-        'fixtures'  => (int) env('API_FOOTBALL_TTL_FIXTURES', 900),    // 15 min
-        'standings' => (int) env('API_FOOTBALL_TTL_STANDINGS', 3600),  // 1 h
-        'transfers' => (int) env('API_FOOTBALL_TTL_TRANSFERS', 86400), // 24 h
+        'fixtures'  => (int) env('FOOTBALL_TTL_FIXTURES', 900),
+        'standings' => (int) env('FOOTBALL_TTL_STANDINGS', 3600),
+        'transfers' => (int) env('FOOTBALL_TTL_TRANSFERS', 86400),
     ],
 ];

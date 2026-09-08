@@ -24,8 +24,8 @@ class SyncFootballStats extends Command
 
     public function handle(ApiFootballClient $api): int
     {
-        if (empty(config('football.api.key'))) {
-            $this->error('API-Football key is not set (Settings → API-Football, or API_FOOTBALL_KEY).');
+        if (! $api->isConfigured()) {
+            $this->error('football-data token is not set (Settings → API, or FOOTBALL_DATA_TOKEN).');
             return self::FAILURE;
         }
 
@@ -57,6 +57,7 @@ class SyncFootballStats extends Command
         $this->info("Syncing [{$type}] season {$season} for {$teams->count()} team(s)...");
 
         $fx = $st = $tr = 0;
+        $warnedTransfers = false;
         $failures = 0;           // consecutive empty API responses
         $doneLeagues = [];       // standings are per league, not per team
 
@@ -71,22 +72,23 @@ class SyncFootballStats extends Command
                 $failures = empty($rows) ? $failures + 1 : 0;
             }
 
-            if (in_array($type, ['all', 'transfers'], true)) {
-                $rows = $api->transfers($team->api_id);
-                $tr  += $this->storeTransfers($rows, $team->api_id);
-                $this->line('   transfers: '.count($rows));
+            // football-data.org has no transfers endpoint; existing rows are
+            // kept and still rendered, they simply stop being refreshed.
+            if (in_array($type, ['all', 'transfers'], true) && ! $warnedTransfers) {
+                $this->warn('   transfers: not available on football-data.org — skipped');
+                $warnedTransfers = true;
             }
 
             if (in_array($type, ['all', 'standings'], true)) {
-                $league = (int) $team->primary_league_api_id;
+                $code = $team->primary_league_code;
 
-                if (! $league) {
-                    $this->warn('   no primary league set — standings skipped');
-                } elseif (! in_array($league, $doneLeagues, true)) {
-                    $rows = $api->standings($league, $season);
-                    $st  += $this->storeStandings($rows, $league, $season);
-                    $doneLeagues[] = $league;
-                    $this->line("   standings (league {$league}): ".count($rows));
+                if (! $code) {
+                    $this->warn('   no primary competition code — standings skipped');
+                } elseif (! in_array($code, $doneLeagues, true)) {
+                    $rows = $api->standings($code, $season);
+                    $st  += $this->storeStandings($rows, $code, $season);
+                    $doneLeagues[] = $code;
+                    $this->line("   standings ({$code}): ".count($rows));
                 }
             }
 
@@ -121,6 +123,7 @@ class SyncFootballStats extends Command
                 ['api_id' => $id],
                 [
                     'league_api_id' => data_get($row, 'league.id'),
+                    'league_code'   => data_get($row, 'league.code'),
                     'league_name'   => data_get($row, 'league.name'),
                     'league_round'  => data_get($row, 'league.round'),
                     'season'        => $season,
@@ -143,7 +146,7 @@ class SyncFootballStats extends Command
         return $n;
     }
 
-    protected function storeStandings(array $rows, int $league, int $season): int
+    protected function storeStandings(array $rows, string $code, int $season): int
     {
         $n = 0;
 
@@ -154,8 +157,13 @@ class SyncFootballStats extends Command
             }
 
             Standing::updateOrCreate(
-                ['league_api_id' => $league, 'season' => $season, 'team_api_id' => $teamId],
                 [
+                    'league_api_id' => data_get($row, 'competition_id'),
+                    'season'        => $season,
+                    'team_api_id'   => $teamId,
+                ],
+                [
+                    'league_code'   => $code,
                     'rank'          => data_get($row, 'rank'),
                     'team_name'     => data_get($row, 'team.name'),
                     'team_logo'     => data_get($row, 'team.logo'),

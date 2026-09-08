@@ -12,23 +12,33 @@ use Illuminate\Support\Str;
 class SyncFootball extends Command
 {
     protected $signature = 'sport:sync-football
-                            {--season= : Override the configured season (start year, e.g. 2024)}
-                            {--create-countries : Also create countries that do not exist yet (default: only import teams for countries already created in the admin)}';
+                            {--season= : Season start year (omit to use the API current season)}
+                            {--competition= : Limit to one competition code, e.g. PL}
+                            {--create-countries : Also create countries that do not exist yet}
+                            {--sleep=7 : Seconds between competitions (free tier allows ~10 req/min)}';
 
-    protected $description = 'Import football teams from API-Football, only for countries already created in the admin';
+    protected $description = 'Import football teams from football-data.org into the local taxonomy';
 
     public function handle(ApiFootballClient $api): int
     {
-        $season  = (int) ($this->option('season') ?: config('football.season'));
-        $leagues = config('football.leagues', []);
-        $create  = (bool) $this->option('create-countries');
-
-        if (empty(config('football.api.key'))) {
-            $this->error('API_FOOTBALL_KEY is not set. Add it to your .env first.');
+        if (! $api->isConfigured()) {
+            $this->error('FOOTBALL_DATA_TOKEN is not set (Settings → API, or .env).');
             return self::FAILURE;
         }
 
-        // Ensure the "football" sport exists (it owns the deep hierarchy).
+        $season  = $this->option('season') ? (int) $this->option('season') : null;
+        $create  = (bool) $this->option('create-countries');
+        $sleep   = (int) $this->option('sleep');
+        $leagues = config('football.leagues', []);
+
+        if ($only = $this->option('competition')) {
+            $leagues = array_intersect_key($leagues, [$only => true]);
+            if (empty($leagues)) {
+                $this->error("Unknown competition code: {$only}");
+                return self::FAILURE;
+            }
+        }
+
         $sport = Sport::firstOrCreate(
             ['slug' => 'football'],
             [
@@ -41,39 +51,28 @@ class SyncFootball extends Command
         );
 
         if (! $create && SportCountry::where('sport_id', $sport->id)->count() === 0) {
-            $this->error('No countries created yet. Add the countries you want in the admin (Sport → Countries), set their "API name" (e.g. England), then run the import. Or pass --create-countries to auto-create them.');
+            $this->error('No countries created yet. Add them in the admin (Sport → Countries) or pass --create-countries.');
             return self::FAILURE;
         }
 
-        $mode = $create ? 'creating missing countries' : 'existing countries only';
-        $this->info("Syncing season {$season} across ".count($leagues)." league(s) [{$mode}]...");
+        $this->info('Importing '.count($leagues).' competition(s) from football-data.org'.($season ? " (season {$season})" : ' (current season)').'...');
 
-        $teamCount = 0;
-        $skipped   = []; // country name => skipped team count
+        $total   = 0;
+        $skipped = [];
 
-        foreach ($leagues as $leagueId => $leagueName) {
-            $this->line("→ League {$leagueId} ({$leagueName})");
-            $rows = $api->teamsByLeague((int) $leagueId, $season);
+        foreach ($leagues as $code => $label) {
+            $this->line("→ {$code} ({$label})");
+            $teams = $api->teamsByCompetition($code, $season);
 
-            if (empty($rows)) {
-                $this->warn('  no teams returned (quota, wrong id, or off-season?)');
+            if (empty($teams)) {
+                $this->warn('  nothing returned (rate limit, token, or competition not in your plan)');
                 continue;
             }
 
-            $imported = 0;
-
-            foreach ($rows as $row) {
-                $t = $row['team'] ?? [];
-                $v = $row['venue'] ?? [];
-
-                if (empty($t['id']) || empty($t['name'])) {
-                    continue;
-                }
-
-                $countryName = $t['country'] ?? 'World';
+            foreach ($teams as $t) {
+                $countryName = $t['area'] ?: 'World';
                 $country     = $this->resolveCountry($sport, $countryName, $create);
 
-                // Country not created in the admin — skip its teams.
                 if (! $country) {
                     $skipped[$countryName] = ($skipped[$countryName] ?? 0) + 1;
                     continue;
@@ -84,51 +83,48 @@ class SyncFootball extends Command
                     [
                         'sport_id'              => $sport->id,
                         'api_id'                => $t['id'],
-                        'primary_league_api_id' => (int) $leagueId,
+                        'primary_league_api_id' => $t['competition_id'],
+                        'primary_league_code'   => $t['competition_code'],
                         'name'                  => ['en' => $t['name']],
-                        'short_name'            => $t['code'] ?? null,
-                        'logo_url'              => $t['logo'] ?? null,
-                        'founded'               => $t['founded'] ?? null,
-                        'stadium'               => $v['name'] ?? null,
-                        'city'                  => $v['city'] ?? null,
+                        'short_name'            => $t['code'],
+                        'logo_url'              => $t['crest'],
+                        'founded'               => $t['founded'],
+                        'stadium'               => $t['venue'],
                         'is_active'             => true,
                     ]
                 );
 
-                $teamCount++;
-                $imported++;
+                $total++;
             }
 
-            $this->info("  imported {$imported} team(s)");
+            $this->info('  imported '.count($teams).' team(s)');
+
+            if ($sleep > 0 && count($leagues) > 1) {
+                sleep($sleep);
+            }
         }
 
         $this->newLine();
-        $this->info("Done. {$teamCount} team row(s) upserted.");
+        $this->info("Done. {$total} team row(s) upserted.");
 
-        if (! empty($skipped)) {
+        if ($skipped) {
             $this->newLine();
             $this->warn('Skipped teams for countries not created in the admin:');
             foreach ($skipped as $name => $n) {
-                $this->line("  - {$name}: {$n} team(s)");
+                $this->line("  - {$name}: {$n}");
             }
-            $this->line('Create these under Sport → Countries (set "API name" to match) and re-run, or use --create-countries.');
+            $this->line('Create them under Sport → Countries (API name = the country as returned above), or use --create-countries.');
         }
 
         return self::SUCCESS;
     }
 
-    /**
-     * Find the already-created country for this API country name.
-     * Matches on api_name first, then slug. Creates it only when allowed.
-     */
     protected function resolveCountry(Sport $sport, string $name, bool $create): ?SportCountry
     {
         $slug = Str::slug($name);
 
         $country = SportCountry::where('sport_id', $sport->id)
-            ->where(function ($q) use ($name, $slug) {
-                $q->where('api_name', $name)->orWhere('slug', $slug);
-            })
+            ->where(fn ($q) => $q->where('api_name', $name)->orWhere('slug', $slug))
             ->first();
 
         if ($country || ! $create) {

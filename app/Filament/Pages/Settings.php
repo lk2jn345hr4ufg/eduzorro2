@@ -30,7 +30,7 @@ class Settings extends Page implements HasForms
 
     /** The setting keys this page manages. */
     protected array $keys = [
-        'api_football_key',
+        'football_data_token',
         'api_football_season',
         'news_provider',
         'news_api_key',
@@ -47,7 +47,7 @@ class Settings extends Page implements HasForms
     {
         // Prefill with the current effective value: DB setting, else config default.
         $this->form->fill([
-            'api_football_key'    => Setting::get('api_football_key', config('football.api.key')),
+            'football_data_token' => Setting::get('football_data_token', config('football.api.token')),
             'api_football_season' => Setting::get('api_football_season', config('football.season')),
             'news_provider'       => Setting::get('news_provider', config('news.provider')),
             'news_api_key'        => Setting::get('news_api_key', config('news.key')),
@@ -65,16 +65,18 @@ class Settings extends Page implements HasForms
     {
         return $form
             ->schema([
-                Section::make('API-Football')
-                    ->description('api-sports.io — drives countries, teams, fixtures, standings and transfers.')
+                Section::make('football-data.org')
+                    ->description('Drives countries, teams, fixtures and standings. Free tier covers the current season of 12 competitions; it has no transfers endpoint.')
                     ->schema([
-                        TextInput::make('api_football_key')
-                            ->label('API key')
+                        TextInput::make('football_data_token')
+                            ->label('API token (X-Auth-Token)')
                             ->password()->revealable()
                             ->autocomplete(false),
                         TextInput::make('api_football_season')
                             ->label('Season (start year)')
-                            ->numeric()->placeholder('2024'),
+                            ->numeric()
+                            ->placeholder((string) config('football.season'))
+                            ->helperText('Free plans generally only allow the current season.'),
                     ])->columns(2),
 
                 Section::make('News API')

@@ -36,6 +36,7 @@ class Fixture extends Model
             ],
             'league' => [
                 'id'    => $this->league_api_id,
+                'code'  => $this->league_code,
                 'name'  => $this->league_name,
                 'round' => $this->league_round,
             ],
