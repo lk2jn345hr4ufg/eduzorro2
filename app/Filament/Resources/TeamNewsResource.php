@@ -65,7 +65,24 @@ class TeamNewsResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('title.en')->label('Title')->searchable()->limit(50),
+                // Gemini writes translations into the active site languages
+                // (ru/uk), so title.en can be empty on rewritten rows — hence
+                // both locales get their own column with an explicit dash
+                // rather than one column that silently renders blank.
+                TextColumn::make('title_en')
+                    ->label('Title (EN)')
+                    ->getStateUsing(fn (TeamNews $record) => data_get($record->title, 'en') ?: '—')
+                    ->wrap()
+                    ->limit(60)
+                    ->searchable(query: fn ($query, string $search) => $query->where('title', 'like', "%{$search}%")),
+
+                TextColumn::make('title_ru')
+                    ->label('Title (RU)')
+                    ->getStateUsing(fn (TeamNews $record) => data_get($record->title, 'ru') ?: '—')
+                    ->wrap()
+                    ->limit(60)
+                    ->searchable(query: fn ($query, string $search) => $query->where('title', 'like', "%{$search}%")),
+
                 TextColumn::make('team.slug')->label('Team')->searchable(),
                 TextColumn::make('published_at')->dateTime()->sortable(),
                 IconColumn::make('is_active')->boolean(),
