@@ -44,4 +44,7 @@ return [
     'back_to_news'  => 'Back to sports news',
     'source'        => 'Source',
     'more_from_team'=> 'More from this team',
+    'season' => 'Season',
+    'all_matches' => 'All matches',
+    'calendar_hint' => 'Pick a day to see its matches. Click again to clear.',
 ];

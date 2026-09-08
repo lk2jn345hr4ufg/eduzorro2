@@ -67,9 +67,29 @@ class TeamController extends Controller
 
         return match ($tab) {
             'fixtures' => (function () use ($api, $team, $season) {
-                $all = $this->storedFixtures($team, $season) ?: $api->teamFixtures($team->api_id, $season);
+                // Seasons actually stored for this team, newest first.
+                $seasons = Fixture::forTeam($team->api_id)
+                    ->distinct()->orderByDesc('season')->pluck('season')->all();
+
+                // Prefer the configured season, but if nothing was synced for
+                // it fall back to the newest season we do have, so the page
+                // never renders empty just because the setting drifted.
+                $effective = in_array($season, $seasons, true)
+                    ? $season
+                    : ($seasons[0] ?? $season);
+
+                $all = $this->storedFixtures($team, $effective)
+                    ?: $api->teamFixtures($team->api_id, $effective);
+
                 [$upcoming, $results] = $this->splitFixtures($all);
-                return ['upcoming' => $upcoming, 'results' => $results];
+
+                return [
+                    'upcoming'       => $upcoming,
+                    'results'        => $results,
+                    'allFixtures'    => $all,
+                    'seasons'        => $seasons,
+                    'currentSeason'  => $effective,
+                ];
             })(),
 
             'euro-cups' => (function () use ($api, $team, $season) {

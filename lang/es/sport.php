@@ -44,4 +44,7 @@ return [
     'back_to_news'  => 'Volver a noticias',
     'source'        => 'Fuente',
     'more_from_team'=> 'Más de este equipo',
+    'season' => 'Temporada',
+    'all_matches' => 'Todos los partidos',
+    'calendar_hint' => 'Elige un día para ver sus partidos. Púlsalo de nuevo para limpiar.',
 ];
