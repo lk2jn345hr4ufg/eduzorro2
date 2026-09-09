@@ -28,9 +28,14 @@ class ApiSportsTransfersClient
         $key  = config('apisports.key');
         $host = config('apisports.host');
 
-        $headers = $host
-            ? ['x-rapidapi-key' => $key, 'x-rapidapi-host' => $host]   // RapidAPI
-            : ['x-apisports-key' => $key];                              // direct
+        // Only switch to RapidAPI headers when the host really is RapidAPI.
+        // A stale API_FOOTBALL_HOST in .env used to send RapidAPI auth to the
+        // direct api-sports domain, which answers 200 with an empty response.
+        $useRapidApi = $host && Str::contains($host, 'rapidapi');
+
+        $headers = $useRapidApi
+            ? ['x-rapidapi-key' => $key, 'x-rapidapi-host' => $host]
+            : ['x-apisports-key' => $key];
 
         return Http::baseUrl(config('apisports.base_url'))
             ->timeout((int) config('apisports.timeout', 12))
@@ -60,6 +65,12 @@ class ApiSportsTransfersClient
             // quota blocks a call, so surface that instead of silent zeros.
             if ($this->hasErrors($body['errors'] ?? [])) {
                 Log::warning('api-sports returned errors', ['path' => $path, 'errors' => $body['errors']]);
+            } elseif (empty($body['response'])) {
+                // Empty with no error usually means bad auth headers or a
+                // filter that matched nothing — log enough to tell them apart.
+                Log::info('api-sports empty response', [
+                    'path' => $path, 'query' => $query, 'results' => $body['results'] ?? null,
+                ]);
             }
 
             return (array) ($body['response'] ?? []);

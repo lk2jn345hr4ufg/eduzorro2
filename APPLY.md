@@ -1,32 +1,34 @@
-# Fix: "no api-sports match" for every team
+# Fix: transfers lookup returned 0 while the API works
 
-Every team was skipped at the lookup step. Two problems, both mine:
+Calling api-sports by hand returned 5 results for "Manchester United", but the
+client got nothing. The cause is the auth headers: if `API_FOOTBALL_HOST` is set
+in .env (a leftover from the original RapidAPI-capable config), the client sends
+`x-rapidapi-key` / `x-rapidapi-host` to the DIRECT api-sports domain. That domain
+ignores those headers and answers HTTP 200 with an empty response and no error -
+which looked exactly like "team not found".
 
-1. **Failed lookups were cached for a week.** If the very first search failed
-   (quota, a bad country filter, a network hiccup), the miss was stored and every
-   later run answered "not found" without ever calling the API again. Only
-   successful lookups are cached now.
-2. **Only one search attempt.** It searched the full club name filtered by
-   country and gave up. It now tries progressively: name + country, then name
-   alone, then the first word — which is what actually finds clubs whose local
-   name differs from the api-sports spelling.
-
-Also added `--debug`, which prints each search and the candidates it returned,
-so a miss is diagnosable instead of silent.
+## Changes
+- The client only uses RapidAPI headers when the configured host actually is a
+  RapidAPI host; otherwise it always uses `x-apisports-key`.
+- An empty-but-error-free response is now logged with the path and query, so this
+  class of misconfiguration is visible in the log instead of silent.
+- New `sport:transfers-doctor` command prints the effective base URL, key, host,
+  plan and daily quota, then runs a real lookup - one command that answers "is it
+  my key, my quota, or my code".
 
 ## Files
 - app/Services/Football/ApiSportsTransfersClient.php  (modified)
-- app/Console/Commands/SyncTransfers.php              (modified: --debug)
+- app/Console/Commands/TransfersDoctor.php            (new)
 
 ## Apply - local
 ```
-unzip -o ~/Downloads/transfers-lookup-fix.zip -d /tmp/lk-unzip
-cp -a /tmp/lk-unzip/transfers-lookup-fix/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/lk-unzip
+unzip -o ~/Downloads/transfers-host-fix.zip -d /tmp/hf-unzip
+cp -a /tmp/hf-unzip/transfers-host-fix/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/hf-unzip
 cd /Users/olegmishyn/HERD/eduzorro
 php artisan optimize:clear
 git add .
-git commit -m "Fix api-sports team lookup: don't cache misses, add fallbacks"
+git commit -m "Only use RapidAPI headers for RapidAPI hosts; add transfers doctor"
 git push
 ```
 
@@ -34,25 +36,25 @@ git push
 ```
 cd ~/laravel-app
 git pull origin main
-php artisan optimize:clear
 
-# clear the poisoned lookup cache from the failed run
+# check whether the stale variable is there, and drop it if so
+grep -n "API_FOOTBALL_HOST" .env
+# (comment it out or delete the line, then:)
+php artisan config:clear
 php artisan cache:clear
 
-# now watch what the API actually returns
-php artisan sport:sync-transfers --country=england --limit=3 --sleep=1 --debug
+php artisan sport:transfers-doctor
 ```
 
-You should see lines like:
-```
-   search "Manchester United" in England → 1 candidate(s): Manchester United #33
-→ Manchester United: linked to api-sports id 33
-   transfers: 263
-```
+Expect: plan Free, a quota line, then
+`search "Manchester United" → 5 candidate(s): Manchester United #33 ...`
+and `Resolved to api-sports id 33`.
 
-If instead you see `→ 0 candidate(s)` on every attempt, the key or quota is the
-problem, not the name - check `tail -n 30 storage/logs/laravel.log`.
-Once a few teams link correctly, run the rest:
+Then load the data:
 ```
 php artisan sport:sync-transfers --country=england --limit=15 --sleep=1
 ```
+
+Note: the fix works even if you leave API_FOOTBALL_HOST in .env, since the host
+is now ignored unless it is a RapidAPI host - but removing the stale line is
+still the cleaner outcome.
