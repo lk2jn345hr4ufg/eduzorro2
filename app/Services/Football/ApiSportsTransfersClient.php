@@ -18,6 +18,9 @@ use Illuminate\Support\Str;
  */
 class ApiSportsTransfersClient
 {
+    /** Unix timestamp (float) of the last outgoing request, for throttling. */
+    protected static float $lastRequestAt = 0.0;
+
     public function isConfigured(): bool
     {
         return ! empty(config('apisports.key'));
@@ -43,16 +46,41 @@ class ApiSportsTransfersClient
             ->acceptJson();
     }
 
-    /** Returns the API "response" array, or [] on any failure. */
-    public function get(string $path, array $query = []): array
+    /**
+     * Returns the API "response" array, or [] on any failure.
+     *
+     * The free plan allows ~10 requests/minute, so calls are spaced out here
+     * rather than relying on the caller: one team can trigger several lookups
+     * back to back, which is what used to fire a burst and earn a 429.
+     */
+    public function get(string $path, array $query = [], int $attempt = 1): array
     {
         if (! $this->isConfigured()) {
             Log::warning('api-sports key missing; transfers skipped', ['path' => $path]);
             return [];
         }
 
+        $this->throttle();
+
         try {
             $res = $this->http()->get($path, $query);
+
+            if ($res->status() === 429) {
+                $maxAttempts = (int) config('apisports.retries', 3);
+
+                if ($attempt < $maxAttempts) {
+                    $wait = (int) config('apisports.retry_wait', 20) * $attempt;
+                    Log::info('api-sports rate limited, backing off', [
+                        'path' => $path, 'attempt' => $attempt, 'wait' => $wait,
+                    ]);
+                    sleep($wait);
+
+                    return $this->get($path, $query, $attempt + 1);
+                }
+
+                Log::warning('api-sports rate limited, giving up', ['path' => $path]);
+                return [];
+            }
 
             if ($res->failed()) {
                 Log::warning('api-sports request failed', ['path' => $path, 'status' => $res->status()]);
@@ -61,13 +89,9 @@ class ApiSportsTransfersClient
 
             $body = $res->json();
 
-            // api-sports answers 200 with an errors object when the plan or
-            // quota blocks a call, so surface that instead of silent zeros.
             if ($this->hasErrors($body['errors'] ?? [])) {
                 Log::warning('api-sports returned errors', ['path' => $path, 'errors' => $body['errors']]);
             } elseif (empty($body['response'])) {
-                // Empty with no error usually means bad auth headers or a
-                // filter that matched nothing — log enough to tell them apart.
                 Log::info('api-sports empty response', [
                     'path' => $path, 'query' => $query, 'results' => $body['results'] ?? null,
                 ]);
@@ -78,6 +102,22 @@ class ApiSportsTransfersClient
             Log::warning('api-sports request threw', ['path' => $path, 'error' => $e->getMessage()]);
             return [];
         }
+    }
+
+    /** Keep a minimum gap between requests to stay under the per-minute cap. */
+    protected function throttle(): void
+    {
+        $gap = (float) config('apisports.min_interval', 6.5);
+
+        if (self::$lastRequestAt > 0.0) {
+            $elapsed = microtime(true) - self::$lastRequestAt;
+
+            if ($elapsed < $gap) {
+                usleep((int) (($gap - $elapsed) * 1_000_000));
+            }
+        }
+
+        self::$lastRequestAt = microtime(true);
     }
 
     /** Raw transfers payload for an api-sports team id. */

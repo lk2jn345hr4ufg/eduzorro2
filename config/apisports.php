@@ -19,6 +19,15 @@ return [
     'host'     => env('API_FOOTBALL_HOST'), // set only when going through RapidAPI
     'timeout'  => (int) env('API_FOOTBALL_TIMEOUT', 12),
 
+    /*
+     | Free plan is ~10 requests/minute. The client spaces its own calls out by
+     | this many seconds and retries a 429 after a growing pause, so a burst of
+     | lookups can no longer trip the limit.
+     */
+    'min_interval' => (float) env('API_FOOTBALL_MIN_INTERVAL', 6.5),
+    'retries'      => (int) env('API_FOOTBALL_RETRIES', 3),
+    'retry_wait'   => (int) env('API_FOOTBALL_RETRY_WAIT', 20),
+
     'cache' => [
         'transfers' => (int) env('API_FOOTBALL_TTL_TRANSFERS', 86400),
         'lookup'    => (int) env('API_FOOTBALL_TTL_LOOKUP', 604800), // team-id lookups rarely change

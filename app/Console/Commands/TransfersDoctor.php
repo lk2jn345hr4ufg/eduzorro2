@@ -24,6 +24,8 @@ class TransfersDoctor extends Command
         $this->line('base_url : '.config('apisports.base_url'));
         $this->line('key      : '.($key ? substr($key, 0, 6).'… ('.strlen($key).' chars)' : 'NOT SET'));
         $this->line('host     : '.($host ?: 'not set (direct api-sports — correct for v3.football.api-sports.io)'));
+        $this->line('throttle : '.config('apisports.min_interval').'s between calls, '
+            .config('apisports.retries').' retries on 429');
 
         if ($host && ! str_contains(strtolower($host), 'rapidapi')) {
             $this->warn('host is set but is not a RapidAPI host — remove API_FOOTBALL_HOST from .env');
@@ -34,7 +36,10 @@ class TransfersDoctor extends Command
         $status = $api->get('/status');
 
         if (empty($status)) {
-            $this->error('No answer from /status — key or headers are wrong (see storage/logs/laravel.log).');
+            $this->error('No answer from /status. Check storage/logs/laravel.log:');
+            $this->line('  status 429 → rate limited. The free plan allows ~10 requests/minute');
+            $this->line('              and 100/day; wait a minute (or until the daily reset) and retry.');
+            $this->line('  other      → key or headers are wrong.');
             return self::FAILURE;
         }
 

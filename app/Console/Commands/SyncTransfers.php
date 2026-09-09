@@ -19,7 +19,7 @@ class SyncTransfers extends Command
                             {--team= : Limit to a single team slug}
                             {--country= : Limit to one country (slug, e.g. england)}
                             {--limit=0 : Max teams this run (0 = all)}
-                            {--sleep=1 : Seconds between teams}
+                            {--sleep=0 : Extra seconds between teams (the client already throttles itself)}
                             {--relink : Re-resolve api-sports ids even if already stored}
                             {--debug : Print what each name lookup returned}';
 

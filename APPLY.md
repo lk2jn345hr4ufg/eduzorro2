@@ -1,34 +1,42 @@
-# Fix: transfers lookup returned 0 while the API works
+# Fix: 429 rate limit on transfers lookups
 
-Calling api-sports by hand returned 5 results for "Manchester United", but the
-client got nothing. The cause is the auth headers: if `API_FOOTBALL_HOST` is set
-in .env (a leftover from the original RapidAPI-capable config), the client sends
-`x-rapidapi-key` / `x-rapidapi-host` to the DIRECT api-sports domain. That domain
-ignores those headers and answers HTTP 200 with an empty response and no error -
-which looked exactly like "team not found".
+The log showed 18 requests inside the same second. That is not the daily quota
+(which was 22/100 a minute earlier) - it is the api-sports free plan's
+~10 requests/MINUTE cap. `--sleep` only paused between teams, while each
+unmatched team fired up to three lookups back to back with no gap.
 
 ## Changes
-- The client only uses RapidAPI headers when the configured host actually is a
-  RapidAPI host; otherwise it always uses `x-apisports-key`.
-- An empty-but-error-free response is now logged with the path and query, so this
-  class of misconfiguration is visible in the log instead of silent.
-- New `sport:transfers-doctor` command prints the effective base URL, key, host,
-  plan and daily quota, then runs a real lookup - one command that answers "is it
-  my key, my quota, or my code".
+- The client now throttles itself: a minimum gap between every outgoing request
+  (default 6.5s, so ~9/minute), applied inside `get()` so no caller can burst.
+- A 429 is retried with a growing pause (default 3 attempts, 20s x attempt)
+  instead of being counted as "team not found".
+- `--sleep` on the sync command now defaults to 0, since throttling is handled
+  centrally; it stays available if you want extra spacing.
+- `sport:transfers-doctor` prints the throttle settings and, when /status fails,
+  explains how to tell a rate limit apart from a bad key.
+
+Tunable in .env if you upgrade the plan:
+```
+API_FOOTBALL_MIN_INTERVAL=6.5
+API_FOOTBALL_RETRIES=3
+API_FOOTBALL_RETRY_WAIT=20
+```
 
 ## Files
 - app/Services/Football/ApiSportsTransfersClient.php  (modified)
-- app/Console/Commands/TransfersDoctor.php            (new)
+- app/Console/Commands/SyncTransfers.php             (modified)
+- app/Console/Commands/TransfersDoctor.php           (modified)
+- config/apisports.php                               (modified)
 
 ## Apply - local
 ```
-unzip -o ~/Downloads/transfers-host-fix.zip -d /tmp/hf-unzip
-cp -a /tmp/hf-unzip/transfers-host-fix/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/hf-unzip
+unzip -o ~/Downloads/transfers-throttle.zip -d /tmp/th-unzip
+cp -a /tmp/th-unzip/transfers-throttle/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/th-unzip
 cd /Users/olegmishyn/HERD/eduzorro
 php artisan optimize:clear
 git add .
-git commit -m "Only use RapidAPI headers for RapidAPI hosts; add transfers doctor"
+git commit -m "Throttle api-sports requests and retry on 429"
 git push
 ```
 
@@ -36,25 +44,22 @@ git push
 ```
 cd ~/laravel-app
 git pull origin main
+php artisan optimize:clear
 
-# check whether the stale variable is there, and drop it if so
-grep -n "API_FOOTBALL_HOST" .env
-# (comment it out or delete the line, then:)
-php artisan config:clear
-php artisan cache:clear
-
+# wait a minute for the per-minute window to clear, then:
 php artisan sport:transfers-doctor
 ```
 
-Expect: plan Free, a quota line, then
-`search "Manchester United" → 5 candidate(s): Manchester United #33 ...`
-and `Resolved to api-sports id 33`.
-
-Then load the data:
+Expect the lookup to resolve Manchester United to id 33. Then load in small
+batches - each team costs 1 lookup (first time only) + 1 transfers call, and the
+daily cap is 100:
 ```
-php artisan sport:sync-transfers --country=england --limit=15 --sleep=1
+php artisan sport:sync-transfers --country=england --limit=10
 ```
+At ~6.5s per call that batch takes a couple of minutes; that is the throttle
+doing its job, not a hang.
 
-Note: the fix works even if you leave API_FOOTBALL_HOST in .env, since the host
-is now ignored unless it is a RapidAPI host - but removing the stale line is
-still the cleaner outcome.
+## Note on the daily quota
+100 requests/day means roughly 45-50 teams per day on the first pass (lookup +
+transfers each), and about 100 on later passes since ids are cached on the team
+row. Spread countries across days, or run it from the scheduler.
