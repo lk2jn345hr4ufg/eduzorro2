@@ -99,14 +99,18 @@ class TeamController extends Controller
                 return ['euroFixtures' => $stored ?: $api->teamEuroFixtures($team->api_id, $season)];
             })(),
 
-            'transfers' => (function () use ($api, $team) {
-                $rows = Transfer::where('team_api_id', $team->api_id)
+            'transfers' => (function () use ($team) {
+                // Transfers come from api-sports, which has its own team ids —
+                // hence apisports_id rather than the football-data api_id.
+                // Older rows imported before the provider switch are still keyed
+                // to that same api-sports id, so both keep working.
+                $transferId = $team->apisports_id ?: $team->api_id;
+
+                $rows = Transfer::where('team_api_id', $transferId)
                     ->orderByDesc('transfer_date')
                     ->get();
 
-                return ['transfers' => $rows->isNotEmpty()
-                    ? Transfer::toApiShapeCollection($rows)
-                    : $api->transfers($team->api_id)];
+                return ['transfers' => Transfer::toApiShapeCollection($rows)];
             })(),
 
             'standings' => (function () use ($api, $team, $season) {

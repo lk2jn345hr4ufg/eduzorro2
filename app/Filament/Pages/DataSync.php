@@ -105,6 +105,40 @@ class DataSync extends Page
                     $this->result('Fixtures / standings / transfers sync', $code, Artisan::output());
                 }),
 
+            Action::make('syncTransfers')
+                ->label('Sync transfers (api-sports)')
+                ->icon('heroicon-o-arrows-right-left')
+                ->color('primary')
+                ->form([
+                    Select::make('country')
+                        ->label('Country')
+                        ->options(fn () => SportCountry::query()
+                            ->orderBy('slug')->pluck('slug', 'slug')->all())
+                        ->searchable()->native(false)
+                        ->placeholder('All countries'),
+                    TextInput::make('team')->label('Team slug')->placeholder('all teams (leave empty)'),
+                    TextInput::make('limit')->numeric()->default(15)
+                        ->helperText('Max teams this run. First run also spends one lookup call per team.'),
+                    TextInput::make('sleep')->numeric()->default(1)
+                        ->helperText('Seconds between teams.'),
+                    Toggle::make('relink')
+                        ->label('Re-resolve api-sports ids')
+                        ->helperText('Only needed if a team got linked to the wrong club.'),
+                ])
+                ->action(function (array $data) {
+                    @set_time_limit(0);
+                    $params = [
+                        '--limit' => (int) ($data['limit'] ?? 0),
+                        '--sleep' => (int) ($data['sleep'] ?? 0),
+                    ];
+                    if (! empty($data['team']))     { $params['--team'] = $data['team']; }
+                    if (! empty($data['country']))  { $params['--country'] = $data['country']; }
+                    if (! empty($data['relink']))   { $params['--relink'] = true; }
+
+                    $code = Artisan::call('sport:sync-transfers', $params);
+                    $this->result('Transfers sync', $code, Artisan::output());
+                }),
+
             Action::make('syncNews')
                 ->label('Sync team news')
                 ->icon('heroicon-o-newspaper')

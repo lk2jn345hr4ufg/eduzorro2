@@ -1,7 +1,9 @@
 @php
     // Flatten API rows -> one row per transfer, resolving direction against THIS team.
     // API-Football repeats the same move across windows, so dedupe on player+date+clubs.
-    $teamApiId = (int) $team->api_id;
+    // Direction is resolved against the api-sports id, because that is what
+    // the transfer rows reference (football-data has no transfers endpoint).
+    $teamApiId = (int) ($team->apisports_id ?: $team->api_id);
     $teamName  = $team->translate('name');
 
     $rows = collect($transfers)

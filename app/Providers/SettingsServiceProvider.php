@@ -20,6 +20,7 @@ class SettingsServiceProvider extends ServiceProvider
         // Maps a settings key => config path. Only non-empty values override.
         $map = [
             'football_data_token'  => 'football.api.token',
+            'apisports_key'        => 'apisports.key',
             'api_football_season'  => 'football.season',
             'news_provider'       => 'news.provider',
             'news_api_key'        => 'news.key',

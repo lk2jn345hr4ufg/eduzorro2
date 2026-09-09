@@ -75,7 +75,7 @@ class SyncFootballStats extends Command
             // football-data.org has no transfers endpoint; existing rows are
             // kept and still rendered, they simply stop being refreshed.
             if (in_array($type, ['all', 'transfers'], true) && ! $warnedTransfers) {
-                $this->warn('   transfers: not available on football-data.org — skipped');
+                $this->warn('   transfers: use sport:sync-transfers (api-sports) — skipped here');
                 $warnedTransfers = true;
             }
 
