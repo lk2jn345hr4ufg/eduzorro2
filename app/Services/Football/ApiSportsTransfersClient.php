@@ -82,7 +82,12 @@ class ApiSportsTransfersClient
      * Find the api-sports team id for a club name, optionally narrowed by
      * country. Cached, because this is a lookup that almost never changes.
      */
-    public function resolveTeamId(string $name, ?string $country = null): ?int
+    /**
+     * Find the api-sports team id for a club name, optionally narrowed by
+     * country. Only successful lookups are cached — caching a miss would hide
+     * a transient failure (quota, network) behind a week-long "not found".
+     */
+    public function resolveTeamId(string $name, ?string $country = null, ?callable $log = null): ?int
     {
         $clean = $this->searchable($name);
 
@@ -92,41 +97,71 @@ class ApiSportsTransfersClient
 
         $key = 'apisports:lookup:'.md5($clean.'|'.$country);
 
-        $id = Cache::remember($key, (int) config('apisports.cache.lookup', 604800), function () use ($clean, $country) {
+        if ($cached = Cache::get($key)) {
+            return (int) $cached;
+        }
+
+        // Try the narrow search first, then progressively looser attempts.
+        $attempts = array_values(array_unique(array_filter([
+            $country ? "{$clean}|{$country}" : null,
+            "{$clean}|",
+            // Last resort: first word only ("Wolverhampton" for "Wolves" won't
+            // match, but "Manchester" will surface both Manchester clubs).
+            Str::contains($clean, ' ') ? Str::before($clean, ' ').'|' : null,
+        ])));
+
+        foreach ($attempts as $attempt) {
+            [$term, $countryFilter] = explode('|', $attempt, 2);
+
             $rows = $this->get('/teams', array_filter([
-                'search'  => $clean,
-                'country' => $country,
+                'search'  => $term,
+                'country' => $countryFilter ?: null,
             ]));
 
+            if ($log) {
+                $log(sprintf('search "%s"%s → %d candidate(s)%s',
+                    $term,
+                    $countryFilter ? " in {$countryFilter}" : '',
+                    count($rows),
+                    count($rows) ? ': '.collect($rows)->take(3)
+                        ->map(fn ($r) => data_get($r, 'team.name').' #'.data_get($r, 'team.id'))
+                        ->implode(', ') : ''
+                ));
+            }
+
             if (empty($rows)) {
-                return 0;
+                continue;
             }
 
-            // Prefer an exact-ish name match, else the first hit.
-            $target = Str::lower($clean);
+            $id = $this->pickBest($rows, $clean);
 
-            foreach ($rows as $row) {
-                if (Str::lower((string) data_get($row, 'team.name')) === $target) {
-                    return (int) data_get($row, 'team.id');
-                }
-            }
-
-            return (int) data_get($rows, '0.team.id', 0);
-        });
-
-        return $id ?: null;
-    }
-
-    /** api-sports sends [] or {} for "no errors" depending on the endpoint. */
-    protected function hasErrors($errors): bool
-    {
-        foreach ((array) $errors as $e) {
-            if (! empty($e)) {
-                return true;
+            if ($id) {
+                Cache::put($key, $id, (int) config('apisports.cache.lookup', 604800));
+                return $id;
             }
         }
 
-        return false;
+        return null;
+    }
+
+    /** Prefer an exact name match, then a normalised one, else the first hit. */
+    protected function pickBest(array $rows, string $wanted): ?int
+    {
+        $target = Str::lower($wanted);
+
+        foreach ($rows as $row) {
+            if (Str::lower((string) data_get($row, 'team.name')) === $target) {
+                return (int) data_get($row, 'team.id');
+            }
+        }
+
+        foreach ($rows as $row) {
+            if (Str::lower($this->searchable((string) data_get($row, 'team.name'))) === $target) {
+                return (int) data_get($row, 'team.id');
+            }
+        }
+
+        return ((int) data_get($rows, '0.team.id')) ?: null;
     }
 
     /** Strip club suffixes so "Manchester United FC" searches as "Manchester United". */

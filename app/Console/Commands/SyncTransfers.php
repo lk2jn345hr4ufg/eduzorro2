@@ -20,7 +20,8 @@ class SyncTransfers extends Command
                             {--country= : Limit to one country (slug, e.g. england)}
                             {--limit=0 : Max teams this run (0 = all)}
                             {--sleep=1 : Seconds between teams}
-                            {--relink : Re-resolve api-sports ids even if already stored}';
+                            {--relink : Re-resolve api-sports ids even if already stored}
+                            {--debug : Print what each name lookup returned}';
 
     protected $description = 'Import transfers from api-sports for teams sourced from football-data.org';
 
@@ -67,13 +68,19 @@ class SyncTransfers extends Command
 
             if (! $apiSportsId) {
                 $country     = $team->country?->api_name ?: $team->country?->translate('name');
-                $apiSportsId = $api->resolveTeamId($name, $country);
+                $debug       = (bool) $this->option('debug');
+
+                $apiSportsId = $api->resolveTeamId(
+                    $name,
+                    $country,
+                    $debug ? fn (string $line) => $this->line("   {$line}") : null
+                );
 
                 if ($apiSportsId) {
                     $team->update(['apisports_id' => $apiSportsId]);
                     $this->line("→ {$name}: linked to api-sports id {$apiSportsId}");
                 } else {
-                    $this->warn("→ {$name}: no api-sports match, skipped");
+                    $this->warn("→ {$name}: no api-sports match, skipped (run with --debug to see the lookups)");
                     continue;
                 }
             } else {
