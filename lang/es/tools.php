@@ -73,4 +73,9 @@ return [
     'offline_platform_title' => 'Plataformas con descarga integrada',
     'offline_platform_text' => 'Plataformas como Coursera, edX y Udemy ofrecen acceso sin conexión oficial en sus apps.',
     'offline_note' => 'Descargar vídeos fuera de estas funciones oficiales incumple los términos del servicio y los derechos de autor.',
+
+    // landing page
+    'browse_all' => 'Ver todas las herramientas',
+    'footnote' => 'Todas las herramientas son gratuitas y funcionan en tu navegador.',
+    'count' => '{1} :count herramienta|[2,*] :count herramientas',
 ];

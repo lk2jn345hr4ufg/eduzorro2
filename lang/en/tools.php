@@ -75,4 +75,9 @@ return [
     'offline_platform_title' => 'Platforms with built-in downloads',
     'offline_platform_text' => 'Course platforms such as Coursera, edX and Udemy offer official offline access in their mobile apps, which is usually the simplest route for structured study.',
     'offline_note' => 'Downloading videos outside these official features breaks the platform terms of service and, for most content, copyright law.',
+
+    // landing page
+    'browse_all' => 'Browse all tools',
+    'footnote' => 'All tools are free and run in your browser — nothing is saved or sent anywhere, except the AI tools, which only send what you paste when you press the button.',
+    'count' => '{1} :count tool|[2,4] :count tools|[5,*] :count tools',
 ];

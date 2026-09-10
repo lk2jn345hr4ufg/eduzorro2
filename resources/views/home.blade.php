@@ -10,21 +10,33 @@
     </section>
 
     {{-- Study tools are region-independent (/{language}/tools), so they get
-         their own section instead of being repeated inside every region card. --}}
+         their own promo block linking to the tools landing page. The primary
+         button uses the first active language; the rest are offered as small
+         links so every language version stays crawlable. --}}
     @if ($languages->isNotEmpty())
+        @php($primaryLanguage = $languages->first())
+
         <section class="home-section">
-            <h2>{{ __('tools.tools') }}</h2>
-            <p class="lead">{{ __('tools.tagline') }}</p>
-            <ul class="chip-list">
-                @foreach ($languages as $language)
-                    <li>
-                        <a class="chip" href="{{ route('tools.index', [$language]) }}">
-                            {{ $language->native_name ?? $language->name }}
-                            <small>({{ strtoupper($language->code) }})</small>
-                        </a>
-                    </li>
-                @endforeach
-            </ul>
+            <div class="tools-promo">
+                <div class="tools-promo-text">
+                    <h2>{{ __('tools.tools') }}</h2>
+                    <p>{{ __('tools.tagline') }}</p>
+                </div>
+
+                <div class="tools-promo-actions">
+                    <a class="btn-primary" href="{{ route('tools.index', [$primaryLanguage]) }}">
+                        {{ __('tools.browse_all') }} →
+                    </a>
+
+                    @if ($languages->count() > 1)
+                        <p class="tools-promo-langs">
+                            @foreach ($languages as $language)
+                                <a href="{{ route('tools.index', [$language]) }}">{{ strtoupper($language->code) }}</a>@if (! $loop->last) <span>·</span> @endif
+                            @endforeach
+                        </p>
+                    @endif
+                </div>
+            </div>
         </section>
     @endif
 

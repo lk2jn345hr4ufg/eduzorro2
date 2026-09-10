@@ -1,45 +1,44 @@
-# Video & lecture study tools (4 new tools)
+# Tools landing page + home page link
 
-Adds a "Video & lectures" category to /tools with four tools that help people
-work with lecture videos — linking, planning and note-taking — without copying
-the videos themselves.
+The tools index is now a proper landing page, and the home page points at it
+with a single promo block instead of a row of language chips.
 
-## The tools
-- **/tools/youtube-timestamp** — paste a video URL, set h:m:s, get a link that
-  opens at that moment plus the ready `<iframe>` embed code. Accepts watch?v=,
-  youtu.be, /embed/, /shorts/ and bare ids. Pure browser JS, nothing is fetched.
-- **/tools/video-study-planner** — paste the durations of a course's videos and
-  see the total, the time at your playback speed, the realistic effort with
-  note-taking overhead, how many days it takes at N minutes/day, and the finish
-  date. Accepts 12:30, 1:04:20, "12m 30s" or plain minutes. Also browser-only.
-- **/tools/video-notes-ai** — the visitor pastes notes THEY wrote and gets back a
-  structured outline, self-check questions, or a spaced-revision plan. Uses the
-  Gemini key already configured for news. Rate limited to 10 requests/hour/IP.
-- **/tools/offline-video-guide** — a short reference page on legal ways to keep
-  lectures available offline (app offline mode, Premium, asking the author,
-  course platforms with built-in downloads).
+## What changed
+
+**Landing page (/{language}/tools)**
+- Hero now shows how many tools there are in total (pluralised per language).
+- Anchor navigation across the categories, each with its own count — with ~90
+  tools the page is long, so visitors can jump straight to Mathematics, Grades
+  or Video & lectures.
+- Each category renders as a section with an id, so category links are shareable
+  (e.g. /ru/tools#cat-math).
+- Footnote explaining that the tools are free and run in the browser.
+
+**Home page**
+- The list of language chips is replaced by one promo block: title, tagline and
+  a primary "Browse all tools" button pointing at the landing page in the first
+  active language.
+- The other languages stay as small links underneath, so every language version
+  of the landing page is still crawlable and one click away.
 
 ## Files (extract over project root, keep paths)
-- resources/views/tools/partials/{youtube-timestamp,video-study-planner,video-notes-ai,offline-video-guide}.blade.php (new)
-- database/seeders/VideoToolSeeder.php        (new)
-- app/Http/Controllers/ToolAiController.php   (new: the AI endpoint)
-- app/Services/AI/GeminiClient.php            (modified: added complete())
-- routes/web.php                              (modified: POST tools/video-notes/generate)
-- resources/views/layouts/app.blade.php       (modified: csrf-token meta, needed by the AI tool)
-- app/Filament/Resources/ToolResource.php     (modified: "Video & lectures" category)
-- public/css/tools.css                        (modified: styles for the new tools)
-- lang/{en,uk,ru,es}/tools.php                (modified: 43 new strings + category)
+- resources/views/tools/index.blade.php  (rewritten: landing page)
+- resources/views/home.blade.php         (modified: promo block)
+- public/css/tools.css                   (modified: landing + promo styles)
+- lang/{en,uk,ru,es}/tools.php           (modified: browse_all, footnote, count)
+
+No migration, no controller change — the landing page uses the data the tools
+index already received.
 
 ## Apply — local
 ```
-unzip -o ~/Downloads/video-tools.zip -d /tmp/vid-unzip
-cp -a /tmp/vid-unzip/video-tools/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/vid-unzip
+unzip -o ~/Downloads/tools-landing.zip -d /tmp/land-unzip
+cp -a /tmp/land-unzip/tools-landing/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/land-unzip
 cd /Users/olegmishyn/HERD/eduzorro
 php artisan optimize:clear
-php artisan db:seed --class=Database\\Seeders\\VideoToolSeeder
 git add .
-git commit -m "Add video and lecture study tools"
+git commit -m "Turn the tools index into a landing page and link it from home"
 git push
 ```
 
@@ -48,18 +47,12 @@ git push
 cd ~/laravel-app
 git pull origin main
 php artisan optimize:clear
-php artisan db:seed --class=Database\\Seeders\\VideoToolSeeder --force
 ```
 
-No migration — reuses the existing `tools` table.
+## Note
+The `count` string uses Laravel's `trans_choice` plural rules, so Ukrainian and
+Russian decline correctly (1 інструмент / 3 інструменти / 90 інструментів).
 
-## Notes
-- Three of the four tools run entirely in the browser; only the notes organiser
-  makes a server call, and only when the visitor presses the button.
-- The AI tool needs the Gemini key (Admin → Sport → Settings → Gemini). Without
-  it the tool answers with a clear "not configured" message instead of failing.
-- The rate limit is per IP per hour and lives in ToolAiController; raise it there
-  if the tool proves popular.
-- Deliberately not included: a video downloader. It breaks YouTube's terms,
-  attracts DMCA complaints, is rejected by ad networks, and is a common reason
-  for shared hosts to suspend an account — a real risk to the whole domain.
+The promo block and the anchor nav are styled in tools.css, which on the server
+still needs to be reachable at /css/tools.css — until that symlink exists the
+block will render unstyled.
