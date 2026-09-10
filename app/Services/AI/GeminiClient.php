@@ -36,6 +36,41 @@ class GeminiClient
         return $this->normalize($json, $article, $locales);
     }
 
+    /**
+     * Free-form completion, used by tools that need plain text back rather than
+     * the article translation contract. Returns null on any failure.
+     */
+    public function complete(string $prompt, float $temperature = 0.4): ?string
+    {
+        if (! $this->isConfigured()) {
+            return null;
+        }
+
+        $model = config('gemini.model', 'gemini-2.0-flash');
+        $url   = config('gemini.base_url')."/models/{$model}:generateContent";
+
+        try {
+            $res = Http::timeout((int) config('gemini.timeout', 40))
+                ->acceptJson()
+                ->post($url.'?key='.config('gemini.key'), [
+                    'contents'         => [['parts' => [['text' => $prompt]]]],
+                    'generationConfig' => ['temperature' => $temperature],
+                ]);
+
+            if ($res->failed()) {
+                Log::warning('Gemini completion failed', ['status' => $res->status()]);
+                return null;
+            }
+
+            $text = data_get($res->json(), 'candidates.0.content.parts.0.text');
+
+            return $text ? trim($text) : null;
+        } catch (\Throwable $e) {
+            Log::warning('Gemini completion threw', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
     protected function buildPrompt(array $article, array $locales, string $style): string
     {
         $codes = implode(', ', $locales);

@@ -99,3 +99,41 @@
 @media (max-width: 480px) {
     .math-fields { grid-template-columns: 1fr 1fr; }
 }
+
+/* ---- Video & lecture tools ---- */
+.tool-out-block { margin-top: 18px; }
+.tool-out-block > label { display: block; margin-bottom: 6px; color: var(--ink-soft); font-size: .9rem; }
+.copy-row { display: flex; gap: 8px; align-items: flex-start; }
+.copy-row .inp { flex: 1 1 auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem; }
+.copy-row .btn { flex: 0 0 auto; min-width: 92px; }
+.tool-note { margin: 8px 0 0; color: var(--ink-faint); font-size: .82rem; }
+
+.tool-output {
+    margin: 14px 0 0;
+    padding: 14px;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm, 8px);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: inherit;
+    font-size: .92rem;
+    line-height: 1.6;
+    max-height: 520px;
+    overflow-y: auto;
+}
+
+.offline-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.offline-card {
+    padding: 16px;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm, 8px);
+}
+.offline-card h3 { margin: 0 0 8px; font-size: 1rem; }
+.offline-card p { margin: 0; color: var(--ink-soft); font-size: .9rem; line-height: 1.55; }
+
+@media (max-width: 640px) {
+    .copy-row { flex-direction: column; }
+    .copy-row .btn { width: 100%; }
+}

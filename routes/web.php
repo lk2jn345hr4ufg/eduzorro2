@@ -13,6 +13,7 @@ use App\Http\Controllers\FootballController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SportController;
+use App\Http\Controllers\ToolAiController;
 use App\Http\Controllers\ToolController;
 use App\Http\Controllers\SportNewsController;
 use App\Http\Controllers\TeamController;
@@ -48,6 +49,11 @@ Route::prefix('{language:code}')
     ->group(function () {
         Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
         Route::get('/tools/{tool}', [ToolController::class, 'show'])->name('tools.show');
+
+        // Backend for the AI note-structuring tool (processes text the visitor
+        // typed themselves, nothing is fetched from third-party services).
+        Route::post('/tools/video-notes/generate', [ToolAiController::class, 'videoNotes'])
+            ->name('tools.video-notes.generate');
     });
 
 Route::prefix('{region:slug}/{language:code}')

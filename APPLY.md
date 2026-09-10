@@ -1,65 +1,65 @@
-# Fix: 429 rate limit on transfers lookups
+# Video & lecture study tools (4 new tools)
 
-The log showed 18 requests inside the same second. That is not the daily quota
-(which was 22/100 a minute earlier) - it is the api-sports free plan's
-~10 requests/MINUTE cap. `--sleep` only paused between teams, while each
-unmatched team fired up to three lookups back to back with no gap.
+Adds a "Video & lectures" category to /tools with four tools that help people
+work with lecture videos — linking, planning and note-taking — without copying
+the videos themselves.
 
-## Changes
-- The client now throttles itself: a minimum gap between every outgoing request
-  (default 6.5s, so ~9/minute), applied inside `get()` so no caller can burst.
-- A 429 is retried with a growing pause (default 3 attempts, 20s x attempt)
-  instead of being counted as "team not found".
-- `--sleep` on the sync command now defaults to 0, since throttling is handled
-  centrally; it stays available if you want extra spacing.
-- `sport:transfers-doctor` prints the throttle settings and, when /status fails,
-  explains how to tell a rate limit apart from a bad key.
+## The tools
+- **/tools/youtube-timestamp** — paste a video URL, set h:m:s, get a link that
+  opens at that moment plus the ready `<iframe>` embed code. Accepts watch?v=,
+  youtu.be, /embed/, /shorts/ and bare ids. Pure browser JS, nothing is fetched.
+- **/tools/video-study-planner** — paste the durations of a course's videos and
+  see the total, the time at your playback speed, the realistic effort with
+  note-taking overhead, how many days it takes at N minutes/day, and the finish
+  date. Accepts 12:30, 1:04:20, "12m 30s" or plain minutes. Also browser-only.
+- **/tools/video-notes-ai** — the visitor pastes notes THEY wrote and gets back a
+  structured outline, self-check questions, or a spaced-revision plan. Uses the
+  Gemini key already configured for news. Rate limited to 10 requests/hour/IP.
+- **/tools/offline-video-guide** — a short reference page on legal ways to keep
+  lectures available offline (app offline mode, Premium, asking the author,
+  course platforms with built-in downloads).
 
-Tunable in .env if you upgrade the plan:
+## Files (extract over project root, keep paths)
+- resources/views/tools/partials/{youtube-timestamp,video-study-planner,video-notes-ai,offline-video-guide}.blade.php (new)
+- database/seeders/VideoToolSeeder.php        (new)
+- app/Http/Controllers/ToolAiController.php   (new: the AI endpoint)
+- app/Services/AI/GeminiClient.php            (modified: added complete())
+- routes/web.php                              (modified: POST tools/video-notes/generate)
+- resources/views/layouts/app.blade.php       (modified: csrf-token meta, needed by the AI tool)
+- app/Filament/Resources/ToolResource.php     (modified: "Video & lectures" category)
+- public/css/tools.css                        (modified: styles for the new tools)
+- lang/{en,uk,ru,es}/tools.php                (modified: 43 new strings + category)
+
+## Apply — local
 ```
-API_FOOTBALL_MIN_INTERVAL=6.5
-API_FOOTBALL_RETRIES=3
-API_FOOTBALL_RETRY_WAIT=20
-```
-
-## Files
-- app/Services/Football/ApiSportsTransfersClient.php  (modified)
-- app/Console/Commands/SyncTransfers.php             (modified)
-- app/Console/Commands/TransfersDoctor.php           (modified)
-- config/apisports.php                               (modified)
-
-## Apply - local
-```
-unzip -o ~/Downloads/transfers-throttle.zip -d /tmp/th-unzip
-cp -a /tmp/th-unzip/transfers-throttle/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/th-unzip
+unzip -o ~/Downloads/video-tools.zip -d /tmp/vid-unzip
+cp -a /tmp/vid-unzip/video-tools/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/vid-unzip
 cd /Users/olegmishyn/HERD/eduzorro
 php artisan optimize:clear
+php artisan db:seed --class=Database\\Seeders\\VideoToolSeeder
 git add .
-git commit -m "Throttle api-sports requests and retry on 429"
+git commit -m "Add video and lecture study tools"
 git push
 ```
 
-## Apply - server
+## Apply — server
 ```
 cd ~/laravel-app
 git pull origin main
 php artisan optimize:clear
-
-# wait a minute for the per-minute window to clear, then:
-php artisan sport:transfers-doctor
+php artisan db:seed --class=Database\\Seeders\\VideoToolSeeder --force
 ```
 
-Expect the lookup to resolve Manchester United to id 33. Then load in small
-batches - each team costs 1 lookup (first time only) + 1 transfers call, and the
-daily cap is 100:
-```
-php artisan sport:sync-transfers --country=england --limit=10
-```
-At ~6.5s per call that batch takes a couple of minutes; that is the throttle
-doing its job, not a hang.
+No migration — reuses the existing `tools` table.
 
-## Note on the daily quota
-100 requests/day means roughly 45-50 teams per day on the first pass (lookup +
-transfers each), and about 100 on later passes since ids are cached on the team
-row. Spread countries across days, or run it from the scheduler.
+## Notes
+- Three of the four tools run entirely in the browser; only the notes organiser
+  makes a server call, and only when the visitor presses the button.
+- The AI tool needs the Gemini key (Admin → Sport → Settings → Gemini). Without
+  it the tool answers with a clear "not configured" message instead of failing.
+- The rate limit is per IP per hour and lives in ToolAiController; raise it there
+  if the tool proves popular.
+- Deliberately not included: a video downloader. It breaks YouTube's terms,
+  attracts DMCA complaints, is rejected by ad networks, and is a common reason
+  for shared hosts to suspend an account — a real risk to the whole domain.

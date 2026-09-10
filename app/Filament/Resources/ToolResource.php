@@ -37,6 +37,7 @@ class ToolResource extends Resource
                     'tests'    => 'Tests',
                     'planning' => 'Planning',
                     'math'     => 'Mathematics',
+                    'video'    => 'Video & lectures',
                     'other'    => 'Other',
                 ])
                 ->default('grades')
