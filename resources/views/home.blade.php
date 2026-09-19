@@ -40,6 +40,35 @@
         </section>
     @endif
 
+    {{-- Sport is region-independent too (/{language}/sport): a club belongs to
+         its own country, which is already in the URL. One block for the whole
+         site instead of the same three links repeated in every region card. --}}
+    @if ($languages->isNotEmpty())
+        @php($sportLanguage = $languages->first())
+
+        <section class="home-section">
+            <h2>{{ __('sport.sports') }}</h2>
+            <p class="lead">{{ __('sport.tagline') }}</p>
+            <ul class="chip-list">
+                <li>
+                    <a class="chip" href="{{ route('sport.index', [$sportLanguage]) }}">
+                        {{ __('sport.sports') }}
+                    </a>
+                </li>
+                <li>
+                    <a class="chip" href="{{ route('sport.news.index', [$sportLanguage]) }}">
+                        {{ __('sport.sports_news') }}
+                    </a>
+                </li>
+                <li>
+                    <a class="chip" href="{{ route('sport.football.countries', [$sportLanguage]) }}">
+                        {{ __('sport.football') }}
+                    </a>
+                </li>
+            </ul>
+        </section>
+    @endif
+
     {{-- Regions: each region links to every available language (crawlable hub),
          plus a direct shortcut into each industry so visitors can skip
          straight past the language-picker step if they don't need it. --}}
@@ -60,30 +89,6 @@
                     </ul>
 
                     @php($extra = $regionExtras[$region->id] ?? null)
-                    @php($sportLang = $extra['linkLanguage'] ?? $region->languages->first())
-
-                    @if ($sportLang)
-                        <div class="region-card-industries">
-                            <p class="mini-eyebrow">{{ __('sport.sports') }}</p>
-                            <ul class="chip-list">
-                                <li>
-                                    <a class="chip" href="{{ route('sport.index', [$region, $sportLang]) }}">
-                                        {{ __('sport.sports') }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="chip" href="{{ route('sport.news.index', [$region, $sportLang]) }}">
-                                        {{ __('sport.sports_news') }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="chip" href="{{ route('sport.football.countries', [$region, $sportLang]) }}">
-                                        {{ __('sport.football') }}
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    @endif
 
                     @if ($extra && ($extra['verticals']->isNotEmpty() || $extra['businessCount'] > 0))
                         {{-- Real WordPress-imported content for this region --}}

@@ -19,7 +19,7 @@
         <div class="category-grid">
             @forelse ($teams as $team)
                 <a class="category-tile team-tile"
-                   href="{{ route('sport.team', [$currentRegion, $currentLanguage, $country, $team]) }}">
+                   href="{{ route('sport.team', [$currentLanguage, $country, $team]) }}">
                     @if ($team->logo_url)
                         <img src="{{ $team->logo_url }}" alt="" width="28" height="28" loading="lazy">
                     @endif

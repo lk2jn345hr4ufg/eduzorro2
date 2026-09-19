@@ -47,4 +47,5 @@ return [
     'season' => 'Season',
     'all_matches' => 'All matches',
     'calendar_hint' => 'Pick a day to see its matches. Click again to clear.',
+    'tagline' => 'Football clubs, fixtures, standings and news',
 ];

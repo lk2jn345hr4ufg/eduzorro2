@@ -19,7 +19,7 @@
         <div class="category-grid">
             @forelse ($countries as $country)
                 <a class="category-tile"
-                   href="{{ route('sport.football.country', [$currentRegion, $currentLanguage, $country]) }}">
+                   href="{{ route('sport.football.country', [$currentLanguage, $country]) }}">
                     {{ $country->translate('name') }}
                     <small>{{ $country->teams_count }} {{ __('sport.teams_count') }}</small>
                 </a>

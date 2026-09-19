@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Fixture;
 use App\Models\Language;
-use App\Models\Region;
 use App\Models\SportCountry;
 use App\Models\Standing;
 use App\Models\Team;
@@ -16,7 +15,6 @@ class TeamController extends Controller
     public const TABS = ['news', 'fixtures', 'euro-cups', 'transfers', 'standings'];
 
     public function show(
-        Region $region,
         Language $language,
         SportCountry $country,
         Team $team,
@@ -30,10 +28,10 @@ class TeamController extends Controller
         $data   = $this->tabData($tab, $team, $api, $season);
 
         $breadcrumbs = [
-            ['label' => __('messages.home'), 'url' => route('region.home', [$region, $language])],
-            ['label' => __('sport.sports'), 'url' => route('sport.index', [$region, $language])],
-            ['label' => __('sport.football'), 'url' => route('sport.football.countries', [$region, $language])],
-            ['label' => $country->translate('name'), 'url' => route('sport.football.country', [$region, $language, $country])],
+            ['label' => __('messages.home'), 'url' => route('home')],
+            ['label' => __('sport.sports'), 'url' => route('sport.index', [$language])],
+            ['label' => __('sport.football'), 'url' => route('sport.football.countries', [$language])],
+            ['label' => $country->translate('name'), 'url' => route('sport.football.country', [$language, $country])],
             ['label' => $team->translate('name')],
         ];
 

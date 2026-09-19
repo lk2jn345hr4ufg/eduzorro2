@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Language;
-use App\Models\Region;
 use App\Models\TeamNews;
 
 class SportNewsController extends Controller
 {
-    /** /{region}/{lang}/sport/news — all sports news, newest first. */
-    public function index(Region $region, Language $language)
+    /** /{language}/sport/news — all sports news, newest first. */
+    public function index(Language $language)
     {
         $news = TeamNews::query()
             ->active()->published()
@@ -18,16 +17,16 @@ class SportNewsController extends Controller
             ->paginate(24);
 
         $breadcrumbs = [
-            ['label' => __('messages.home'), 'url' => route('region.home', [$region, $language])],
-            ['label' => __('sport.sports'), 'url' => route('sport.index', [$region, $language])],
+            ['label' => __('messages.home'), 'url' => route('home')],
+            ['label' => __('sport.sports'), 'url' => route('sport.index', [$language])],
             ['label' => __('sport.sports_news')],
         ];
 
         return view('sport.news.index', compact('news', 'breadcrumbs'));
     }
 
-    /** /{region}/{lang}/sport/news/{news} — a single article. */
-    public function show(Region $region, Language $language, TeamNews $news)
+    /** /{language}/sport/news/{news} — a single article. */
+    public function show(Language $language, TeamNews $news)
     {
         abort_unless($news->is_active && $news->published_at && $news->published_at <= now(), 404);
 
@@ -44,9 +43,9 @@ class SportNewsController extends Controller
             ->get();
 
         $breadcrumbs = [
-            ['label' => __('messages.home'), 'url' => route('region.home', [$region, $language])],
-            ['label' => __('sport.sports'), 'url' => route('sport.index', [$region, $language])],
-            ['label' => __('sport.sports_news'), 'url' => route('sport.news.index', [$region, $language])],
+            ['label' => __('messages.home'), 'url' => route('home')],
+            ['label' => __('sport.sports'), 'url' => route('sport.index', [$language])],
+            ['label' => __('sport.sports_news'), 'url' => route('sport.news.index', [$language])],
             ['label' => $news->translate('title')],
         ];
 

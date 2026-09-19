@@ -1,57 +1,60 @@
-# Custom meta tags per team tab
+# Sport moves to language-only URLs
 
-A team's five pages — News, Fixtures, European cups, Transfers, Standings — are
-all driven by one `Team` record, so until now they shared a single title and
-description. Five URLs with identical tags is exactly what search engines treat
-as duplicates. This gives each tab its own.
+The sport section no longer carries the visitor's region. A club belongs to its
+own country, which is already a segment of the URL, so the region added nothing
+but a duplicate copy of identical content for every region.
 
-## Two levels, so you don't edit 100 teams by hand
-
-**1. Global templates — SEO → Meta tags**
-Five new tabs: Team · News, Team · Fixtures, Team · European cups,
-Team · Transfers, Team · Standings. Each takes a title and description per
-language, with placeholders filled in per team:
-
-- `{team}` — team name
-- `{country}` — country name
-- `{site}` — site name
-- `{tab}` — translated tab name
-
-Example for the Fixtures tab (RU):
 ```
-Title:       {team} — расписание матчей {country} | {site}
-Description: Календарь игр {team}: ближайшие матчи, результаты и турниры сезона.
+before:  https://eduzorro.com/ukraine/ru/sport/football/england/liverpool/standings
+after:   https://eduzorro.com/ru/sport/football/england/liverpool/standings
 ```
-One entry covers every team.
 
-**2. Per-team override — Teams → edit → "SEO per tab"**
-A collapsed section with a tab per page and a language tab inside, for the cases
-where one club needs wording of its own.
+Every old URL 301-redirects to the new one, so indexed links and any external
+links keep working.
 
-## Resolution order
-per-team tab override → team-wide SEO → global tab template → generated default.
-Anything left empty simply falls through, so partial edits are safe.
+## Why this matters beyond tidiness
+With N regions, each team page existed N times over with the same content. Those
+were competing duplicates in search. Now there is exactly one canonical URL per
+language, and the hreflang alternates still work because they key off the
+`{language}` parameter.
+
+## What changed
+- **routes/web.php** — the eight sport routes moved into the language-only
+  group (`/{language}/sport/...`), which already hosts the tools. Eight legacy
+  routes in the region group now issue 301s.
+  Parameters are written without an explicit key (`{team}`, not `{team:slug}`):
+  the models declare `getRouteKeyName() = 'slug'`, and an explicit key after
+  another bound parameter makes Laravel try to scope the child through a
+  relationship that does not exist — the exact crash the tools pages hit.
+- **Controllers** — `SportController`, `FootballController`, `SportNewsController`
+  and `TeamController` no longer take a `Region`; breadcrumbs point at the global
+  home instead of the region home.
+- **Views** — every `route('sport.*', [$currentRegion, ...])` call dropped the
+  region argument.
+- **sport/index.blade.php** — its title used the region name, which is no longer
+  shared on these pages; it now uses a new `sport.tagline` string.
+- **home.blade.php** — the three sport chips moved out of the region cards into
+  one standalone section, for the same reason the tools link did: the URL is the
+  same for every region, so repeating it per card was noise.
 
 ## Files (extract over project root, keep paths)
-- database/migrations/2025_08_06_000015_add_meta_tabs_to_teams.php (new)
-- config/seo_pages.php                       (modified: 5 team tab entries)
-- app/Support/Seo.php                        (modified: placeholder substitution)
-- app/Models/Team.php                        (modified: meta_tabs cast + tabMeta())
-- app/Filament/Resources/TeamResource.php    (modified: "SEO per tab" section)
-- resources/views/sport/team.blade.php       (modified: resolution chain)
+- routes/web.php
+- app/Http/Controllers/{Sport,Football,SportNews,Team}Controller.php
+- resources/views/sport/**  (index, show, countries, teams, team, news/*, partials/*)
+- resources/views/home.blade.php, region-language.blade.php
+- lang/{en,uk,ru,es}/sport.php  (new `tagline` string)
 
-Requires the two earlier SEO packages (seo-meta-editing, seo-meta-page).
+No migration.
 
 ## Apply — local
 ```
-unzip -o ~/Downloads/seo-team-tabs.zip -d /tmp/seo3-unzip
-cp -a /tmp/seo3-unzip/seo-team-tabs/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/seo3-unzip
+unzip -o ~/Downloads/sport-language-url.zip -d /tmp/sporturl-unzip
+cp -a /tmp/sporturl-unzip/sport-language-url/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/sporturl-unzip
 cd /Users/olegmishyn/HERD/eduzorro
-php artisan migrate
 php artisan optimize:clear
 git add .
-git commit -m "Add per-tab meta tags for team pages"
+git commit -m "Move sport section to language-only URLs with 301s"
 git push
 ```
 
@@ -59,19 +62,19 @@ git push
 ```
 cd ~/laravel-app
 git pull origin main
-php artisan migrate --force
 php artisan optimize:clear
 ```
 
 ## Check
-Open the five Liverpool URLs and compare `<title>`:
 ```
-curl -s https://eduzorro.com/ukraine/ru/sport/football/england/liverpool | grep -o '<title>[^<]*</title>'
-curl -s https://eduzorro.com/ukraine/ru/sport/football/england/liverpool/fixtures | grep -o '<title>[^<]*</title>'
+curl -sI https://eduzorro.com/ukraine/ru/sport/football/england/liverpool/standings | head -3
+# expect 301 -> /ru/sport/football/england/liverpool/standings
+
+curl -sI https://eduzorro.com/ru/sport/football/england/liverpool/standings | head -3
+# expect 200
 ```
-They should now differ.
 
 ## Note
-The same pattern works for any other multi-tab page later: add an entry to
-config/seo_pages.php and call
-`Seo::pageMeta('key', 'title', $default, ['team' => ..., 'country' => ...])`.
+The per-tab meta templates from the previous package are unaffected — they key
+off the tab name, not the region. Worth re-checking the five Liverpool titles
+after this deploy to confirm they are still distinct.

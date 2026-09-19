@@ -47,4 +47,5 @@ return [
     'season' => 'Temporada',
     'all_matches' => 'Todos los partidos',
     'calendar_hint' => 'Elige un día para ver sus partidos. Púlsalo de nuevo para limpiar.',
+    'tagline' => 'Clubes de fútbol, calendario, clasificaciones y noticias',
 ];

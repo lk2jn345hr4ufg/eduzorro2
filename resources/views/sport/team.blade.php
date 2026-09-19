@@ -48,8 +48,8 @@
         @foreach ($tabs as $t)
             <a class="team-tab {{ $t === $tab ? 'is-active' : '' }}"
                href="{{ $t === 'news'
-                    ? route('sport.team', [$currentRegion, $currentLanguage, $country, $team])
-                    : route('sport.team.tab', [$currentRegion, $currentLanguage, $country, $team, $t]) }}">
+                    ? route('sport.team', [$currentLanguage, $country, $team])
+                    : route('sport.team.tab', [$currentLanguage, $country, $team, $t]) }}">
                 {{ __('sport.' . str_replace('-', '_', $t)) }}
             </a>
         @endforeach

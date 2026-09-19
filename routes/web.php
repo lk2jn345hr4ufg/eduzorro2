@@ -54,6 +54,27 @@ Route::prefix('{language:code}')
         // typed themselves, nothing is fetched from third-party services).
         Route::post('/tools/video-notes/generate', [ToolAiController::class, 'videoNotes'])
             ->name('tools.video-notes.generate');
+
+        /*
+         * Sport lives here too: a club belongs to its own country (england,
+         * spain...), which is already a segment of the URL, so the visitor's
+         * region added nothing but duplicate URLs for identical content.
+         *
+         * Parameters are written without an explicit key ({team}, not
+         * {team:slug}): the models declare getRouteKeyName() = 'slug', and an
+         * explicit key after another bound parameter would make Laravel try to
+         * scope the child through a relationship that doesn't exist.
+         */
+        Route::get('/sport', [SportController::class, 'index'])->name('sport.index');
+        Route::get('/sport/news', [SportNewsController::class, 'index'])->name('sport.news.index');
+        Route::get('/sport/news/{news}', [SportNewsController::class, 'show'])->name('sport.news.show');
+        Route::get('/sport/football', [FootballController::class, 'countries'])->name('sport.football.countries');
+        Route::get('/sport/football/{country}', [FootballController::class, 'teams'])->name('sport.football.country');
+        Route::get('/sport/football/{country}/{team}', [TeamController::class, 'show'])->name('sport.team');
+        Route::get('/sport/football/{country}/{team}/{tab}', [TeamController::class, 'show'])
+            ->whereIn('tab', TeamController::TABS)
+            ->name('sport.team.tab');
+        Route::get('/sport/{sport}', [SportController::class, 'show'])->name('sport.show');
     });
 
 Route::prefix('{region:slug}/{language:code}')
@@ -81,22 +102,34 @@ Route::prefix('{region:slug}/{language:code}')
         Route::get('/businesses/{business:slug}', [BusinessController::class, 'show'])->name('business.show');
 
         /*
-         * Sport section. Football has a deep hierarchy
-         * (countries → teams → team hub with tabs); other sports are just
-         * listed. Registered before the /{industry} wildcard so the literal
-         * "sport" prefix wins route matching. Team tabs are constrained to a
-         * known set so slugs can't leak into the {tab} segment.
+         * Legacy region-scoped sport URLs. The sport section moved to
+         * /{language}/sport (a club belongs to a country, not to a visitor's
+         * region), so these 301 to the new location and keep indexed links alive.
          */
-        Route::get('/sport', [SportController::class, 'index'])->name('sport.index');
-        Route::get('/sport/news', [SportNewsController::class, 'index'])->name('sport.news.index');
-        Route::get('/sport/news/{news:slug}', [SportNewsController::class, 'show'])->name('sport.news.show');
-        Route::get('/sport/football', [FootballController::class, 'countries'])->name('sport.football.countries');
-        Route::get('/sport/football/{country:slug}', [FootballController::class, 'teams'])->name('sport.football.country');
-        Route::get('/sport/football/{country:slug}/{team:slug}', [TeamController::class, 'show'])->name('sport.team');
-        Route::get('/sport/football/{country:slug}/{team:slug}/{tab}', [TeamController::class, 'show'])
+        Route::get('/sport', fn ($region, $language) => redirect()->route('sport.index', [$language], 301))
+            ->name('sport.index.legacy');
+
+        Route::get('/sport/news', fn ($region, $language) => redirect()->route('sport.news.index', [$language], 301))
+            ->name('sport.news.index.legacy');
+
+        Route::get('/sport/news/{news}', fn ($region, $language, $news) => redirect()->route('sport.news.show', [$language, $news], 301))
+            ->name('sport.news.show.legacy');
+
+        Route::get('/sport/football', fn ($region, $language) => redirect()->route('sport.football.countries', [$language], 301))
+            ->name('sport.football.countries.legacy');
+
+        Route::get('/sport/football/{country}', fn ($region, $language, $country) => redirect()->route('sport.football.country', [$language, $country], 301))
+            ->name('sport.football.country.legacy');
+
+        Route::get('/sport/football/{country}/{team}', fn ($region, $language, $country, $team) => redirect()->route('sport.team', [$language, $country, $team], 301))
+            ->name('sport.team.legacy');
+
+        Route::get('/sport/football/{country}/{team}/{tab}', fn ($region, $language, $country, $team, $tab) => redirect()->route('sport.team.tab', [$language, $country, $team, $tab], 301))
             ->whereIn('tab', TeamController::TABS)
-            ->name('sport.team.tab');
-        Route::get('/sport/{sport:slug}', [SportController::class, 'show'])->name('sport.show');
+            ->name('sport.team.tab.legacy');
+
+        Route::get('/sport/{sport}', fn ($region, $language, $sport) => redirect()->route('sport.show', [$language, $sport], 301))
+            ->name('sport.show.legacy');
 
         /*
          * Legacy region-scoped tool URLs. Tools moved to /{language}/tools,

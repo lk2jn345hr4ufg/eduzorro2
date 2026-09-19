@@ -17,7 +17,7 @@
             <h1>{{ $title }}</h1>
             <p class="lead">
                 @if ($team)
-                    <a href="{{ route('sport.team', [$currentRegion, $currentLanguage, $team->country, $team]) }}">
+                    <a href="{{ route('sport.team', [$currentLanguage, $team->country, $team]) }}">
                         {{ $team->translate('name') }}
                     </a>
                 @endif
@@ -50,7 +50,7 @@
             </p>
         @endif
 
-        <p><a href="{{ route('sport.news.index', [$currentRegion, $currentLanguage]) }}">← {{ __('sport.back_to_news') }}</a></p>
+        <p><a href="{{ route('sport.news.index', [$currentLanguage]) }}">← {{ __('sport.back_to_news') }}</a></p>
     </article>
 
     @if ($related->isNotEmpty())
@@ -59,7 +59,7 @@
             <ul class="link-list">
                 @foreach ($related as $item)
                     <li>
-                        <a href="{{ route('sport.news.show', [$currentRegion, $currentLanguage, $item]) }}">
+                        <a href="{{ route('sport.news.show', [$currentLanguage, $item]) }}">
                             {{ $item->translate('title') }}
                         </a>
                     </li>

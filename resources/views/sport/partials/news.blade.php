@@ -5,13 +5,13 @@
         @foreach ($news as $item)
             <article class="news-item">
                 @if ($item->image_url)
-                    <a href="{{ route('sport.news.show', [$currentRegion, $currentLanguage, $item]) }}">
+                    <a href="{{ route('sport.news.show', [$currentLanguage, $item]) }}">
                         <img src="{{ $item->image_url }}" alt="" loading="lazy">
                     </a>
                 @endif
                 <div>
                     <h3>
-                        <a href="{{ route('sport.news.show', [$currentRegion, $currentLanguage, $item]) }}">
+                        <a href="{{ route('sport.news.show', [$currentLanguage, $item]) }}">
                             {{ $item->translate('title') }}
                         </a>
                     </h3>

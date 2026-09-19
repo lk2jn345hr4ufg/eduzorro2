@@ -23,19 +23,19 @@
                 @foreach ($news as $item)
                     <article class="news-item">
                         @if ($item->image_url)
-                            <a href="{{ route('sport.news.show', [$currentRegion, $currentLanguage, $item]) }}">
+                            <a href="{{ route('sport.news.show', [$currentLanguage, $item]) }}">
                                 <img src="{{ $item->image_url }}" alt="" loading="lazy">
                             </a>
                         @endif
                         <div>
                             <h3>
-                                <a href="{{ route('sport.news.show', [$currentRegion, $currentLanguage, $item]) }}">
+                                <a href="{{ route('sport.news.show', [$currentLanguage, $item]) }}">
                                     {{ $item->translate('title') }}
                                 </a>
                             </h3>
                             <p class="news-feed-meta">
                                 @if ($item->team)
-                                    <a href="{{ route('sport.team', [$currentRegion, $currentLanguage, $item->team->country, $item->team]) }}">
+                                    <a href="{{ route('sport.team', [$currentLanguage, $item->team->country, $item->team]) }}">
                                         {{ $item->team->translate('name') }}
                                     </a>
                                 @endif
