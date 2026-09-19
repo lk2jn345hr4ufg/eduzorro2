@@ -6,8 +6,26 @@
 
 @php($teamName = $team->translate('name'))
 
-@section('title', $team->metaTitle($teamName . ' · ' . __('sport.' . str_replace('-', '_', $tab)) . ' · ' . __('messages.site_name')))
-@section('meta_description', $team->metaDescription($teamName . ' — ' . $country->translate('name')))
+@php($tabKey = str_replace('-', '_', $tab))
+@php($countryName = $country->translate('name'))
+@php($tokens = ['team' => $teamName, 'country' => $countryName, 'site' => __('messages.site_name'), 'tab' => __('sport.' . $tabKey)])
+
+{{-- Each of the five team tabs is its own URL, so the tags resolve in order:
+     this team's per-tab override → the team-wide override → the global
+     per-tab template (SEO → Meta tags) → the generated default. --}}
+@php($defaultTitle = \App\Support\Seo::pageMeta(
+    'team_' . $tabKey, 'title',
+    $teamName . ' · ' . __('sport.' . $tabKey) . ' · ' . __('messages.site_name'),
+    $tokens
+))
+@php($defaultDescription = \App\Support\Seo::pageMeta(
+    'team_' . $tabKey, 'description',
+    $teamName . ' — ' . $countryName,
+    $tokens
+))
+
+@section('title', $team->tabMeta($tab, 'title', $defaultTitle))
+@section('meta_description', $team->tabMeta($tab, 'description', $defaultDescription))
 
 @section('content')
     @include('partials.breadcrumbs')

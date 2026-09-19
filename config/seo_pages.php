@@ -38,4 +38,30 @@ return [
         'label'  => 'Football countries',
         'sample' => '/{region}/{language}/sport/football',
     ],
+    /*
+     | Team tabs. One Team record powers five URLs, so without separate
+     | templates all five would share one title. Placeholders: {team},
+     | {country}, {site}. A per-team override (Teams → SEO per tab) beats
+     | these templates when it is filled in.
+     */
+    'team_news' => [
+        'label'  => 'Team · News',
+        'sample' => '/…/sport/football/{country}/{team}',
+    ],
+    'team_fixtures' => [
+        'label'  => 'Team · Fixtures',
+        'sample' => '/…/{team}/fixtures',
+    ],
+    'team_euro_cups' => [
+        'label'  => 'Team · European cups',
+        'sample' => '/…/{team}/euro-cups',
+    ],
+    'team_transfers' => [
+        'label'  => 'Team · Transfers',
+        'sample' => '/…/{team}/transfers',
+    ],
+    'team_standings' => [
+        'label'  => 'Team · Standings',
+        'sample' => '/…/{team}/standings',
+    ],
 ];

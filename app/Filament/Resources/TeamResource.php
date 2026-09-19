@@ -53,6 +53,35 @@ class TeamResource extends Resource
             Toggle::make('is_active')->default(true),
         
             SeoFields::make(),
+            \Filament\Forms\Components\Section::make('SEO per tab')
+                ->description('Optional. Each team page has five tabs sharing one record, so these let every URL carry its own tags. Empty fields fall back to the team SEO above, then to the global templates in SEO → Meta tags.')
+                ->collapsed()
+                ->schema([
+                    \Filament\Forms\Components\Tabs::make('meta_tabs_tabs')
+                        ->columnSpanFull()
+                        ->tabs(collect([
+                            'news'      => 'News',
+                            'fixtures'  => 'Fixtures',
+                            'euro_cups' => 'European cups',
+                            'transfers' => 'Transfers',
+                            'standings' => 'Standings',
+                        ])->map(fn ($label, $tab) => \Filament\Forms\Components\Tabs\Tab::make($label)
+                            ->schema([
+                                \Filament\Forms\Components\Tabs::make($tab.'_langs')
+                                    ->columnSpanFull()
+                                    ->tabs(
+                                        \App\Models\Language::query()->orderBy('sort_order')->orderBy('code')->get()
+                                            ->map(fn ($language) => \Filament\Forms\Components\Tabs\Tab::make(strtoupper($language->code))
+                                                ->schema([
+                                                    TextInput::make("meta_tabs.{$tab}.title.{$language->code}")
+                                                        ->label('Meta title')->maxLength(255),
+                                                    \Filament\Forms\Components\Textarea::make("meta_tabs.{$tab}.description.{$language->code}")
+                                                        ->label('Meta description')->rows(3)->maxLength(500),
+                                                ]))->all()
+                                    ),
+                            ]))->values()->all()),
+                ]),
+
         ]);
     }
 

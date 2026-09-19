@@ -20,7 +20,7 @@ class Seo
      * {"title": {"en": "...", "uk": "..."}, "description": {...}} and are
      * optional: an empty value returns the fallback the view already built.
      */
-    public static function pageMeta(string $key, string $field, ?string $fallback = null): ?string
+    public static function pageMeta(string $key, string $field, ?string $fallback = null, array $replace = []): ?string
     {
         static $cache = [];
 
@@ -32,7 +32,19 @@ class Seo
         $locale = app()->getLocale();
         $value  = data_get($cache[$key], $field.'.'.$locale);
 
-        return (is_string($value) && trim($value) !== '') ? trim($value) : $fallback;
+        if (! is_string($value) || trim($value) === '') {
+            return $fallback;
+        }
+
+        $value = trim($value);
+
+        // Templates may use {team}, {country}, {site}... so one stored string
+        // can serve every team instead of needing a row per record.
+        foreach ($replace as $token => $replacement) {
+            $value = str_replace('{'.$token.'}', (string) $replacement, $value);
+        }
+
+        return $value;
     }
     /**
      * Build hreflang alternates for the CURRENT route by swapping the {language}

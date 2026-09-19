@@ -1,62 +1,57 @@
-# SEO screen in the admin: meta tags for static pages
+# Custom meta tags per team tab
 
-Adds a dedicated **SEO → Meta tags** screen where you edit the title and
-description of pages that have no database record of their own — the ones the
-previous package could not cover because their text came from language files.
+A team's five pages — News, Fixtures, European cups, Transfers, Standings — are
+all driven by one `Team` record, so until now they shared a single title and
+description. Five URLs with identical tags is exactly what search engines treat
+as duplicates. This gives each tab its own.
 
-## Pages covered here
-- Home page (global `/`)
-- Region home (`/{region}/{language}`)
-- Study tools landing (`/{language}/tools`)
-- Sport section (`/{region}/{language}/sport`)
-- Sports news feed (`/{region}/{language}/sport/news`)
-- Football countries (`/{region}/{language}/sport/football`)
+## Two levels, so you don't edit 100 teams by hand
 
-Each page gets a tab, and inside it a tab per active language with Meta title
-and Meta description.
+**1. Global templates — SEO → Meta tags**
+Five new tabs: Team · News, Team · Fixtures, Team · European cups,
+Team · Transfers, Team · Standings. Each takes a title and description per
+language, with placeholders filled in per team:
 
-## How it fits with the per-record SEO section
-Two places, no overlap:
-- **SEO → Meta tags** (this screen): pages without a record.
-- **SEO section inside a resource form**: regions, industries, categories,
-  sports, countries, teams, study tools, team news.
+- `{team}` — team name
+- `{country}` — country name
+- `{site}` — site name
+- `{tab}` — translated tab name
 
-On the region home both apply, in a sensible order: the region's own override
-wins, and this screen's value is the default for regions that have none.
+Example for the Fixtures tab (RU):
+```
+Title:       {team} — расписание матчей {country} | {site}
+Description: Календарь игр {team}: ближайшие матчи, результаты и турниры сезона.
+```
+One entry covers every team.
 
-## Behaviour
-- Empty field = keep the generated tag. Nothing changes until you type something.
-- Values are stored in the existing `settings` table as JSON per page, so there
-  is **no migration** and saving takes effect immediately.
-- Saving strips blank locales rather than storing empty strings, so a partially
-  filled page never ends up with a blank `<title>`.
-- Overrides feed the Open Graph tags too, since `og:title` / `og:description`
-  reuse the same Blade sections.
+**2. Per-team override — Teams → edit → "SEO per tab"**
+A collapsed section with a tab per page and a language tab inside, for the cases
+where one club needs wording of its own.
+
+## Resolution order
+per-team tab override → team-wide SEO → global tab template → generated default.
+Anything left empty simply falls through, so partial edits are safe.
 
 ## Files (extract over project root, keep paths)
-- config/seo_pages.php                              (new: the page registry)
-- app/Filament/Pages/SeoMeta.php                    (new: the admin screen)
-- resources/views/filament/pages/seo-meta.blade.php (new)
-- app/Support/Seo.php                               (modified: pageMeta() helper)
-- resources/views/home.blade.php                    (modified)
-- resources/views/region-language.blade.php         (modified)
-- resources/views/tools/index.blade.php             (modified)
-- resources/views/sport/index.blade.php             (modified)
-- resources/views/sport/countries.blade.php         (modified)
-- resources/views/sport/news/index.blade.php        (modified)
+- database/migrations/2025_08_06_000015_add_meta_tabs_to_teams.php (new)
+- config/seo_pages.php                       (modified: 5 team tab entries)
+- app/Support/Seo.php                        (modified: placeholder substitution)
+- app/Models/Team.php                        (modified: meta_tabs cast + tabMeta())
+- app/Filament/Resources/TeamResource.php    (modified: "SEO per tab" section)
+- resources/views/sport/team.blade.php       (modified: resolution chain)
 
-Requires the previous package (seo-meta-editing) for the region override on the
-region home; everything else here works standalone.
+Requires the two earlier SEO packages (seo-meta-editing, seo-meta-page).
 
 ## Apply — local
 ```
-unzip -o ~/Downloads/seo-meta-page.zip -d /tmp/seo2-unzip
-cp -a /tmp/seo2-unzip/seo-meta-page/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/seo2-unzip
+unzip -o ~/Downloads/seo-team-tabs.zip -d /tmp/seo3-unzip
+cp -a /tmp/seo3-unzip/seo-team-tabs/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/seo3-unzip
 cd /Users/olegmishyn/HERD/eduzorro
+php artisan migrate
 php artisan optimize:clear
 git add .
-git commit -m "Add admin screen for editing meta tags of static pages"
+git commit -m "Add per-tab meta tags for team pages"
 git push
 ```
 
@@ -64,15 +59,19 @@ git push
 ```
 cd ~/laravel-app
 git pull origin main
+php artisan migrate --force
 php artisan optimize:clear
 ```
 
-Then open /admin → SEO → Meta tags. The page is auto-discovered, nothing to
-register.
-
-## Adding another page later
-Add an entry to `config/seo_pages.php` and use it in the view:
-```blade
-@section('title', \App\Support\Seo::pageMeta('my_key', 'title', 'generated default'))
+## Check
+Open the five Liverpool URLs and compare `<title>`:
 ```
-It appears on the admin screen automatically.
+curl -s https://eduzorro.com/ukraine/ru/sport/football/england/liverpool | grep -o '<title>[^<]*</title>'
+curl -s https://eduzorro.com/ukraine/ru/sport/football/england/liverpool/fixtures | grep -o '<title>[^<]*</title>'
+```
+They should now differ.
+
+## Note
+The same pattern works for any other multi-tab page later: add an entry to
+config/seo_pages.php and call
+`Seo::pageMeta('key', 'title', $default, ['team' => ..., 'country' => ...])`.

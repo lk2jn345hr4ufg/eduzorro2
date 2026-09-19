@@ -14,6 +14,7 @@ class Team extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'meta_tabs'        => 'array',
         'meta_title'       => 'array',
         'meta_description' => 'array',
         'name'        => 'array',
@@ -49,5 +50,23 @@ class Team extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order')->orderBy('id');
+    }
+
+    /**
+     * Per-tab meta override for this team, e.g. tabMeta('fixtures', 'title').
+     * Falls back to the team-wide override, then to whatever the caller passes.
+     */
+    public function tabMeta(string $tab, string $field, ?string $fallback = null): ?string
+    {
+        $key   = str_replace('-', '_', $tab);
+        $value = data_get($this->meta_tabs, $key.'.'.$field.'.'.app()->getLocale());
+
+        if (is_string($value) && trim($value) !== '') {
+            return trim($value);
+        }
+
+        return $field === 'title'
+            ? $this->metaTitle($fallback)
+            : $this->metaDescription($fallback);
     }
 }
