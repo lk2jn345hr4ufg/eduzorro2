@@ -9,8 +9,8 @@
     $categories = $tools->keys();
 @endphp
 
-@section('title', __('tools.tools') . ' · ' . __('messages.site_name'))
-@section('meta_description', __('tools.tagline'))
+@section('title', \App\Support\Seo::pageMeta('tools_index', 'title', __('tools.tools') . ' · ' . __('messages.site_name')))
+@section('meta_description', \App\Support\Seo::pageMeta('tools_index', 'description', __('tools.tagline')))
 
 @section('content')
     @include('partials.breadcrumbs')

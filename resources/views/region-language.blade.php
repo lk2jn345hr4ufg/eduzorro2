@@ -2,8 +2,8 @@
 
 @php($regionName = $currentRegion->translate('name'))
 
-@section('title', $currentRegion->metaTitle(__('messages.site_name') . ' · ' . $regionName))
-@section('meta_description', $currentRegion->metaDescription(__('messages.tagline') . ' — ' . $regionName))
+@section('title', $currentRegion->metaTitle(\App\Support\Seo::pageMeta('region_home', 'title', __('messages.site_name') . ' · ' . $regionName)))
+@section('meta_description', $currentRegion->metaDescription(\App\Support\Seo::pageMeta('region_home', 'description', __('messages.tagline') . ' — ' . $regionName)))
 
 @section('content')
     <section class="hero hero-compact">

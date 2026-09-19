@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', __('messages.site_name') . ' — ' . __('messages.tagline'))
-@section('meta_description', __('messages.tagline'))
+@section('title', \App\Support\Seo::pageMeta('home', 'title', __('messages.site_name') . ' — ' . __('messages.tagline')))
+@section('meta_description', \App\Support\Seo::pageMeta('home', 'description', __('messages.tagline')))
 
 @section('content')
     <section class="hero">

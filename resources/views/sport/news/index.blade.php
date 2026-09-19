@@ -4,8 +4,8 @@
     <link rel="stylesheet" href="{{ asset('css/sport.css') }}">
 @endpush
 
-@section('title', __('sport.sports_news') . ' · ' . __('messages.site_name'))
-@section('meta_description', __('sport.latest_news'))
+@section('title', \App\Support\Seo::pageMeta('sport_news', 'title', __('sport.sports_news') . ' · ' . __('messages.site_name')))
+@section('meta_description', \App\Support\Seo::pageMeta('sport_news', 'description', __('sport.latest_news')))
 
 @section('content')
     @include('partials.breadcrumbs')

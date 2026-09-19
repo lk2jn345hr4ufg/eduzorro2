@@ -1,53 +1,62 @@
-# Editable meta tags in the admin
+# SEO screen in the admin: meta tags for static pages
 
-Adds an optional per-page **SEO** section to the admin, where you can override
-the `<title>` and `<meta name="description">` for individual records, in every
-site language.
+Adds a dedicated **SEO → Meta tags** screen where you edit the title and
+description of pages that have no database record of their own — the ones the
+previous package could not cover because their text came from language files.
 
-## Where it appears
-A collapsed "SEO" section at the bottom of the edit form for:
+## Pages covered here
+- Home page (global `/`)
+- Region home (`/{region}/{language}`)
+- Study tools landing (`/{language}/tools`)
+- Sport section (`/{region}/{language}/sport`)
+- Sports news feed (`/{region}/{language}/sport/news`)
+- Football countries (`/{region}/{language}/sport/football`)
 
-- Regions
-- Industries
-- Categories
-- Sports
-- Countries (sport)
-- Teams
-- Study tools
-- Team news
+Each page gets a tab, and inside it a tab per active language with Meta title
+and Meta description.
 
-Each has a tab per active language for **Meta title** and **Meta description**.
+## How it fits with the per-record SEO section
+Two places, no overlap:
+- **SEO → Meta tags** (this screen): pages without a record.
+- **SEO section inside a resource form**: regions, industries, categories,
+  sports, countries, teams, study tools, team news.
 
-## How it behaves
-- Both fields are **optional overrides**. Left empty, the page keeps the title
-  and description it already generates from its own content — so installing this
-  changes nothing visible until someone fills a field in.
-- Overrides are per language: filling only the Russian meta title leaves the
-  other languages on their generated values.
-- The override also feeds the Open Graph tags, since `og:title` and
-  `og:description` reuse the same sections in the layout.
+On the region home both apply, in a sensible order: the region's own override
+wins, and this screen's value is the default for regions that have none.
+
+## Behaviour
+- Empty field = keep the generated tag. Nothing changes until you type something.
+- Values are stored in the existing `settings` table as JSON per page, so there
+  is **no migration** and saving takes effect immediately.
+- Saving strips blank locales rather than storing empty strings, so a partially
+  filled page never ends up with a blank `<title>`.
+- Overrides feed the Open Graph tags too, since `og:title` / `og:description`
+  reuse the same Blade sections.
 
 ## Files (extract over project root, keep paths)
-- database/migrations/2025_08_06_000014_add_seo_meta_columns.php (new)
-- app/Support/HasSeoMeta.php                    (new: metaTitle/metaDescription)
-- app/Filament/Support/SeoFields.php            (new: the reusable form section)
-- app/Models/{Region,Industry,Category,Sport,SportCountry,Team,Tool,TeamNews}.php (modified: trait + casts)
-- app/Filament/Resources/{...the 8 matching resources}.php (modified: SEO section)
-- resources/views/{industry,category,region-language}.blade.php (modified)
-- resources/views/tools/show.blade.php          (modified)
-- resources/views/sport/{show,teams,team}.blade.php (modified)
-- resources/views/sport/news/show.blade.php     (modified)
+- config/seo_pages.php                              (new: the page registry)
+- app/Filament/Pages/SeoMeta.php                    (new: the admin screen)
+- resources/views/filament/pages/seo-meta.blade.php (new)
+- app/Support/Seo.php                               (modified: pageMeta() helper)
+- resources/views/home.blade.php                    (modified)
+- resources/views/region-language.blade.php         (modified)
+- resources/views/tools/index.blade.php             (modified)
+- resources/views/sport/index.blade.php             (modified)
+- resources/views/sport/countries.blade.php         (modified)
+- resources/views/sport/news/index.blade.php        (modified)
+
+Requires the previous package (seo-meta-editing) for the region override on the
+region home; everything else here works standalone.
 
 ## Apply — local
 ```
-unzip -o ~/Downloads/seo-meta-editing.zip -d /tmp/seo-unzip
-cp -a /tmp/seo-unzip/seo-meta-editing/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/seo-unzip
+unzip -o ~/Downloads/seo-meta-page.zip -d /tmp/seo2-unzip
+cp -a /tmp/seo2-unzip/seo-meta-page/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/seo2-unzip
 cd /Users/olegmishyn/HERD/eduzorro
-php artisan migrate
 php artisan optimize:clear
 git add .
-git commit -m "Add editable meta title and description per page"
+git commit -m "Add admin screen for editing meta tags of static pages"
 git push
 ```
 
@@ -55,20 +64,15 @@ git push
 ```
 cd ~/laravel-app
 git pull origin main
-php artisan migrate --force
 php artisan optimize:clear
 ```
 
-## Notes
-- The migration is written to skip any table that already has the columns, so it
-  is safe to re-run.
-- Length guidance shown in the form: ~50–60 characters for the title, ~140–160
-  for the description. Nothing is truncated automatically — search engines cut
-  the display themselves, and a slightly long tag is not an error.
-- Not covered by this package: the global home page and the tools landing page,
-  whose text comes from the language files (`messages.site_name`,
-  `messages.tagline`, `tools.tagline`). Say the word and I'll add those to the
-  admin Settings page as global defaults.
-- Adding the section to another resource later is one line:
-  `SeoFields::make(),` at the end of its form schema, plus `use HasSeoMeta` and
-  the two casts on the model.
+Then open /admin → SEO → Meta tags. The page is auto-discovered, nothing to
+register.
+
+## Adding another page later
+Add an entry to `config/seo_pages.php` and use it in the view:
+```blade
+@section('title', \App\Support\Seo::pageMeta('my_key', 'title', 'generated default'))
+```
+It appears on the admin screen automatically.

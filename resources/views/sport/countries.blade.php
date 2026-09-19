@@ -4,8 +4,8 @@
     <link rel="stylesheet" href="{{ asset('css/sport.css') }}">
 @endpush
 
-@section('title', __('sport.football') . ' · ' . __('sport.countries') . ' · ' . __('messages.site_name'))
-@section('meta_description', __('sport.football') . ' — ' . __('sport.countries'))
+@section('title', \App\Support\Seo::pageMeta('football_countries', 'title', __('sport.football') . ' · ' . __('sport.countries') . ' · ' . __('messages.site_name')))
+@section('meta_description', \App\Support\Seo::pageMeta('football_countries', 'description', __('sport.football') . ' — ' . __('sport.countries')))
 
 @section('content')
     @include('partials.breadcrumbs')

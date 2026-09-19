@@ -12,6 +12,28 @@ use Illuminate\Support\Facades\Route;
  */
 class Seo
 {
+
+    /**
+     * Admin-editable meta tag for a static page (one without its own model).
+     *
+     * Values live in the settings table under "seo_page_{key}" as
+     * {"title": {"en": "...", "uk": "..."}, "description": {...}} and are
+     * optional: an empty value returns the fallback the view already built.
+     */
+    public static function pageMeta(string $key, string $field, ?string $fallback = null): ?string
+    {
+        static $cache = [];
+
+        if (! array_key_exists($key, $cache)) {
+            $raw = \App\Models\Setting::get('seo_page_'.$key);
+            $cache[$key] = $raw ? (json_decode($raw, true) ?: []) : [];
+        }
+
+        $locale = app()->getLocale();
+        $value  = data_get($cache[$key], $field.'.'.$locale);
+
+        return (is_string($value) && trim($value) !== '') ? trim($value) : $fallback;
+    }
     /**
      * Build hreflang alternates for the CURRENT route by swapping the {language}
      * parameter for every active language, keeping all other params identical.

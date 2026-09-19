@@ -4,8 +4,8 @@
     <link rel="stylesheet" href="{{ asset('css/sport.css') }}">
 @endpush
 
-@section('title', __('sport.sports') . ' · ' . $currentRegion->translate('name') . ' · ' . __('messages.site_name'))
-@section('meta_description', __('sport.sports') . ' — ' . $currentRegion->translate('name'))
+@section('title', \App\Support\Seo::pageMeta('sport_index', 'title', __('sport.sports') . ' · ' . $currentRegion->translate('name') . ' · ' . __('messages.site_name')))
+@section('meta_description', \App\Support\Seo::pageMeta('sport_index', 'description', __('sport.sports') . ' — ' . $currentRegion->translate('name')))
 
 @section('content')
     @include('partials.breadcrumbs')
