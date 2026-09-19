@@ -1,60 +1,60 @@
-# Sport moves to language-only URLs
+# Pattern-based 301s from the old region URLs
 
-The sport section no longer carries the visitor's region. A club belongs to its
-own country, which is already a segment of the URL, so the region added nothing
-but a duplicate copy of identical content for every region.
+The sport and tools sections moved out of `/{region}/{language}/…`. The route
+level already redirects the common case, but it has a gap worth closing.
 
+## The gap
+Those legacy routes live *inside* the region group, so they only fire when the
+region segment still resolves to a live `Region` model. An old link pointing at
+a region that was since renamed, deactivated or deleted never reaches them — it
+404s and the link is lost. Exactly the URLs most likely to exist in search
+results and on other sites.
+
+This adds a middleware that runs **before routing** and works on the raw path,
+so the redirect happens regardless of what became of the region.
+
+## Rules
 ```
-before:  https://eduzorro.com/ukraine/ru/sport/football/england/liverpool/standings
-after:   https://eduzorro.com/ru/sport/football/england/liverpool/standings
+/{anything}/{xx}/sport/...  ->  /{xx}/sport/...
+/{anything}/{xx}/tools/...  ->  /{xx}/tools/...
 ```
 
-Every old URL 301-redirects to the new one, so indexed links and any external
-links keep working.
+Verified behaviour:
 
-## Why this matters beyond tidiness
-With N regions, each team page existed N times over with the same content. Those
-were competing duplicates in search. Now there is exactly one canonical URL per
-language, and the hreflang alternates still work because they key off the
-`{language}` parameter.
+| Old URL | Result |
+|---|---|
+| `/ukraine/ru/sport/football/england/liverpool/standings` | 301 → `/ru/sport/football/england/liverpool/standings` |
+| `/spain/es/sport/news/some-article` | 301 → `/es/sport/news/some-article` |
+| `/deleted-region/uk/sport/football` | 301 → `/uk/sport/football` |
+| `/ukraine/ru/tools/gpa-calculator` | 301 → `/ru/tools/gpa-calculator` |
+| `/ru/sport/football/england/liverpool` | untouched (no loop) |
+| `/ukraine/ru/businesses` | untouched |
+| `/ukraine/ru/directory/schools` | untouched |
 
-## What changed
-- **routes/web.php** — the eight sport routes moved into the language-only
-  group (`/{language}/sport/...`), which already hosts the tools. Eight legacy
-  routes in the region group now issue 301s.
-  Parameters are written without an explicit key (`{team}`, not `{team:slug}`):
-  the models declare `getRouteKeyName() = 'slug'`, and an explicit key after
-  another bound parameter makes Laravel try to scope the child through a
-  relationship that does not exist — the exact crash the tools pages hit.
-- **Controllers** — `SportController`, `FootballController`, `SportNewsController`
-  and `TeamController` no longer take a `Region`; breadcrumbs point at the global
-  home instead of the region home.
-- **Views** — every `route('sport.*', [$currentRegion, ...])` call dropped the
-  region argument.
-- **sport/index.blade.php** — its title used the region name, which is no longer
-  shared on these pages; it now uses a new `sport.tagline` string.
-- **home.blade.php** — the three sport chips moved out of the region cards into
-  one standalone section, for the same reason the tools link did: the URL is the
-  same for every region, so repeating it per card was noise.
+The language group is two letters, so a path that already starts with a language
+can never match — no redirect loops. Query strings are preserved.
+
+## Ordering
+`HandleRedirects` (the admin-managed redirects table) still runs first, so a
+rule you create in the admin always beats these generic patterns. The existing
+route-level legacy redirects are left in place as a fallback; they simply stop
+being reached.
 
 ## Files (extract over project root, keep paths)
-- routes/web.php
-- app/Http/Controllers/{Sport,Football,SportNews,Team}Controller.php
-- resources/views/sport/**  (index, show, countries, teams, team, news/*, partials/*)
-- resources/views/home.blade.php, region-language.blade.php
-- lang/{en,uk,ru,es}/sport.php  (new `tagline` string)
+- app/Http/Middleware/RedirectLegacyPaths.php  (new)
+- bootstrap/app.php                            (modified: registers it)
 
 No migration.
 
 ## Apply — local
 ```
-unzip -o ~/Downloads/sport-language-url.zip -d /tmp/sporturl-unzip
-cp -a /tmp/sporturl-unzip/sport-language-url/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/sporturl-unzip
+unzip -o ~/Downloads/legacy-redirects.zip -d /tmp/legacy-unzip
+cp -a /tmp/legacy-unzip/legacy-redirects/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/legacy-unzip
 cd /Users/olegmishyn/HERD/eduzorro
 php artisan optimize:clear
 git add .
-git commit -m "Move sport section to language-only URLs with 301s"
+git commit -m "Add pattern-based 301s from old region-scoped sport and tools URLs"
 git push
 ```
 
@@ -68,13 +68,12 @@ php artisan optimize:clear
 ## Check
 ```
 curl -sI https://eduzorro.com/ukraine/ru/sport/football/england/liverpool/standings | head -3
-# expect 301 -> /ru/sport/football/england/liverpool/standings
-
-curl -sI https://eduzorro.com/ru/sport/football/england/liverpool/standings | head -3
-# expect 200
+curl -sI https://eduzorro.com/nonexistent-region/ru/sport | head -3
+curl -sI https://eduzorro.com/ru/sport | head -3
 ```
+First two: `301` with the new `location`. Third: `200`, unchanged.
 
-## Note
-The per-tab meta templates from the previous package are unaffected — they key
-off the tab name, not the region. Worth re-checking the five Liverpool titles
-after this deploy to confirm they are still distinct.
+## Adding another moved section later
+Add one line to `RULES` in the middleware — it covers every region and language
+at once, which is why this lives in code rather than as thousands of rows in the
+redirects table.

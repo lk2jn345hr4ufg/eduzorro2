@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\HandleRedirects;
+use App\Http\Middleware\RedirectLegacyPaths;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SetRegionAndLocale;
 use Illuminate\Foundation\Application;
@@ -16,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Runs before routing, so it also catches retired URLs that no
         // longer match any route (the main 301-redirect use case).
+        // Structural rules for whole sections that moved (sport, tools). These
+        // are prepended FIRST so that HandleRedirects, prepended after, ends up
+        // ahead of them — an admin-defined redirect should always win over a
+        // generic pattern.
+        $middleware->prepend(RedirectLegacyPaths::class);
+
         $middleware->prepend(HandleRedirects::class);
 
         // Alias used by the localized route group in routes/web.php.
