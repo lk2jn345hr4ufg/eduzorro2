@@ -6,6 +6,7 @@ use App\Models\Article;
 use App\Models\Category;
 use App\Models\Fixture;
 use App\Models\Post;
+use App\Models\Setting;
 use App\Models\Standing;
 use App\Models\Transfer;
 use Illuminate\Support\Carbon;
@@ -69,7 +70,6 @@ class PublicController extends Controller
             'articles'   => $articles,
             'categories' => Category::ordered()->get(),
         ], [
-            // Мета для страницы категории — на основе её названия.
             'metaTitle'       => "{$category->name} — новости «Ливерпуля» | LiverpoolIn",
             'metaDescription' => "Материалы «Ливерпуля» в категории «{$category->name}»: "
                 . ($category->description ?: 'свежие новости и статьи по теме.'),
@@ -118,7 +118,6 @@ class PublicController extends Controller
 
         $next = Fixture::upcoming()->first();
 
-        // Динамика в описание: ближайший матч.
         $meta = $this->seo('fixtures');
         if ($next) {
             $meta['metaDescription'] .= ' Ближайший матч: '
@@ -276,17 +275,17 @@ class PublicController extends Controller
     /* -------- SEO -------- */
 
     /**
-     * Достаёт шаблон мета-тегов из config/seo.php и возвращает
-     * пару metaTitle/metaDescription для передачи во вьюху.
+     * Мета-теги раздела: сначала правки из админки (таблица settings),
+     * затем значения по умолчанию из config/seo.php.
      */
     private function seo(string $key): array
     {
         $cfg = config("seo.$key", []);
 
-        return [
-            'metaTitle'       => $cfg['title'] ?? 'LiverpoolIn',
-            'metaDescription' => $cfg['description'] ?? '',
-        ];
+        $title = Setting::get("seo.$key.title") ?: ($cfg['title'] ?? 'LiverpoolIn');
+        $desc  = Setting::get("seo.$key.description") ?: ($cfg['description'] ?? '');
+
+        return ['metaTitle' => $title, 'metaDescription' => $desc];
     }
 
     /* -------- helpers -------- */

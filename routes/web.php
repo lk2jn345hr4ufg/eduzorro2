@@ -1,115 +1,97 @@
 <?php
 
-use App\Http\Controllers\BusinessController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\DirectoryController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\IndustryController;
-use App\Http\Controllers\ListingReviewController;
-use App\Http\Controllers\RegionLanguageController;
-use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\FootballController;
-use App\Http\Controllers\SearchController;
+use App\Http\Controllers\Admin\ApiFootballController;
+use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FixtureController as AdminFixtureController;
+use App\Http\Controllers\Admin\PostController;
+use App\Http\Controllers\Admin\SeoController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicController;
 use App\Http\Controllers\SitemapController;
-use App\Http\Controllers\SportController;
-use App\Http\Controllers\ToolAiController;
-use App\Http\Controllers\ToolController;
-use App\Http\Controllers\SportNewsController;
-use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
-// Global entry point: choose a region & language.
-Route::get('/', [HomeController::class, 'index'])->name('home');
+/* ---------------- Публичная часть ---------------- */
+Route::get('/', [PublicController::class, 'home'])->name('home');
 
-// XML sitemap (SEO).
+Route::get('/articles', [PublicController::class, 'posts'])->name('posts.index');
+Route::get('/articles/{post}', [PublicController::class, 'postShow'])->name('posts.show');
+
+Route::get('/news/{slug}', [PublicController::class, 'show'])->name('article.show');
+Route::get('/category/{slug}', [PublicController::class, 'category'])->name('category');
+
+Route::get('/fixtures/international', [PublicController::class, 'internationalFixtures'])
+    ->name('fixtures.international');
+Route::get('/fixtures', [PublicController::class, 'fixtures'])->name('fixtures');
+Route::get('/table', [PublicController::class, 'table'])->name('table');
+Route::get('/transfers', [PublicController::class, 'transfers'])->name('transfers');
+
+// SEO
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
 
-/*
- * Localized area.  URL shape:  /{region-slug}/{language-code}/...
- * The region.locale middleware resolves both models, sets the app locale,
- * and shares them (plus active regions/languages) with every view.
- *
- * NOTE: literal-prefixed routes (/search, /company) are registered BEFORE the
- * /{industry} wildcard so they win route matching.
- *
- * withoutScopedBindings() is required: because {language:code} uses a custom
- * key, Laravel would otherwise try to auto-scope it through a guessed
- * relationship on the previous model (Region::languages()), which doesn't
- * exist — region and language are independent, not parent/child.
- */
-/*
- * Study tools are identical everywhere, so they live under a language-only
- * prefix: /{language}/tools. Registered BEFORE the region group so that
- * /ru/tools matches here instead of being read as region=ru, language=tools.
- */
-Route::prefix('{language:code}')
-    ->middleware('locale')
-    ->withoutScopedBindings()
-    ->group(function () {
-        Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
-        Route::get('/tools/{tool}', [ToolController::class, 'show'])->name('tools.show');
+/* ---------------- Админка ---------------- */
+Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
-        // Backend for the AI note-structuring tool (processes text the visitor
-        // typed themselves, nothing is fetched from third-party services).
-        Route::post('/tools/video-notes/generate', [ToolAiController::class, 'videoNotes'])
-            ->name('tools.video-notes.generate');
-    });
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('run/scrape-news', [DashboardController::class, 'scrapeNews'])->name('run.scrapeNews');
+    Route::post('run/edit-pending', [DashboardController::class, 'editPending'])->name('run.editPending');
+    Route::post('run/scrape-fixtures', [DashboardController::class, 'scrapeFixtures'])->name('run.scrapeFixtures');
+    Route::post('run/sync-standings', [DashboardController::class, 'syncStandings'])->name('run.syncStandings');
+    Route::post('run/sync-transfers', [DashboardController::class, 'syncTransfers'])->name('run.syncTransfers');
+    Route::post('run/sync-euro', [DashboardController::class, 'syncEuro'])->name('run.syncEuro');
 
-Route::prefix('{region:slug}/{language:code}')
-    ->middleware('region.locale')
-    ->withoutScopedBindings()
-    ->group(function () {
+    Route::get('articles', [ArticleController::class, 'index'])->name('articles');
+    Route::get('articles/{article:id}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
+    Route::post('articles/{article:id}/ai-edit', [ArticleController::class, 'aiEdit'])->name('articles.aiEdit');
+    Route::put('articles/{article:id}', [ArticleController::class, 'update'])->name('articles.update');
+    Route::post('articles/{article:id}/publish', [ArticleController::class, 'publish'])->name('articles.publish');
+    Route::post('articles/{article:id}/unpublish', [ArticleController::class, 'unpublish'])->name('articles.unpublish');
+    Route::delete('articles/{article:id}', [ArticleController::class, 'destroy'])->name('articles.destroy');
 
-        Route::get('/', [RegionLanguageController::class, 'index'])->name('region.home');
+    Route::get('posts', [PostController::class, 'index'])->name('posts');
+    Route::get('posts/create', [PostController::class, 'create'])->name('posts.create');
+    Route::post('posts', [PostController::class, 'store'])->name('posts.store');
+    Route::get('posts/{post}/edit', [PostController::class, 'edit'])->name('posts.edit');
+    Route::put('posts/{post}', [PostController::class, 'update'])->name('posts.update');
+    Route::post('posts/{post}/publish', [PostController::class, 'publish'])->name('posts.publish');
+    Route::post('posts/{post}/unpublish', [PostController::class, 'unpublish'])->name('posts.unpublish');
+    Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
 
-        Route::get('/search/suggest', [SearchController::class, 'suggest'])->name('search.suggest');
-        Route::get('/search', [SearchController::class, 'results'])->name('search.results');
+    Route::get('categories', [CategoryController::class, 'index'])->name('categories');
+    Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
-        Route::get('/company/{company:slug}', [CompanyController::class, 'show'])->name('company.show');
-        Route::post('/company/{company:slug}/reviews', [ReviewController::class, 'store'])->name('review.store');
+    Route::get('fixtures', [AdminFixtureController::class, 'index'])->name('fixtures');
+    Route::get('fixtures/create', [AdminFixtureController::class, 'create'])->name('fixtures.create');
+    Route::post('fixtures', [AdminFixtureController::class, 'store'])->name('fixtures.store');
+    Route::get('fixtures/{fixture}/edit', [AdminFixtureController::class, 'edit'])->name('fixtures.edit');
+    Route::put('fixtures/{fixture}', [AdminFixtureController::class, 'update'])->name('fixtures.update');
+    Route::delete('fixtures/{fixture}', [AdminFixtureController::class, 'destroy'])->name('fixtures.destroy');
 
-        // WordPress-imported content: 5 review-driven verticals + the
-        // business registry. Registered before the /{industry} wildcard
-        // below so these literal prefixes win route matching.
-        Route::get('/directory/{vertical}', [DirectoryController::class, 'index'])->name('directory.index');
-        Route::get('/directory/{vertical}/category/{categorySlug}', [DirectoryController::class, 'category'])->name('directory.category');
-        Route::get('/directory/{vertical}/{listing:slug}', [DirectoryController::class, 'show'])->name('directory.show');
-        Route::post('/directory/{vertical}/{listing:slug}/reviews', [ListingReviewController::class, 'store'])->name('directory.review.store');
+    Route::get('api-football', [ApiFootballController::class, 'index'])->name('apifootball');
+    Route::put('api-football', [ApiFootballController::class, 'update'])->name('apifootball.update');
+    Route::post('api-football/test', [ApiFootballController::class, 'test'])->name('apifootball.test');
 
-        Route::get('/businesses', [BusinessController::class, 'index'])->name('business.index');
-        Route::get('/businesses/{business:slug}', [BusinessController::class, 'show'])->name('business.show');
+    // SEO / мета-теги
+    Route::get('seo', [SeoController::class, 'edit'])->name('seo');
+    Route::put('seo', [SeoController::class, 'update'])->name('seo.update');
 
-        /*
-         * Sport section. Football has a deep hierarchy
-         * (countries → teams → team hub with tabs); other sports are just
-         * listed. Registered before the /{industry} wildcard so the literal
-         * "sport" prefix wins route matching. Team tabs are constrained to a
-         * known set so slugs can't leak into the {tab} segment.
-         */
-        Route::get('/sport', [SportController::class, 'index'])->name('sport.index');
-        Route::get('/sport/news', [SportNewsController::class, 'index'])->name('sport.news.index');
-        Route::get('/sport/news/{news:slug}', [SportNewsController::class, 'show'])->name('sport.news.show');
-        Route::get('/sport/football', [FootballController::class, 'countries'])->name('sport.football.countries');
-        Route::get('/sport/football/{country:slug}', [FootballController::class, 'teams'])->name('sport.football.country');
-        Route::get('/sport/football/{country:slug}/{team:slug}', [TeamController::class, 'show'])->name('sport.team');
-        Route::get('/sport/football/{country:slug}/{team:slug}/{tab}', [TeamController::class, 'show'])
-            ->whereIn('tab', TeamController::TABS)
-            ->name('sport.team.tab');
-        Route::get('/sport/{sport:slug}', [SportController::class, 'show'])->name('sport.show');
+    Route::get('settings', [SettingController::class, 'edit'])->name('settings');
+    Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
+});
 
-        /*
-         * Legacy region-scoped tool URLs. Tools moved to /{language}/tools,
-         * so these 301 to the new location to keep any indexed links alive.
-         */
-        Route::get('/tools', function ($region, $language) {
-            return redirect()->route('tools.index', [$language], 301);
-        })->name('tools.index.legacy');
+/* ---------------- Breeze auth ---------------- */
+Route::get('/dashboard', fn () => redirect()->route('admin.dashboard'))
+    ->middleware(['auth', 'verified'])->name('dashboard');
 
-        Route::get('/tools/{tool}', function ($region, $language, $tool) {
-            return redirect()->route('tools.show', [$language, $tool], 301);
-        })->name('tools.show.legacy');
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
-        Route::get('/{industry:slug}', [IndustryController::class, 'show'])->name('industry.show');
-        Route::get('/{industry:slug}/{category:slug}', [CategoryController::class, 'show'])->name('category.show');
-    });
+require __DIR__ . '/auth.php';
