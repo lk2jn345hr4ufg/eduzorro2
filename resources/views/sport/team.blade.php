@@ -6,8 +6,8 @@
 
 @php($teamName = $team->translate('name'))
 
-@section('title', $teamName . ' · ' . __('sport.' . str_replace('-', '_', $tab)) . ' · ' . __('messages.site_name'))
-@section('meta_description', $teamName . ' — ' . $country->translate('name'))
+@section('title', $team->metaTitle($teamName . ' · ' . __('sport.' . str_replace('-', '_', $tab)) . ' · ' . __('messages.site_name')))
+@section('meta_description', $team->metaDescription($teamName . ' — ' . $country->translate('name')))
 
 @section('content')
     @include('partials.breadcrumbs')

@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
+use App\Support\HasSeoMeta;
 use App\Support\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 
 class SportCountry extends Model
 {
+    use HasSeoMeta;
     use HasTranslations;
 
     protected $guarded = [];
 
     protected $casts = [
+        'meta_title'       => 'array',
+        'meta_description' => 'array',
         'name'      => 'array',
         'is_active' => 'boolean',
     ];

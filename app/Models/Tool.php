@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
+use App\Support\HasSeoMeta;
 use App\Support\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 
 class Tool extends Model
 {
+    use HasSeoMeta;
     use HasTranslations;
 
     protected $guarded = [];
 
     protected $casts = [
+        'meta_title'       => 'array',
+        'meta_description' => 'array',
         'name'        => 'array',
         'description' => 'array',
         'intro'       => 'array',

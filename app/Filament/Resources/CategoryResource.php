@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoryResource\Pages;
+use App\Filament\Support\SeoFields;
 use App\Filament\Support\TranslatableTabs;
 use App\Models\Category;
 use App\Models\Industry;
@@ -55,6 +56,8 @@ class CategoryResource extends Resource
 
             TranslatableTabs::make('name', 'Name'),
             TranslatableTabs::make('description', 'Description', textarea: true),
+        
+            SeoFields::make(),
         ]);
     }
 

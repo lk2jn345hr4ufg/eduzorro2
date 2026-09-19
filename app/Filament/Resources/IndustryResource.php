@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\IndustryResource\Pages;
+use App\Filament\Support\SeoFields;
 use App\Filament\Support\TranslatableTabs;
 use App\Models\Industry;
 use Filament\Forms\Components\Grid;
@@ -44,6 +45,8 @@ class IndustryResource extends Resource
 
             TranslatableTabs::make('name', 'Name'),
             TranslatableTabs::make('description', 'Description', textarea: true),
+        
+            SeoFields::make(),
         ]);
     }
 

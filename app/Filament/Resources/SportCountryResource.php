@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SportCountryResource\Pages;
+use App\Filament\Support\SeoFields;
 use App\Models\SportCountry;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
@@ -38,6 +39,8 @@ class SportCountryResource extends Resource
             TextInput::make('flag_url')->url(),
             TextInput::make('sort_order')->numeric()->default(0),
             Toggle::make('is_active')->default(true),
+        
+            SeoFields::make(),
         ]);
     }
 

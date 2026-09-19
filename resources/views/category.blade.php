@@ -3,8 +3,8 @@
 @php($categoryName = $category->translate('name'))
 @php($regionName = $currentRegion->translate('name'))
 
-@section('title', $categoryName . ' · ' . $regionName . ' · ' . __('messages.site_name'))
-@section('meta_description', $categoryName . ' — ' . $regionName . '. ' . __('messages.tagline'))
+@section('title', $category->metaTitle($categoryName . ' · ' . $regionName . ' · ' . __('messages.site_name')))
+@section('meta_description', $category->metaDescription($categoryName . ' — ' . $regionName . '. ' . __('messages.tagline')))
 
 @push('head')
     <script type="application/ld+json">

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TeamNewsResource\Pages;
+use App\Filament\Support\SeoFields;
 use App\Models\Language;
 use App\Models\TeamNews;
 use App\Services\AI\GeminiClient;
@@ -58,6 +59,8 @@ class TeamNewsResource extends Resource
             TextInput::make('source_url')->url(),
             DateTimePicker::make('published_at')->default(now()),
             Toggle::make('is_active')->default(true),
+        
+            SeoFields::make(),
         ]);
     }
 

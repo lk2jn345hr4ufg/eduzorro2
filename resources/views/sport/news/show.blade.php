@@ -6,8 +6,8 @@
 
 @php($title = $news->translate('title'))
 
-@section('title', $title . ' · ' . __('messages.site_name'))
-@section('meta_description', \Illuminate\Support\Str::limit(strip_tags($news->translate('excerpt') ?: $title), 160))
+@section('title', $news->metaTitle($title . ' · ' . __('messages.site_name')))
+@section('meta_description', $news->metaDescription(\Illuminate\Support\Str::limit(strip_tags($news->translate('excerpt') ?: $title), 160)))
 
 @section('content')
     @include('partials.breadcrumbs')

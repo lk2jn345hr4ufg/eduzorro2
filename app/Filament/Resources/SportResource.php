@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SportResource\Pages;
+use App\Filament\Support\SeoFields;
 use App\Models\Sport;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\TextInput;
@@ -35,6 +36,8 @@ class SportResource extends Resource
             TextInput::make('sort_order')->numeric()->default(0),
             Toggle::make('has_competitions')->helperText('Enable deep hierarchy (only football today).'),
             Toggle::make('is_active')->default(true),
+        
+            SeoFields::make(),
         ]);
     }
 

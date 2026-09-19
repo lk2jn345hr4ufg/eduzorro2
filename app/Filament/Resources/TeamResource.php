@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TeamResource\Pages;
+use App\Filament\Support\SeoFields;
 use App\Models\Team;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
@@ -50,6 +51,8 @@ class TeamResource extends Resource
             TextInput::make('website')->url(),
             TextInput::make('sort_order')->numeric()->default(0),
             Toggle::make('is_active')->default(true),
+        
+            SeoFields::make(),
         ]);
     }
 

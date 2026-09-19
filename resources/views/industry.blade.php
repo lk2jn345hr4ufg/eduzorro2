@@ -3,8 +3,8 @@
 @php($industryName = $industry->translate('name'))
 @php($regionName = $currentRegion->translate('name'))
 
-@section('title', $industryName . ' · ' . $regionName . ' · ' . __('messages.site_name'))
-@section('meta_description', $industryName . ' — ' . $regionName)
+@section('title', $industry->metaTitle($industryName . ' · ' . $regionName . ' · ' . __('messages.site_name')))
+@section('meta_description', $industry->metaDescription($industryName . ' — ' . $regionName))
 
 @section('content')
     @include('partials.breadcrumbs')

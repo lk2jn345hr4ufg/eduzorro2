@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\RegionResource\Pages;
+use App\Filament\Support\SeoFields;
 use App\Filament\Support\TranslatableTabs;
 use App\Models\Region;
 use Filament\Forms\Components\Grid;
@@ -66,6 +67,8 @@ class RegionResource extends Resource
             ]),
 
             TranslatableTabs::make('name', 'Name'),
+        
+            SeoFields::make(),
         ]);
     }
 

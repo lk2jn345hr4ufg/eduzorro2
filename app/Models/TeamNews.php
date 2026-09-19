@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Support\HasSeoMeta;
 use App\Support\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 
 class TeamNews extends Model
 {
+    use HasSeoMeta;
     use HasTranslations;
 
     protected $table = 'team_news';
@@ -14,6 +16,8 @@ class TeamNews extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'meta_title'       => 'array',
+        'meta_description' => 'array',
         'title'        => 'array',
         'excerpt'      => 'array',
         'body'         => 'array',

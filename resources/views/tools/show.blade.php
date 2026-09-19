@@ -4,8 +4,8 @@
     <link rel="stylesheet" href="{{ asset('css/tools.css') }}">
 @endpush
 
-@section('title', $tool->translate('name') . ' · ' . __('messages.site_name'))
-@section('meta_description', $tool->translate('description') ?: __('tools.tagline'))
+@section('title', $tool->metaTitle($tool->translate('name') . ' · ' . __('messages.site_name')))
+@section('meta_description', $tool->metaDescription($tool->translate('description') ?: __('tools.tagline')))
 
 @section('content')
     @include('partials.breadcrumbs')

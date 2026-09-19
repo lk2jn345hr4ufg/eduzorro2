@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ToolResource\Pages;
+use App\Filament\Support\SeoFields;
 use App\Models\Tool;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
@@ -62,6 +63,8 @@ class ToolResource extends Resource
             ])->columns(2),
             TextInput::make('sort_order')->numeric()->default(0),
             Toggle::make('is_active')->default(true),
+        
+            SeoFields::make(),
         ]);
     }
 

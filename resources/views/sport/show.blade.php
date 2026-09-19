@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="{{ asset('css/sport.css') }}">
 @endpush
 
-@section('title', $sport->translate('name') . ' · ' . __('messages.site_name'))
+@section('title', $sport->metaTitle($sport->translate('name') . ' · ' . __('messages.site_name')))
 
 @section('content')
     @include('partials.breadcrumbs')
