@@ -48,4 +48,10 @@ return [
     'all_matches' => 'All matches',
     'calendar_hint' => 'Pick a day to see its matches. Click again to clear.',
     'tagline' => 'Football clubs, fixtures, standings and news',
+    'matchday_lead' => 'Fixtures and results by day, grouped by competition',
+    'choose_day' => 'Choose a day',
+    'today' => 'Today',
+    'live' => 'Live',
+    'finished_short' => 'FT',
+    'no_matches_on' => 'No matches on :date.',
 ];

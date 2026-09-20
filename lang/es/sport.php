@@ -48,4 +48,10 @@ return [
     'all_matches' => 'Todos los partidos',
     'calendar_hint' => 'Elige un día para ver sus partidos. Púlsalo de nuevo para limpiar.',
     'tagline' => 'Clubes de fútbol, calendario, clasificaciones y noticias',
+    'matchday_lead' => 'Partidos y resultados por día, agrupados por competición',
+    'choose_day' => 'Elige un día',
+    'today' => 'Hoy',
+    'live' => 'En vivo',
+    'finished_short' => 'Final',
+    'no_matches_on' => 'No hay partidos el :date.',
 ];
