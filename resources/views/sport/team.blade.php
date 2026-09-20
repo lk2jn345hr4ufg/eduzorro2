@@ -24,6 +24,9 @@
     $tokens
 ))
 
+@php($defaultHeading = \App\Support\Seo::pageMeta('team_' . $tabKey, 'heading', $teamName, $tokens))
+@php($heading = $team->tabMeta($tab, 'heading', $defaultHeading))
+
 @section('title', $team->tabMeta($tab, 'title', $defaultTitle))
 @section('meta_description', $team->tabMeta($tab, 'description', $defaultDescription))
 
@@ -35,7 +38,7 @@
             <img class="team-logo" src="{{ $team->logo_url }}" alt="" width="56" height="56">
         @endif
         <div>
-            <h1>{{ $teamName }}</h1>
+            <h1>{{ $heading }}</h1>
             <p class="lead">
                 {{ $country->translate('name') }}
                 @if ($team->stadium) · {{ __('sport.stadium') }}: {{ $team->stadium }} @endif

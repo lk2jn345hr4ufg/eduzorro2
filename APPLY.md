@@ -1,60 +1,60 @@
-# Pattern-based 301s from the old region URLs
+# Custom H1 for the team tab pages
 
-The sport and tools sections moved out of `/{region}/{language}/…`. The route
-level already redirects the common case, but it has a gap worth closing.
+The five team pages (News, Fixtures, European cups, Transfers, Standings) all
+showed the same `<h1>` — the team name. The meta tags now differ per tab, so the
+visible heading should too: it is the strongest on-page signal of what a URL is
+about, and five identical headings undercut the distinct titles.
 
-## The gap
-Those legacy routes live *inside* the region group, so they only fire when the
-region segment still resolves to a live `Region` model. An old link pointing at
-a region that was since renamed, deactivated or deleted never reaches them — it
-404s and the link is lost. Exactly the URLs most likely to exist in search
-results and on other sites.
+## Where you edit it
 
-This adds a middleware that runs **before routing** and works on the raw path,
-so the redirect happens regardless of what became of the region.
+**Global template — SEO → Meta tags**
+Each of the five team tabs now has an **H1 heading** field alongside the meta
+fields, per language, with the same placeholders:
 
-## Rules
+- `{team}`, `{country}`, `{site}`, `{tab}`
+
+Example for the Standings tab (RU):
 ```
-/{anything}/{xx}/sport/...  ->  /{xx}/sport/...
-/{anything}/{xx}/tools/...  ->  /{xx}/tools/...
+H1: Турнирная таблица — {team}
 ```
+One entry covers every team.
 
-Verified behaviour:
+**Per-team override — Teams → edit → "SEO per tab"**
+An H1 field sits above the meta fields in each tab, for clubs that need their
+own wording.
 
-| Old URL | Result |
-|---|---|
-| `/ukraine/ru/sport/football/england/liverpool/standings` | 301 → `/ru/sport/football/england/liverpool/standings` |
-| `/spain/es/sport/news/some-article` | 301 → `/es/sport/news/some-article` |
-| `/deleted-region/uk/sport/football` | 301 → `/uk/sport/football` |
-| `/ukraine/ru/tools/gpa-calculator` | 301 → `/ru/tools/gpa-calculator` |
-| `/ru/sport/football/england/liverpool` | untouched (no loop) |
-| `/ukraine/ru/businesses` | untouched |
-| `/ukraine/ru/directory/schools` | untouched |
+## Resolution order
+per-team tab H1 → global tab template → the team name (as before).
 
-The language group is two letters, so a path that already starts with a language
-can never match — no redirect loops. Query strings are preserved.
+Nothing changes visually until a field is filled in, so this is safe to deploy
+before writing any templates.
 
-## Ordering
-`HandleRedirects` (the admin-managed redirects table) still runs first, so a
-rule you create in the admin always beats these generic patterns. The existing
-route-level legacy redirects are left in place as a fallback; they simply stop
-being reached.
+## Design note
+`tabMeta()` treats a heading differently from the meta fields on purpose: an
+empty H1 does **not** fall back to the team's meta title. A title is written for
+a search result ("Liverpool — расписание матчей | EduZorro") and would look wrong
+as a page heading, so the heading falls through to the plain team name instead.
 
 ## Files (extract over project root, keep paths)
-- app/Http/Middleware/RedirectLegacyPaths.php  (new)
-- bootstrap/app.php                            (modified: registers it)
+- config/seo_pages.php                     (modified: heading flag on the 5 tabs)
+- app/Models/Team.php                      (modified: heading-aware tabMeta)
+- app/Filament/Pages/SeoMeta.php           (modified: H1 field, prefill, save)
+- app/Filament/Resources/TeamResource.php  (modified: per-team H1 field)
+- resources/views/sport/team.blade.php     (modified: renders the resolved H1)
 
-No migration.
+Requires the earlier SEO packages (seo-meta-editing, seo-meta-page,
+seo-team-tabs). No migration — the value is stored in the JSON columns those
+packages already added.
 
 ## Apply — local
 ```
-unzip -o ~/Downloads/legacy-redirects.zip -d /tmp/legacy-unzip
-cp -a /tmp/legacy-unzip/legacy-redirects/. /Users/olegmishyn/HERD/eduzorro/
-rm -rf /tmp/legacy-unzip
+unzip -o ~/Downloads/custom-h1.zip -d /tmp/h1-unzip
+cp -a /tmp/h1-unzip/custom-h1/. /Users/olegmishyn/HERD/eduzorro/
+rm -rf /tmp/h1-unzip
 cd /Users/olegmishyn/HERD/eduzorro
 php artisan optimize:clear
 git add .
-git commit -m "Add pattern-based 301s from old region-scoped sport and tools URLs"
+git commit -m "Add editable H1 for team tab pages"
 git push
 ```
 
@@ -67,13 +67,12 @@ php artisan optimize:clear
 
 ## Check
 ```
-curl -sI https://eduzorro.com/ukraine/ru/sport/football/england/liverpool/standings | head -3
-curl -sI https://eduzorro.com/nonexistent-region/ru/sport | head -3
-curl -sI https://eduzorro.com/ru/sport | head -3
+curl -s https://eduzorro.com/ru/sport/football/england/liverpool/standings | grep -o '<h1>[^<]*</h1>'
+curl -s https://eduzorro.com/ru/sport/football/england/liverpool/fixtures  | grep -o '<h1>[^<]*</h1>'
 ```
-First two: `301` with the new `location`. Third: `200`, unchanged.
+Once templates are filled in, these differ.
 
-## Adding another moved section later
-Add one line to `RULES` in the middleware — it covers every region and language
-at once, which is why this lives in code rather than as thousands of rows in the
-redirects table.
+## Adding an editable H1 to another page later
+Set `'heading' => true` on its entry in `config/seo_pages.php`, then render
+`\App\Support\Seo::pageMeta('key', 'heading', $default, $tokens)` in the view.
+The field appears on the admin screen automatically.

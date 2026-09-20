@@ -47,21 +47,26 @@ return [
     'team_news' => [
         'label'  => 'Team · News',
         'sample' => '/…/sport/football/{country}/{team}',
+        'heading' => true,
     ],
     'team_fixtures' => [
         'label'  => 'Team · Fixtures',
         'sample' => '/…/{team}/fixtures',
+        'heading' => true,
     ],
     'team_euro_cups' => [
         'label'  => 'Team · European cups',
         'sample' => '/…/{team}/euro-cups',
+        'heading' => true,
     ],
     'team_transfers' => [
         'label'  => 'Team · Transfers',
         'sample' => '/…/{team}/transfers',
+        'heading' => true,
     ],
     'team_standings' => [
         'label'  => 'Team · Standings',
         'sample' => '/…/{team}/standings',
+        'heading' => true,
     ],
 ];

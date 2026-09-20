@@ -73,6 +73,8 @@ class TeamResource extends Resource
                                         \App\Models\Language::query()->orderBy('sort_order')->orderBy('code')->get()
                                             ->map(fn ($language) => \Filament\Forms\Components\Tabs\Tab::make(strtoupper($language->code))
                                                 ->schema([
+                                                    TextInput::make("meta_tabs.{$tab}.heading.{$language->code}")
+                                                        ->label('H1 heading')->maxLength(255),
                                                     TextInput::make("meta_tabs.{$tab}.title.{$language->code}")
                                                         ->label('Meta title')->maxLength(255),
                                                     \Filament\Forms\Components\Textarea::make("meta_tabs.{$tab}.description.{$language->code}")

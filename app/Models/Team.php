@@ -65,6 +65,12 @@ class Team extends Model
             return trim($value);
         }
 
+        // A heading is page furniture, not a meta tag: falling back to the
+        // team's meta title would put a title-shaped string in the <h1>.
+        if ($field === 'heading') {
+            return $fallback;
+        }
+
         return $field === 'title'
             ? $this->metaTitle($fallback)
             : $this->metaDescription($fallback);

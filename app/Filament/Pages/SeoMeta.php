@@ -48,6 +48,7 @@ class SeoMeta extends Page implements HasForms
             foreach ($this->languages() as $language) {
                 $state[$key]['title'][$language->code]       = data_get($stored, "title.{$language->code}");
                 $state[$key]['description'][$language->code] = data_get($stored, "description.{$language->code}");
+                $state[$key]['heading'][$language->code]     = data_get($stored, "heading.{$language->code}");
             }
         }
 
@@ -71,7 +72,7 @@ class SeoMeta extends Page implements HasForms
                                         Tabs::make($key.'_langs')
                                             ->columnSpanFull()
                                             ->tabs($languages->map(fn (Language $language) => Tab::make(strtoupper($language->code))
-                                                ->schema([
+                                                ->schema(array_values(array_filter([
                                                     TextInput::make("{$key}.title.{$language->code}")
                                                         ->label('Meta title')
                                                         ->maxLength(255),
@@ -79,7 +80,14 @@ class SeoMeta extends Page implements HasForms
                                                         ->label('Meta description')
                                                         ->rows(3)
                                                         ->maxLength(500),
-                                                ]))->all()),
+                                                    // Only pages that render a configurable <h1> get this.
+                                                    ! empty($page['heading'])
+                                                        ? TextInput::make("{$key}.heading.{$language->code}")
+                                                            ->label('H1 heading')
+                                                            ->maxLength(255)
+                                                            ->helperText('Placeholders: {team}, {country}, {tab}')
+                                                        : null,
+                                                ]))))->all()),
                                     ]),
                             ]);
                     })->values()->all()),
@@ -96,7 +104,7 @@ class SeoMeta extends Page implements HasForms
 
             // Drop empty locales so a blank field means "use the default"
             // rather than storing an empty string that would blank the tag.
-            foreach (['title', 'description'] as $field) {
+            foreach (['title', 'description', 'heading'] as $field) {
                 $values[$field] = array_filter(
                     $values[$field] ?? [],
                     fn ($v) => is_string($v) && trim($v) !== ''
