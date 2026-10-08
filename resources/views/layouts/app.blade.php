@@ -36,8 +36,10 @@
 </head>
 <body>
 @php($navLanguage = $currentLanguage ?? null)
+{{-- Queried per request (one tiny query). Not cached: config/cache.php has
+     serializable_classes = false, so cached Eloquent models come back broken. --}}
 @php($navCompetitions = $navLanguage
-    ? cache()->remember('nav_competitions', 600, fn () => \App\Models\Competition::active()->ordered()->get())
+    ? \App\Models\Competition::active()->ordered()->take(6)->get()
     : collect())
 
 <header class="site-header">
