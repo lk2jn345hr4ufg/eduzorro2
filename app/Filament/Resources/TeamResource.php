@@ -17,7 +17,9 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Artisan;
 
@@ -26,7 +28,7 @@ class TeamResource extends Resource
     protected static ?string $model = Team::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    protected static ?string $navigationGroup = 'Sport';
+    protected static ?string $navigationGroup = 'Football';
     protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
@@ -34,6 +36,11 @@ class TeamResource extends Resource
         return $form->schema([
             Select::make('sport_id')->relationship('sport', 'slug')->required(),
             Select::make('sport_country_id')->relationship('country', 'slug')->searchable()->required(),
+            Select::make('competition_id')
+                ->label('Championship')
+                ->relationship('competition', 'slug')
+                ->searchable()->preload()
+                ->helperText('The domestic championship this club plays in: drives breadcrumbs, the standings tab and the championship team list.'),
             TextInput::make('slug')->required(),
             Fieldset::make('Name')->schema([
                 TextInput::make('name.en')->label('EN')->required(),
@@ -51,20 +58,24 @@ class TeamResource extends Resource
             TextInput::make('website')->url(),
             TextInput::make('sort_order')->numeric()->default(0),
             Toggle::make('is_active')->default(true),
-        
+            Toggle::make('is_popular')->label('Popular (home page)')->default(false),
+            TextInput::make('popular_order')->numeric()->default(0)->helperText('Order inside the "popular teams" block.'),
+
             SeoFields::make(),
             \Filament\Forms\Components\Section::make('SEO per tab')
-                ->description('Optional. Each team page has five tabs sharing one record, so these let every URL carry its own tags. Empty fields fall back to the team SEO above, then to the global templates in SEO → Meta tags.')
+                ->description('Optional. Each team page has seven tabs sharing one record, so these let every URL carry its own tags. Empty fields fall back to the team SEO above, then to the global templates in SEO → Meta tags.')
                 ->collapsed()
                 ->schema([
                     \Filament\Forms\Components\Tabs::make('meta_tabs_tabs')
                         ->columnSpanFull()
                         ->tabs(collect([
+                            'dashboard' => 'Overview',
                             'news'      => 'News',
-                            'fixtures'  => 'Fixtures',
+                            'standings' => 'Standings',
                             'euro_cups' => 'European cups',
                             'transfers' => 'Transfers',
-                            'standings' => 'Standings',
+                            'fixtures'  => 'Fixtures',
+                            'results'   => 'Results',
                         ])->map(fn ($label, $tab) => \Filament\Forms\Components\Tabs\Tab::make($label)
                             ->schema([
                                 \Filament\Forms\Components\Tabs::make($tab.'_langs')
@@ -93,12 +104,16 @@ class TeamResource extends Resource
             ->columns([
                 ImageColumn::make('logo_url')->label('')->circular(),
                 TextColumn::make('name.en')->label('Name')->searchable(),
-                TextColumn::make('country.slug')->label('Country')->searchable(),
+                TextColumn::make('competition.code')->label('League')->badge()->sortable(),
+                TextColumn::make('country.slug')->label('Country')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('api_id')->label('API id'),
+                ToggleColumn::make('is_popular')->label('Popular'),
                 IconColumn::make('is_active')->boolean(),
             ])
             ->filters([
+                SelectFilter::make('competition_id')->relationship('competition', 'slug')->label('Championship'),
                 SelectFilter::make('sport_country_id')->relationship('country', 'slug')->label('Country'),
+                TernaryFilter::make('is_popular')->label('Popular'),
             ])
             ->actions([
                 EditAction::make(),

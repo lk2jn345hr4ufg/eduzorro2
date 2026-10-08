@@ -29,6 +29,9 @@ class ListingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-identification';
     protected static ?string $navigationGroup = 'WordPress Import';
+
+    // Retired with the football-only relaunch: data kept, hidden from the menu.
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?int $navigationSort = 1;
 
     const VERTICALS = [

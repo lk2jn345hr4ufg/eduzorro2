@@ -169,6 +169,77 @@ class ApiFootballClient
     }
 
     /**
+     * Every match of a competition season in ONE request (instead of one per
+     * team), plus the season and emblem the API reports.
+     *
+     * @return array{season: ?int, emblem: ?string, matches: array}
+     */
+    public function competitionMatches(string $code, ?int $season = null): array
+    {
+        $body = $this->get("/competitions/{$code}/matches", array_filter(['season' => $season]));
+
+        $matches = collect(data_get($body, 'matches', []))
+            ->map(fn ($m) => $this->normaliseMatch($m))
+            ->all();
+
+        $reported = data_get($body, 'filters.season')
+            ?? data_get($matches, '0.season');
+
+        return [
+            'season'  => $reported ? (int) $reported : $season,
+            'emblem'  => data_get($body, 'competition.emblem'),
+            'matches' => $matches,
+        ];
+    }
+
+    /**
+     * All overall ("TOTAL") tables of a competition. A league has one; group
+     * tournaments (World Cup, Euro) have one per group, each row tagged with
+     * its group so the page can show them separately.
+     */
+    public function standingsAll(string $code, ?int $season = null): array
+    {
+        $body = $this->get("/competitions/{$code}/standings", array_filter(['season' => $season]));
+
+        $competitionId = data_get($body, 'competition.id');
+        $rows = [];
+
+        foreach ((array) data_get($body, 'standings', []) as $table) {
+            if (data_get($table, 'type') !== 'TOTAL') {
+                continue;
+            }
+
+            foreach ((array) data_get($table, 'table', []) as $r) {
+                $rows[] = [
+                    'rank'   => data_get($r, 'position'),
+                    'points' => data_get($r, 'points'),
+                    'group'  => data_get($table, 'group'),
+                    'form'   => data_get($r, 'form'),
+                    'team'   => [
+                        'id'   => data_get($r, 'team.id'),
+                        'name' => data_get($r, 'team.name'),
+                        'logo' => data_get($r, 'team.crest'),
+                    ],
+                    'all' => [
+                        'played' => data_get($r, 'playedGames'),
+                        'win'    => data_get($r, 'won'),
+                        'draw'   => data_get($r, 'draw'),
+                        'lose'   => data_get($r, 'lost'),
+                        'goals'  => [
+                            'for'     => data_get($r, 'goalsFor'),
+                            'against' => data_get($r, 'goalsAgainst'),
+                        ],
+                    ],
+                    'competition_id'   => $competitionId,
+                    'competition_code' => $code,
+                ];
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
      * football-data.org has no transfers endpoint. Kept so callers don't need
      * to special-case it; the tab falls back to whatever is already stored.
      */
@@ -215,6 +286,9 @@ class ApiFootballClient
                 'home' => data_get($m, 'score.fullTime.home'),
                 'away' => data_get($m, 'score.fullTime.away'),
             ],
+            // Season start year, so a whole-competition sync stores each match
+            // under the season it belongs to rather than a guessed one.
+            'season' => ($start = data_get($m, 'season.startDate')) ? (int) substr($start, 0, 4) : null,
         ];
     }
 }

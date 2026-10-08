@@ -19,7 +19,7 @@ class Settings extends Page implements HasForms
     use InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-key';
-    protected static ?string $navigationGroup = 'Sport';
+    protected static ?string $navigationGroup = 'Football';
     protected static ?int $navigationSort = 10;
     protected static ?string $navigationLabel = 'Settings (API keys)';
     protected static ?string $title = 'Settings';

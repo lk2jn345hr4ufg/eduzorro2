@@ -21,6 +21,15 @@ class ApiSportsTransfersClient
     /** Unix timestamp (float) of the last outgoing request, for throttling. */
     protected static float $lastRequestAt = 0.0;
 
+    /** Errors reported by the most recent call (plan, quota, bad parameter). */
+    protected array $lastErrors = [];
+
+    /** e.g. ['plan' => 'Free plans do not have access to this season...'] */
+    public function lastErrors(): array
+    {
+        return $this->lastErrors;
+    }
+
     public function isConfigured(): bool
     {
         return ! empty(config('apisports.key'));
@@ -61,6 +70,7 @@ class ApiSportsTransfersClient
         }
 
         $this->throttle();
+        $this->lastErrors = [];
 
         try {
             $res = $this->http()->get($path, $query);
@@ -79,6 +89,7 @@ class ApiSportsTransfersClient
                 }
 
                 Log::warning('api-sports rate limited, giving up', ['path' => $path]);
+                $this->lastErrors = ['rateLimit' => 'Too many requests (429).'];
                 return [];
             }
 
@@ -90,6 +101,7 @@ class ApiSportsTransfersClient
             $body = $res->json();
 
             if ($this->hasErrors($body['errors'] ?? [])) {
+                $this->lastErrors = array_filter((array) $body['errors']);
                 Log::warning('api-sports returned errors', ['path' => $path, 'errors' => $body['errors']]);
             } elseif (empty($body['response'])) {
                 Log::info('api-sports empty response', [
@@ -102,6 +114,21 @@ class ApiSportsTransfersClient
             Log::warning('api-sports request threw', ['path' => $path, 'error' => $e->getMessage()]);
             return [];
         }
+    }
+
+    /**
+     * api-sports answers HTTP 200 with an "errors" object when the plan, quota
+     * or a parameter blocks a call; it sends [] or {} when there are none.
+     */
+    protected function hasErrors($errors): bool
+    {
+        foreach ((array) $errors as $error) {
+            if (! empty($error)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Keep a minimum gap between requests to stay under the per-minute cap. */

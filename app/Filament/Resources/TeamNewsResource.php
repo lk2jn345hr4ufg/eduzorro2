@@ -28,7 +28,7 @@ class TeamNewsResource extends Resource
     protected static ?string $model = TeamNews::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-newspaper';
-    protected static ?string $navigationGroup = 'Sport';
+    protected static ?string $navigationGroup = 'Football';
     protected static ?int $navigationSort = 4;
     protected static ?string $navigationLabel = 'Team news';
 

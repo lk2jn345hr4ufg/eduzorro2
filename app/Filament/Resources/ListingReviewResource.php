@@ -28,6 +28,9 @@ class ListingReviewResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-star';
     protected static ?string $navigationGroup = 'Moderation';
+
+    // Retired with the football-only relaunch: data kept, hidden from the menu.
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?string $navigationLabel = 'Listing Reviews';
     protected static ?int $navigationSort = 2;
 

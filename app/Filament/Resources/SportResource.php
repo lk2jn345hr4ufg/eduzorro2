@@ -20,6 +20,9 @@ class SportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-trophy';
     protected static ?string $navigationGroup = 'Sport';
+
+    // Retired with the football-only relaunch: data kept, hidden from the menu.
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form

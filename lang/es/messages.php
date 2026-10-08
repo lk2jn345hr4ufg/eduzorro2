@@ -2,7 +2,7 @@
 
 return [
     'site_name'          => 'Eduzorro',
-    'tagline'            => 'Encuentra empresas educativas por región e idioma',
+    'tagline'            => 'Fútbol: clasificaciones, calendario, resultados, cuotas y noticias',
     'home'               => 'Inicio',
     'choose_region'      => 'Elige una región',
     'choose_language'    => 'Elige un idioma',

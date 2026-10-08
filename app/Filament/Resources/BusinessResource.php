@@ -20,6 +20,9 @@ class BusinessResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationGroup = 'WordPress Import';
+
+    // Retired with the football-only relaunch: data kept, hidden from the menu.
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?int $navigationSort = 2;
     protected static ?string $navigationLabel = 'Businesses (registry)';
 

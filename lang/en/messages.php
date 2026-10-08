@@ -2,7 +2,7 @@
 
 return [
     'site_name'          => 'Eduzorro',
-    'tagline'            => 'Find education companies across regions and languages',
+    'tagline'            => 'Football: standings, fixtures, results, odds and team news',
     'home'               => 'Home',
     'choose_region'      => 'Choose a region',
     'choose_language'    => 'Choose a language',

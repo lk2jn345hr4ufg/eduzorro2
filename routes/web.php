@@ -1,148 +1,79 @@
 <?php
 
-use App\Http\Controllers\BusinessController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\DirectoryController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\IndustryController;
-use App\Http\Controllers\ListingReviewController;
-use App\Http\Controllers\RegionLanguageController;
-use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\FootballController;
-use App\Http\Controllers\SearchController;
+use App\Http\Controllers\CompetitionController;
+use App\Http\Controllers\FootballHomeController;
 use App\Http\Controllers\SitemapController;
-use App\Http\Controllers\SportController;
-use App\Http\Controllers\ToolAiController;
-use App\Http\Controllers\ToolController;
 use App\Http\Controllers\SportNewsController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\ToolAiController;
+use App\Http\Controllers\ToolController;
+use App\Models\Competition;
+use App\Models\SportCountry;
 use Illuminate\Support\Facades\Route;
 
-// Global entry point: choose a region & language.
-Route::get('/', [HomeController::class, 'index'])->name('home');
+/*
+ * Football-only site. URL shape:
+ *
+ *   /                                   -> redirect to the default language home
+ *   /{language}                         home dashboard
+ *   /{language}/news[/{news}]           team news feed / article
+ *   /{language}/team/{team}[/{tab}]     team page
+ *   /{language}/{competition}[/{tab}]   championship or tournament page
+ *
+ * The old region-scoped site (courses, business listings, directory,
+ * industries) is retired: every such URL is 301-redirected to the language
+ * home by App\Http\Middleware\RedirectLegacyPaths, which runs before routing.
+ */
 
-// XML sitemap (SEO).
+Route::get('/', [FootballHomeController::class, 'root'])->name('home');
+
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 /*
- * Localized area.  URL shape:  /{region-slug}/{language-code}/...
- * The region.locale middleware resolves both models, sets the app locale,
- * and shares them (plus active regions/languages) with every view.
- *
- * NOTE: literal-prefixed routes (/search, /company) are registered BEFORE the
- * /{industry} wildcard so they win route matching.
- *
- * withoutScopedBindings() is required: because {language:code} uses a custom
- * key, Laravel would otherwise try to auto-scope it through a guessed
- * relationship on the previous model (Region::languages()), which doesn't
- * exist — region and language are independent, not parent/child.
- */
-/*
- * Study tools are identical everywhere, so they live under a language-only
- * prefix: /{language}/tools. Registered BEFORE the region group so that
- * /ru/tools matches here instead of being read as region=ru, language=tools.
+ * {language} is constrained to two letters so it can never swallow an old
+ * region slug, and parameters after it carry no explicit key ({team}, not
+ * {team:slug}): the models declare getRouteKeyName() = 'slug', and an explicit
+ * key after another bound parameter would make Laravel try to scope the child
+ * through a relationship that doesn't exist.
  */
 Route::prefix('{language:code}')
+    ->where(['language' => '[a-z]{2}'])
     ->middleware('locale')
     ->withoutScopedBindings()
     ->group(function () {
+        Route::get('/', [FootballHomeController::class, 'index'])->name('football.home');
+
+        Route::get('/news', [SportNewsController::class, 'index'])->name('sport.news.index');
+        Route::get('/news/{news}', [SportNewsController::class, 'show'])->name('sport.news.show');
+
+        Route::get('/team/{team}', [TeamController::class, 'show'])->name('sport.team');
+        Route::get('/team/{team}/{tab}', [TeamController::class, 'show'])
+            ->whereIn('tab', TeamController::TABS)
+            ->name('sport.team.tab');
+
+        // Study tools stay reachable at their existing URLs, but are no longer
+        // linked from the football site.
         Route::get('/tools', [ToolController::class, 'index'])->name('tools.index');
         Route::get('/tools/{tool}', [ToolController::class, 'show'])->name('tools.show');
-
-        // Backend for the AI note-structuring tool (processes text the visitor
-        // typed themselves, nothing is fetched from third-party services).
         Route::post('/tools/video-notes/generate', [ToolAiController::class, 'videoNotes'])
             ->name('tools.video-notes.generate');
 
-        /*
-         * Sport lives here too: a club belongs to its own country (england,
-         * spain...), which is already a segment of the URL, so the visitor's
-         * region added nothing but duplicate URLs for identical content.
-         *
-         * Parameters are written without an explicit key ({team}, not
-         * {team:slug}): the models declare getRouteKeyName() = 'slug', and an
-         * explicit key after another bound parameter would make Laravel try to
-         * scope the child through a relationship that doesn't exist.
-         */
-        Route::get('/sport', [SportController::class, 'index'])->name('sport.index');
-        Route::get('/sport/news', [SportNewsController::class, 'index'])->name('sport.news.index');
-        Route::get('/sport/news/{news}', [SportNewsController::class, 'show'])->name('sport.news.show');
-        Route::get('/sport/football', [FootballController::class, 'countries'])->name('sport.football.countries');
-        Route::get('/sport/football/{country}', [FootballController::class, 'teams'])->name('sport.football.country');
-        Route::get('/sport/football/{country}/{team}', [TeamController::class, 'show'])->name('sport.team');
-        Route::get('/sport/football/{country}/{team}/{tab}', [TeamController::class, 'show'])
-            ->whereIn('tab', TeamController::TABS)
-            ->name('sport.team.tab');
-        Route::get('/sport/{sport}', [SportController::class, 'show'])->name('sport.show');
-    });
+        // Old country page -> that country's championship (needs a lookup,
+        // so it can't be a plain pattern in the redirect middleware).
+        Route::get('/sport/football/{countrySlug}', function ($language, string $countrySlug) {
+            $country = SportCountry::where('slug', $countrySlug)->first();
+            $league  = $country
+                ? Competition::leagues()->active()->where('sport_country_id', $country->id)->first()
+                : null;
 
-Route::prefix('{region:slug}/{language:code}')
-    ->middleware('region.locale')
-    ->withoutScopedBindings()
-    ->group(function () {
+            return $league
+                ? redirect()->route('competition.show', [$language, $league], 301)
+                : redirect()->route('football.home', [$language], 301);
+        })->name('legacy.country');
 
-        Route::get('/', [RegionLanguageController::class, 'index'])->name('region.home');
-
-        Route::get('/search/suggest', [SearchController::class, 'suggest'])->name('search.suggest');
-        Route::get('/search', [SearchController::class, 'results'])->name('search.results');
-
-        Route::get('/company/{company:slug}', [CompanyController::class, 'show'])->name('company.show');
-        Route::post('/company/{company:slug}/reviews', [ReviewController::class, 'store'])->name('review.store');
-
-        // WordPress-imported content: 5 review-driven verticals + the
-        // business registry. Registered before the /{industry} wildcard
-        // below so these literal prefixes win route matching.
-        Route::get('/directory/{vertical}', [DirectoryController::class, 'index'])->name('directory.index');
-        Route::get('/directory/{vertical}/category/{categorySlug}', [DirectoryController::class, 'category'])->name('directory.category');
-        Route::get('/directory/{vertical}/{listing:slug}', [DirectoryController::class, 'show'])->name('directory.show');
-        Route::post('/directory/{vertical}/{listing:slug}/reviews', [ListingReviewController::class, 'store'])->name('directory.review.store');
-
-        Route::get('/businesses', [BusinessController::class, 'index'])->name('business.index');
-        Route::get('/businesses/{business:slug}', [BusinessController::class, 'show'])->name('business.show');
-
-        /*
-         * Legacy region-scoped sport URLs. The sport section moved to
-         * /{language}/sport (a club belongs to a country, not to a visitor's
-         * region), so these 301 to the new location and keep indexed links alive.
-         */
-        Route::get('/sport', fn ($region, $language) => redirect()->route('sport.index', [$language], 301))
-            ->name('sport.index.legacy');
-
-        Route::get('/sport/news', fn ($region, $language) => redirect()->route('sport.news.index', [$language], 301))
-            ->name('sport.news.index.legacy');
-
-        Route::get('/sport/news/{news}', fn ($region, $language, $news) => redirect()->route('sport.news.show', [$language, $news], 301))
-            ->name('sport.news.show.legacy');
-
-        Route::get('/sport/football', fn ($region, $language) => redirect()->route('sport.football.countries', [$language], 301))
-            ->name('sport.football.countries.legacy');
-
-        Route::get('/sport/football/{country}', fn ($region, $language, $country) => redirect()->route('sport.football.country', [$language, $country], 301))
-            ->name('sport.football.country.legacy');
-
-        Route::get('/sport/football/{country}/{team}', fn ($region, $language, $country, $team) => redirect()->route('sport.team', [$language, $country, $team], 301))
-            ->name('sport.team.legacy');
-
-        Route::get('/sport/football/{country}/{team}/{tab}', fn ($region, $language, $country, $team, $tab) => redirect()->route('sport.team.tab', [$language, $country, $team, $tab], 301))
-            ->whereIn('tab', TeamController::TABS)
-            ->name('sport.team.tab.legacy');
-
-        Route::get('/sport/{sport}', fn ($region, $language, $sport) => redirect()->route('sport.show', [$language, $sport], 301))
-            ->name('sport.show.legacy');
-
-        /*
-         * Legacy region-scoped tool URLs. Tools moved to /{language}/tools,
-         * so these 301 to the new location to keep any indexed links alive.
-         */
-        Route::get('/tools', function ($region, $language) {
-            return redirect()->route('tools.index', [$language], 301);
-        })->name('tools.index.legacy');
-
-        Route::get('/tools/{tool}', function ($region, $language, $tool) {
-            return redirect()->route('tools.show', [$language, $tool], 301);
-        })->name('tools.show.legacy');
-
-        Route::get('/{industry:slug}', [IndustryController::class, 'show'])->name('industry.show');
-        Route::get('/{industry:slug}/{category:slug}', [CategoryController::class, 'show'])->name('category.show');
+        // Must stay last: a bare slug after the language is a competition.
+        Route::get('/{competition}', [CompetitionController::class, 'show'])->name('competition.show');
+        Route::get('/{competition}/{tab}', [CompetitionController::class, 'show'])
+            ->whereIn('tab', CompetitionController::TABS)
+            ->name('competition.tab');
     });

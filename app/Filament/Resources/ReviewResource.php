@@ -28,6 +28,9 @@ class ReviewResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
     protected static ?string $navigationGroup = 'Moderation';
+
+    // Retired with the football-only relaunch: data kept, hidden from the menu.
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?int $navigationSort = 1;
 
     /** Badge in the sidebar showing how many reviews are waiting for approval. */

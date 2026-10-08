@@ -2,168 +2,179 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Competition;
 use App\Models\Fixture;
 use App\Models\Language;
-use App\Models\SportCountry;
 use App\Models\Standing;
 use App\Models\Team;
 use App\Models\Transfer;
-use App\Services\Football\ApiFootballClient;
+use App\Support\TeamLinks;
 
+/**
+ * Team page: /{language}/team/{team}[/{tab}].
+ *
+ * Everything is served from the local DB, filled by sport:sync-competition
+ * (fixtures + standings), sport:sync-transfers and the news pipeline.
+ */
 class TeamController extends Controller
 {
-    public const TABS = ['news', 'fixtures', 'euro-cups', 'transfers', 'standings'];
+    public const TABS = ['dashboard', 'news', 'standings', 'euro-cups', 'transfers', 'fixtures', 'results'];
 
-    public function show(
-        Language $language,
-        SportCountry $country,
-        Team $team,
-        ApiFootballClient $api,
-        string $tab = 'news'
-    ) {
-        abort_unless($team->sport_country_id === $country->id && $team->is_active, 404);
+    public function show(Language $language, Team $team, string $tab = 'dashboard')
+    {
+        abort_unless($team->is_active, 404);
         abort_unless(in_array($tab, self::TABS, true), 404);
 
-        $season = (int) config('football.season');
-        $data   = $this->tabData($tab, $team, $api, $season);
+        $team->loadMissing('competition.country', 'country');
+        $competition = $team->competition;
 
-        $breadcrumbs = [
-            ['label' => __('messages.home'), 'url' => route('home')],
-            ['label' => __('sport.sports'), 'url' => route('sport.index', [$language])],
-            ['label' => __('sport.football'), 'url' => route('sport.football.countries', [$language])],
-            ['label' => $country->translate('name'), 'url' => route('sport.football.country', [$language, $country])],
-            ['label' => $team->translate('name')],
-        ];
+        $breadcrumbs = [['label' => __('messages.home'), 'url' => route('football.home', [$language])]];
+
+        if ($competition && $competition->is_active) {
+            $breadcrumbs[] = [
+                'label' => $competition->translate('name'),
+                'url'   => route('competition.show', [$language, $competition]),
+            ];
+        }
+
+        $breadcrumbs[] = ['label' => $team->translate('name')];
+
+        $data = $team->api_id || in_array($tab, ['news', 'transfers'], true)
+            ? $this->tabData($tab, $team, $competition)
+            : ['apiMissing' => true];
 
         return view('sport.team', array_merge([
-            'country'     => $country,
             'team'        => $team,
+            'competition' => $competition,
             'tab'         => $tab,
             'tabs'        => self::TABS,
             'breadcrumbs' => $breadcrumbs,
         ], $data));
     }
 
-    /**
-     * Fetch just the payload the active tab needs.
-     *
-     * Data is served from the local DB (populated by sport:sync-stats) and
-     * re-shaped into the API-Football payload the views expect. If nothing has
-     * been synced yet for this team, we fall back to a live API read so the
-     * page still works before the first sync.
-     */
-    protected function tabData(string $tab, Team $team, ApiFootballClient $api, int $season): array
+    protected function tabData(string $tab, Team $team, ?Competition $competition): array
     {
-        // News is local; everything else needs the team's API id.
-        if ($tab === 'news') {
-            return ['news' => $team->news()->active()->published()->take(30)->get()];
-        }
+        $apiId = (int) $team->api_id;
 
-        if (! $team->api_id) {
-            return ['apiMissing' => true];
-        }
+        switch ($tab) {
+            case 'dashboard':
+                $next = Fixture::forTeam($apiId)->upcoming()
+                    ->where('kickoff_at', '>=', now()->subHours(3))
+                    ->with('odd')->orderBy('kickoff_at')->take(5)->get();
 
-        return match ($tab) {
-            'fixtures' => (function () use ($api, $team, $season) {
-                // Seasons actually stored for this team, newest first.
-                $seasons = Fixture::forTeam($team->api_id)
-                    ->distinct()->orderByDesc('season')->pluck('season')->all();
+                $recent = Fixture::forTeam($apiId)->played()
+                    ->orderByDesc('kickoff_at')->take(5)->get();
 
-                // Prefer the configured season, but if nothing was synced for
-                // it fall back to the newest season we do have, so the page
-                // never renders empty just because the setting drifted.
-                $effective = in_array($season, $seasons, true)
-                    ? $season
-                    : ($seasons[0] ?? $season);
+                [$table] = $this->leagueTable($team, $competition);
 
-                $all = $this->storedFixtures($team, $effective)
-                    ?: $api->teamFixtures($team->api_id, $effective);
-
-                [$upcoming, $results] = $this->splitFixtures($all);
+                // A window of the table around this team (two above, two below).
+                $pos   = $table->search(fn ($row) => (int) $row->team_api_id === $apiId);
+                $slice = $pos === false
+                    ? $table->take(5)
+                    : $table->slice(max(0, min($pos - 2, $table->count() - 5)), 5);
 
                 return [
-                    'upcoming'       => $upcoming,
-                    'results'        => $results,
-                    'allFixtures'    => $all,
-                    'seasons'        => $seasons,
-                    'currentSeason'  => $effective,
+                    'next'      => $next,
+                    'recent'    => $recent,
+                    'form'      => $recent->map(fn ($f) => $this->outcome($f, $apiId))->reverse()->values(),
+                    'tableRows' => $slice->values(),
+                    'teamRow'   => $pos === false ? null : $table[$pos],
+                    'news'      => $team->news()->active()->published()->take(3)->get(),
+                    'links'     => TeamLinks::forIds(
+                        $slice->pluck('team_api_id')
+                            ->merge($next->pluck('home_api_id'))->merge($next->pluck('away_api_id'))
+                            ->merge($recent->pluck('home_api_id'))->merge($recent->pluck('away_api_id'))
+                    ),
                 ];
-            })(),
 
-            'euro-cups' => (function () use ($api, $team, $season) {
-                $codes  = array_keys(config('football.euro_competitions', []));
-                $stored = $this->storedFixtures($team, $season, $codes);
+            case 'news':
+                return ['news' => $team->news()->active()->published()->take(30)->get()];
 
-                return ['euroFixtures' => $stored ?: $api->teamEuroFixtures($team->api_id, $season)];
-            })(),
+            case 'standings':
+                [$table] = $this->leagueTable($team, $competition);
 
-            'transfers' => (function () use ($team) {
-                // Transfers come from api-sports, which has its own team ids —
-                // hence apisports_id rather than the football-data api_id.
-                // Older rows imported before the provider switch are still keyed
-                // to that same api-sports id, so both keep working.
-                $transferId = $team->apisports_id ?: $team->api_id;
+                return [
+                    'tableGroups' => $table->isEmpty() ? collect() : collect(['' => $table]),
+                    'links'       => TeamLinks::forIds($table->pluck('team_api_id')),
+                ];
 
-                $rows = Transfer::where('team_api_id', $transferId)
-                    ->orderByDesc('transfer_date')
-                    ->get();
+            case 'euro-cups':
+                $codes = Competition::cups()->pluck('code')
+                    ->merge(array_keys(config('football.euro_competitions', [])))
+                    ->unique()->values()->all();
+
+                $rows = Fixture::forTeam($apiId)->whereIn('league_code', $codes)
+                    ->with('odd')->orderByDesc('kickoff_at')->get();
+
+                return [
+                    'cupGroups' => $rows->groupBy('league_code'),
+                    'cupNames'  => Competition::whereIn('code', $codes)->get()->keyBy('code'),
+                    'links'     => TeamLinks::forFixtures($rows),
+                ];
+
+            case 'transfers':
+                // Transfers come from api-sports, which has its own team ids.
+                $rows = Transfer::where('team_api_id', $team->apisports_id ?: $team->api_id)
+                    ->orderByDesc('transfer_date')->get();
 
                 return ['transfers' => Transfer::toApiShapeCollection($rows)];
-            })(),
 
-            'standings' => (function () use ($api, $team, $season) {
-                if (! $team->primary_league_api_id) {
-                    return ['standings' => []];
-                }
+            case 'fixtures':
+                $rows = Fixture::forTeam($apiId)->upcoming()
+                    ->where('kickoff_at', '>=', now()->subHours(3))
+                    ->with('odd')->orderBy('kickoff_at')->get();
 
-                $rows = Standing::where('league_api_id', $team->primary_league_api_id)
-                    ->where('season', $season)
-                    ->orderBy('rank')
-                    ->get();
+                return [
+                    'days'  => $rows->groupBy(fn ($f) => optional($f->kickoff_at)->toDateString()),
+                    'links' => TeamLinks::forFixtures($rows),
+                ];
 
-                return ['standings' => $rows->isNotEmpty()
-                    ? $rows->map->toApiShape()->all()
-                    : ($team->primary_league_code
-                        ? $api->standings($team->primary_league_code, $season)
-                        : [])];
-            })(),
+            case 'results':
+                $rows = Fixture::forTeam($apiId)->played()->orderByDesc('kickoff_at')->get();
 
-            default => [],
-        };
-    }
-
-    /** Stored fixtures for a team, optionally limited to certain competitions. */
-    protected function storedFixtures(Team $team, int $season, array $leagueCodes = []): array
-    {
-        $query = Fixture::forTeam($team->api_id)->season($season);
-
-        if (! empty($leagueCodes)) {
-            $query->whereIn('league_code', $leagueCodes);
+                return [
+                    'days'     => $rows->groupBy(fn ($f) => optional($f->kickoff_at)->toDateString()),
+                    'links'    => TeamLinks::forFixtures($rows),
+                    'outcomes' => $rows->mapWithKeys(fn ($f) => [$f->id => $this->outcome($f, $apiId)]),
+                ];
         }
 
-        return $query->orderBy('kickoff_at')->get()->map->toApiShape()->all();
+        return [];
     }
 
-    /** Partition fixtures into upcoming (not finished) and results (finished). */
-    protected function splitFixtures(array $fixtures): array
+    /**
+     * The team's championship table for the newest season we hold.
+     *
+     * @return array{0: \Illuminate\Support\Collection, 1: ?int}
+     */
+    protected function leagueTable(Team $team, ?Competition $competition): array
     {
-        $finished = ['FT', 'AET', 'PEN'];
-        $upcoming = [];
-        $results  = [];
+        $code = $competition?->code ?: $team->primary_league_code;
 
-        foreach ($fixtures as $fx) {
-            $status = data_get($fx, 'fixture.status.short');
-            if (in_array($status, $finished, true)) {
-                $results[] = $fx;
-            } else {
-                $upcoming[] = $fx;
-            }
+        if (! $code) {
+            return [collect(), null];
         }
 
-        // Upcoming ascending by date, results most-recent first.
-        usort($upcoming, fn ($a, $b) => strcmp(data_get($a, 'fixture.date', ''), data_get($b, 'fixture.date', '')));
-        usort($results, fn ($a, $b) => strcmp(data_get($b, 'fixture.date', ''), data_get($a, 'fixture.date', '')));
+        $season = $competition
+            ? $competition->currentSeason()
+            : (int) Standing::where('league_code', $code)->max('season');
 
-        return [$upcoming, $results];
+        $rows = Standing::where('league_code', $code)
+            ->where('season', $season)
+            ->orderBy('rank')
+            ->get()
+            ->values();
+
+        return [$rows, $season];
+    }
+
+    /** W / D / L from this team's point of view. */
+    protected function outcome(Fixture $fixture, int $apiId): string
+    {
+        $home   = (int) $fixture->home_api_id === $apiId;
+        $mine   = $home ? $fixture->goals_home : $fixture->goals_away;
+        $theirs = $home ? $fixture->goals_away : $fixture->goals_home;
+
+        return $mine > $theirs ? 'W' : ($mine < $theirs ? 'L' : 'D');
     }
 }

@@ -20,6 +20,7 @@ class Team extends Model
         'name'        => 'array',
         'description' => 'array',
         'is_active'   => 'boolean',
+        'is_popular'  => 'boolean',
     ];
 
     public function getRouteKeyName(): string
@@ -37,6 +38,11 @@ class Team extends Model
         return $this->belongsTo(SportCountry::class, 'sport_country_id');
     }
 
+    public function competition()
+    {
+        return $this->belongsTo(Competition::class);
+    }
+
     public function news()
     {
         return $this->hasMany(TeamNews::class)->latest('published_at');
@@ -50,6 +56,11 @@ class Team extends Model
     public function scopeOrdered($query)
     {
         return $query->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function scopePopular($query)
+    {
+        return $query->where('is_popular', true)->orderBy('popular_order')->orderBy('id');
     }
 
     /**

@@ -1,9 +1,5 @@
 @extends('layouts.app')
 
-@push('head')
-    <link rel="stylesheet" href="{{ asset('css/sport.css') }}">
-@endpush
-
 @php($title = $news->translate('title'))
 
 @section('title', $news->metaTitle($title . ' · ' . __('messages.site_name')))
@@ -17,7 +13,7 @@
             <h1>{{ $title }}</h1>
             <p class="lead">
                 @if ($team)
-                    <a href="{{ route('sport.team', [$currentLanguage, $team->country, $team]) }}">
+                    <a href="{{ route('sport.team', [$currentLanguage, $team]) }}">
                         {{ $team->translate('name') }}
                     </a>
                 @endif

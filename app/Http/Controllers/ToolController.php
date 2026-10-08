@@ -18,7 +18,7 @@ class ToolController extends Controller
         $tools = Tool::active()->ordered()->get()->groupBy('category');
 
         $breadcrumbs = [
-            ['label' => __('messages.home'), 'url' => route('home')],
+            ['label' => __('messages.home'), 'url' => route('football.home', [$language])],
             ['label' => __('tools.tools')],
         ];
 
@@ -31,7 +31,7 @@ class ToolController extends Controller
         abort_unless($tool->is_active, 404);
 
         $breadcrumbs = [
-            ['label' => __('messages.home'), 'url' => route('home')],
+            ['label' => __('messages.home'), 'url' => route('football.home', [$language])],
             ['label' => __('tools.tools'), 'url' => route('tools.index', [$language])],
             ['label' => $tool->translate('name')],
         ];

@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @push('head')
-    <link rel="stylesheet" href="{{ asset('css/tools.css') }}">
+    <link rel="stylesheet" href="{{ \App\Support\Asset::version('css/app.css') }}">
+    <link rel="stylesheet" href="{{ \App\Support\Asset::version('css/tools.css') }}">
 @endpush
 
 @php

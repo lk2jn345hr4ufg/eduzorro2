@@ -1,31 +1,38 @@
 @extends('layouts.app')
 
-@push('head')
-    <link rel="stylesheet" href="{{ asset('css/sport.css') }}">
-@endpush
-
 @php($teamName = $team->translate('name'))
-
 @php($tabKey = str_replace('-', '_', $tab))
-@php($countryName = $country->translate('name'))
-@php($tokens = ['team' => $teamName, 'country' => $countryName, 'site' => __('messages.site_name'), 'tab' => __('sport.' . $tabKey)])
+@php($competitionName = $competition?->translate('name') ?? '')
+@php($countryName = $competition?->country?->translate('name') ?? $team->country?->translate('name') ?? '')
+@php($tabLabel = __('football.tab_' . $tabKey))
+@php($tokens = [
+    'team'        => $teamName,
+    'competition' => $competitionName,
+    'country'     => $countryName,
+    'site'        => __('messages.site_name'),
+    'tab'         => $tabLabel,
+])
 
-{{-- Each of the five team tabs is its own URL, so the tags resolve in order:
-     this team's per-tab override → the team-wide override → the global
-     per-tab template (SEO → Meta tags) → the generated default. --}}
+{{-- Each tab is its own URL, so tags resolve in order: this team's per-tab
+     override → the team-wide override → the global per-tab template
+     (SEO → Meta tags) → the generated default. --}}
 @php($defaultTitle = \App\Support\Seo::pageMeta(
     'team_' . $tabKey, 'title',
-    $teamName . ' · ' . __('sport.' . $tabKey) . ' · ' . __('messages.site_name'),
+    $tab === 'dashboard'
+        ? $teamName . ' · ' . __('messages.site_name')
+        : $teamName . ' · ' . $tabLabel . ' · ' . __('messages.site_name'),
     $tokens
 ))
 @php($defaultDescription = \App\Support\Seo::pageMeta(
     'team_' . $tabKey, 'description',
-    $teamName . ' — ' . $countryName,
+    $teamName . ($competitionName ? ' — ' . $competitionName : '') . ': ' . mb_strtolower($tabLabel),
     $tokens
 ))
-
-@php($defaultHeading = \App\Support\Seo::pageMeta('team_' . $tabKey, 'heading', $teamName, $tokens))
-@php($heading = $team->tabMeta($tab, 'heading', $defaultHeading))
+@php($defaultHeading = \App\Support\Seo::pageMeta(
+    'team_' . $tabKey, 'heading',
+    $tab === 'dashboard' ? $teamName : $teamName . ': ' . mb_strtolower($tabLabel),
+    $tokens
+))
 
 @section('title', $team->tabMeta($tab, 'title', $defaultTitle))
 @section('meta_description', $team->tabMeta($tab, 'description', $defaultDescription))
@@ -33,36 +40,36 @@
 @section('content')
     @include('partials.breadcrumbs')
 
-    <header class="page-head team-head">
+    <header class="entity-head">
         @if ($team->logo_url)
-            <img class="team-logo" src="{{ $team->logo_url }}" alt="" width="56" height="56">
+            <img class="entity-logo" src="{{ $team->logo_url }}" alt="" width="64" height="64">
         @endif
         <div>
-            <h1>{{ $heading }}</h1>
-            <p class="lead">
-                {{ $country->translate('name') }}
-                @if ($team->stadium) · {{ __('sport.stadium') }}: {{ $team->stadium }} @endif
-                @if ($team->founded) · {{ __('sport.founded') }}: {{ $team->founded }} @endif
+            <h1>{{ $team->tabMeta($tab, 'heading', $defaultHeading) }}</h1>
+            <p class="entity-sub">
+                @if ($competition && $competition->is_active)
+                    <a class="pill" href="{{ route('competition.show', [$currentLanguage, $competition]) }}">{{ $competition->flag }} {{ $competitionName }}</a>
+                @elseif ($countryName)
+                    <span class="pill">{{ $countryName }}</span>
+                @endif
+                @if ($team->stadium) <span>{{ __('football.stadium') }}: {{ $team->stadium }}</span> @endif
+                @if ($team->founded) <span>· {{ __('football.founded') }}: {{ $team->founded }}</span> @endif
             </p>
         </div>
     </header>
 
-    <nav class="team-tabs">
+    <nav class="tabs" aria-label="{{ $teamName }}">
         @foreach ($tabs as $t)
-            <a class="team-tab {{ $t === $tab ? 'is-active' : '' }}"
-               href="{{ $t === 'news'
-                    ? route('sport.team', [$currentLanguage, $country, $team])
-                    : route('sport.team.tab', [$currentLanguage, $country, $team, $t]) }}">
-                {{ __('sport.' . str_replace('-', '_', $t)) }}
+            <a @class(['tab', 'is-active' => $t === $tab])
+               href="{{ $t === 'dashboard' ? route('sport.team', [$currentLanguage, $team]) : route('sport.team.tab', [$currentLanguage, $team, $t]) }}">
+                {{ __('football.tab_' . str_replace('-', '_', $t)) }}
             </a>
         @endforeach
     </nav>
 
-    <section class="home-section team-tab-panel">
-        @if (! empty($apiMissing))
-            <p class="notice">{{ __('sport.data_unavailable') }}</p>
-        @else
-            @include('sport.partials.' . $tab)
-        @endif
-    </section>
+    @if (! empty($apiMissing))
+        <section class="card"><p class="empty">{{ __('sport.data_unavailable') }}</p></section>
+    @else
+        @include('football.team.' . $tab)
+    @endif
 @endsection

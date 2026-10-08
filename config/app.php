@@ -80,6 +80,11 @@ return [
 
     'locale' => env('APP_LOCALE', 'en'),
 
+    // Separate public web root on the server (e.g. ~/eduzorro.com/www), used
+    // by App\Support\Asset to version CSS by the copy that is actually served.
+    'public_docroot' => env('PUBLIC_DOCROOT'),
+    'asset_version' => env('ASSET_VERSION', '1'),
+
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),

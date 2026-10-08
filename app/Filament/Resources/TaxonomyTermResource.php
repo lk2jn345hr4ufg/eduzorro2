@@ -30,6 +30,9 @@ class TaxonomyTermResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
     protected static ?string $navigationGroup = 'Directory';
+
+    // Retired with the football-only relaunch: data kept, hidden from the menu.
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?string $navigationLabel = 'Imported categories';
     protected static ?string $modelLabel = 'imported category';
     protected static ?string $pluralModelLabel = 'imported categories';

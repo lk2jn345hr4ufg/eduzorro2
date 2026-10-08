@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Competition;
 use App\Models\SportCountry;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -15,7 +16,7 @@ use Illuminate\Support\Str;
 class DataSync extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
-    protected static ?string $navigationGroup = 'Sport';
+    protected static ?string $navigationGroup = 'Football';
     protected static ?int $navigationSort = 9;
     protected static ?string $navigationLabel = 'Data sync';
     protected static ?string $title = 'Data sync';
@@ -25,6 +26,55 @@ class DataSync extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('syncCompetitions')
+                ->label('Sync championships (matches + tables)')
+                ->icon('heroicon-o-trophy')
+                ->color('success')
+                ->form([
+                    Select::make('codes')
+                        ->label('Competitions')
+                        ->multiple()
+                        ->options(fn () => Competition::query()->whereNotNull('api_id')->orderBy('sort_order')
+                            ->get()->mapWithKeys(fn ($c) => [$c->code => $c->code.' — '.$c->translate('name')])->all())
+                        ->placeholder('All with a football-data id')
+                        ->helperText('2 requests per competition; the free plan allows ~10 per minute.'),
+                    TextInput::make('season')->numeric()->placeholder('current'),
+                    TextInput::make('sleep')->numeric()->default(7)->helperText('Seconds between competitions.'),
+                ])
+                ->action(function (array $data) {
+                    @set_time_limit(0);
+                    $params = ['--sleep' => (int) ($data['sleep'] ?? 7)];
+                    if (! empty($data['codes']))  { $params['codes'] = array_values($data['codes']); }
+                    if (! empty($data['season'])) { $params['--season'] = (int) $data['season']; }
+
+                    $code = Artisan::call('sport:sync-competition', $params);
+                    $this->result('Championships sync', $code, Artisan::output());
+                }),
+
+            Action::make('syncOdds')
+                ->label('Sync odds (API-Football)')
+                ->icon('heroicon-o-currency-dollar')
+                ->color('success')
+                ->form([
+                    Select::make('codes')
+                        ->label('Competitions')
+                        ->multiple()
+                        ->options(fn () => Competition::query()->whereNotNull('apisports_league_id')->orderBy('sort_order')
+                            ->get()->mapWithKeys(fn ($c) => [$c->code => $c->code.' — '.$c->translate('name')])->all())
+                        ->placeholder('All with an API-Football id'),
+                    TextInput::make('days')->numeric()->default(2)->helperText('Days ahead, from today. ≤ 1 request per competition per day with matches.'),
+                    TextInput::make('season')->numeric()->placeholder('site season'),
+                ])
+                ->action(function (array $data) {
+                    @set_time_limit(0);
+                    $params = ['--days' => max(1, (int) ($data['days'] ?? 2))];
+                    if (! empty($data['codes']))  { $params['codes'] = array_values($data['codes']); }
+                    if (! empty($data['season'])) { $params['--season'] = (int) $data['season']; }
+
+                    $code = Artisan::call('sport:sync-odds', $params);
+                    $this->result('Odds sync', $code, Artisan::output());
+                }),
+
             Action::make('syncFootball')
                 ->label('Import teams & countries')
                 ->icon('heroicon-o-cloud-arrow-down')
@@ -220,6 +270,7 @@ class DataSync extends Page
                 ->modalDescription('Clears the application cache, including cached fixtures, standings and transfers. They are refetched on next view.')
                 ->action(function () {
                     Artisan::call('cache:clear');
+                    \Illuminate\Support\Facades\Cache::forget('nav_competitions');
                     Notification::make()->title('Cache cleared')->success()->send();
                 }),
         ];

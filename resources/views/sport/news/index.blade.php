@@ -1,9 +1,5 @@
 @extends('layouts.app')
 
-@push('head')
-    <link rel="stylesheet" href="{{ asset('css/sport.css') }}">
-@endpush
-
 @section('title', \App\Support\Seo::pageMeta('sport_news', 'title', __('sport.sports_news') . ' · ' . __('messages.site_name')))
 @section('meta_description', \App\Support\Seo::pageMeta('sport_news', 'description', __('sport.latest_news')))
 
@@ -35,7 +31,7 @@
                             </h3>
                             <p class="news-feed-meta">
                                 @if ($item->team)
-                                    <a href="{{ route('sport.team', [$currentLanguage, $item->team->country, $item->team]) }}">
+                                    <a href="{{ route('sport.team', [$currentLanguage, $item->team]) }}">
                                         {{ $item->team->translate('name') }}
                                     </a>
                                 @endif

@@ -12,6 +12,40 @@ class Fixture extends Model
         'kickoff_at' => 'datetime',
     ];
 
+    public const FINISHED = ['FT', 'AET', 'PEN'];
+    public const LIVE     = ['IN_PLAY', 'PAUSED', 'LIVE'];
+
+    public function odd()
+    {
+        return $this->hasOne(Odd::class);
+    }
+
+    public function competition()
+    {
+        return $this->belongsTo(Competition::class, 'league_code', 'code');
+    }
+
+    public function isPlayed(): bool
+    {
+        return in_array($this->status_short, self::FINISHED, true);
+    }
+
+    public function isLive(): bool
+    {
+        return in_array($this->status_short, self::LIVE, true);
+    }
+
+    public function scopePlayed($query)
+    {
+        return $query->whereIn('status_short', self::FINISHED);
+    }
+
+    public function scopeUpcoming($query)
+    {
+        return $query->whereNotIn('status_short', self::FINISHED)
+            ->whereNotIn('status_short', ['CANCELLED', 'POSTPONED', 'SUSPENDED']);
+    }
+
     /** Matches involving a given API team id. */
     public function scopeForTeam($query, int $teamApiId)
     {

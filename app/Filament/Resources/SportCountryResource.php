@@ -20,7 +20,7 @@ class SportCountryResource extends Resource
     protected static ?string $model = SportCountry::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-flag';
-    protected static ?string $navigationGroup = 'Sport';
+    protected static ?string $navigationGroup = 'Football';
     protected static ?int $navigationSort = 2;
     protected static ?string $navigationLabel = 'Countries';
 
