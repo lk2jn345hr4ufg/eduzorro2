@@ -62,6 +62,9 @@ class SyncFootball extends Command
 
         foreach ($leagues as $code => $label) {
             $this->line("→ {$code} ({$label})");
+
+            // Championship page this league feeds (null for cups / unknown).
+            $competitionId = \App\Models\Competition::leagues()->where('code', $code)->value('id');
             $teams = $api->teamsByCompetition($code, $season);
 
             if (empty($teams)) {
@@ -101,6 +104,7 @@ class SyncFootball extends Command
                         'api_id'                => $t['id'],
                         'primary_league_api_id' => $t['competition_id'],
                         'primary_league_code'   => $t['competition_code'],
+                        'competition_id'        => $competitionId ?: $existing?->competition_id,
                         'name'                  => ['en' => $t['name']],
                         'short_name'            => $t['code'],
                         'logo_url'              => $t['crest'],
