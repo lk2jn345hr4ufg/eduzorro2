@@ -2,7 +2,7 @@
 
 return [
     'site_name'          => 'Eduzorro',
-    'tagline'            => 'Fútbol: clasificaciones, calendario, resultados, cuotas y noticias',
+    'tagline'            => 'Fútbol: clasificaciones, calendario, resultados, plantillas y cuotas',
     'home'               => 'Inicio',
     'choose_region'      => 'Elige una región',
     'choose_language'    => 'Elige un idioma',

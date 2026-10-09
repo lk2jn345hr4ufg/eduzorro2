@@ -10,6 +10,12 @@ class SportNewsController extends Controller
     /** /{language}/news — all sports news, newest first. */
     public function index(Language $language)
     {
+        // News hidden (Settings → News API): temporary redirect, so the
+        // URLs come back once news is switched on again.
+        if (! config('football.news_enabled')) {
+            return redirect()->route('football.home', [$language]);
+        }
+
         $news = TeamNews::query()
             ->active()->published()
             ->with('team.country')
@@ -27,6 +33,10 @@ class SportNewsController extends Controller
     /** /{language}/news/{news} — a single article. */
     public function show(Language $language, TeamNews $news)
     {
+        if (! config('football.news_enabled')) {
+            return redirect()->route('football.home', [$language]);
+        }
+
         abort_unless($news->is_active && $news->published_at && $news->published_at <= now(), 404);
 
         $news->loadMissing('team.country');

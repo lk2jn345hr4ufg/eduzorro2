@@ -3,6 +3,14 @@
 return [
 
     /*
+     | Team news on the site (feed, article pages, news tab and blocks).
+     | Off: everything news-related is hidden and /news URLs redirect home.
+     | Overridable in the admin: Settings → News API → "Show news on the site".
+     */
+    'news_enabled' => (bool) env('FOOTBALL_NEWS_ENABLED', false),
+
+
+    /*
      |--------------------------------------------------------------------------
      | football-data.org (v4)
      |--------------------------------------------------------------------------

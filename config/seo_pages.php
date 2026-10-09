@@ -70,6 +70,11 @@ return [
         'sample'  => '/{language}/team/{team}',
         'heading' => true,
     ],
+    'team_squad' => [
+        'label'   => 'Team · Squad',
+        'sample'  => '/{language}/team/{team}/squad',
+        'heading' => true,
+    ],
     'team_news' => [
         'label'   => 'Team · News',
         'sample'  => '/{language}/team/{team}/news',

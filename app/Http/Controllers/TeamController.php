@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Competition;
 use App\Models\Fixture;
 use App\Models\Language;
+use App\Models\Player;
 use App\Models\Standing;
 use App\Models\Team;
 use App\Models\Transfer;
@@ -18,12 +19,25 @@ use App\Support\TeamLinks;
  */
 class TeamController extends Controller
 {
-    public const TABS = ['dashboard', 'news', 'standings', 'euro-cups', 'transfers', 'fixtures', 'results'];
+    public const TABS = ['dashboard', 'squad', 'news', 'standings', 'euro-cups', 'transfers', 'fixtures', 'results'];
+
+    /** Tabs actually shown: the news tab only while news is switched on. */
+    public static function tabs(): array
+    {
+        return config('football.news_enabled')
+            ? self::TABS
+            : array_values(array_diff(self::TABS, ['news']));
+    }
 
     public function show(Language $language, Team $team, string $tab = 'dashboard')
     {
         abort_unless($team->is_active, 404);
         abort_unless(in_array($tab, self::TABS, true), 404);
+
+        // News hidden: the old tab URL goes to the team overview.
+        if (! in_array($tab, self::tabs(), true)) {
+            return redirect()->route('sport.team', [$language, $team]);
+        }
 
         $team->loadMissing('competition.country', 'country');
         $competition = $team->competition;
@@ -39,7 +53,7 @@ class TeamController extends Controller
 
         $breadcrumbs[] = ['label' => $team->translate('name')];
 
-        $data = $team->api_id || in_array($tab, ['news', 'transfers'], true)
+        $data = $team->api_id || in_array($tab, ['news', 'transfers', 'squad'], true)
             ? $this->tabData($tab, $team, $competition)
             : ['apiMissing' => true];
 
@@ -47,7 +61,7 @@ class TeamController extends Controller
             'team'        => $team,
             'competition' => $competition,
             'tab'         => $tab,
-            'tabs'        => self::TABS,
+            'tabs'        => self::tabs(),
             'breadcrumbs' => $breadcrumbs,
         ], $data));
     }
@@ -79,12 +93,29 @@ class TeamController extends Controller
                     'form'      => $recent->map(fn ($f) => $this->outcome($f, $apiId))->reverse()->values(),
                     'tableRows' => $slice->values(),
                     'teamRow'   => $pos === false ? null : $table[$pos],
-                    'news'      => $team->news()->active()->published()->take(3)->get(),
+                    'news'       => config('football.news_enabled')
+                        ? $team->news()->active()->published()->take(3)->get()
+                        : collect(),
+                    'squadCount' => $team->players()->count(),
+                    'squadLines' => $team->players()
+                        ->selectRaw('line, count(*) as n')->groupBy('line')->pluck('n', 'line')
+                        ->sortBy(fn ($n, $line) => array_search($line, Player::LINES, true))
+                        ->all(),
                     'links'     => TeamLinks::forIds(
                         $slice->pluck('team_api_id')
                             ->merge($next->pluck('home_api_id'))->merge($next->pluck('away_api_id'))
                             ->merge($recent->pluck('home_api_id'))->merge($recent->pluck('away_api_id'))
                     ),
+                ];
+
+            case 'squad':
+                $players = $team->players()->get()
+                    ->sortBy(fn ($p) => sprintf('%03d|%s', $p->shirt_number ?? 999, $p->name));
+
+                return [
+                    'lines' => collect(Player::LINES)
+                        ->mapWithKeys(fn ($line) => [$line => $players->where('line', $line)->values()])
+                        ->filter(fn ($group) => $group->isNotEmpty()),
                 ];
 
             case 'news':

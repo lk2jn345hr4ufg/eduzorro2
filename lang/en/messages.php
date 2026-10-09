@@ -2,7 +2,7 @@
 
 return [
     'site_name'          => 'Eduzorro',
-    'tagline'            => 'Football: standings, fixtures, results, odds and team news',
+    'tagline'            => 'Football: standings, fixtures, results, squads and odds',
     'home'               => 'Home',
     'choose_region'      => 'Choose a region',
     'choose_language'    => 'Choose a language',

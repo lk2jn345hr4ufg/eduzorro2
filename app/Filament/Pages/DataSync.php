@@ -51,23 +51,59 @@ class DataSync extends Page
                     $this->result('Championships sync', $code, Artisan::output());
                 }),
 
-            Action::make('syncOdds')
-                ->label('Sync odds (API-Football)')
-                ->icon('heroicon-o-currency-dollar')
+            Action::make('syncSquads')
+                ->label('Sync squads')
+                ->icon('heroicon-o-user-group')
                 ->color('success')
                 ->form([
                     Select::make('codes')
-                        ->label('Competitions')
+                        ->label('Championships')
                         ->multiple()
-                        ->options(fn () => Competition::query()->whereNotNull('apisports_league_id')->orderBy('sort_order')
+                        ->options(fn () => Competition::query()->leagues()->orderBy('sort_order')
                             ->get()->mapWithKeys(fn ($c) => [$c->code => $c->code.' — '.$c->translate('name')])->all())
-                        ->placeholder('All with an API-Football id'),
-                    TextInput::make('days')->numeric()->default(2)->helperText('Days ahead, from today. ≤ 1 request per competition per day with matches.'),
-                    TextInput::make('season')->numeric()->placeholder('site season'),
+                        ->placeholder('All'),
+                    Toggle::make('missing')->label('Only teams without a squad')->default(true),
+                    TextInput::make('limit')->numeric()->default(20)
+                        ->helperText('1 request per team, ~10 per minute: 20 teams ≈ 2.5 minutes.'),
                 ])
                 ->action(function (array $data) {
                     @set_time_limit(0);
-                    $params = ['--days' => max(1, (int) ($data['days'] ?? 2))];
+                    $params = ['--limit' => (int) ($data['limit'] ?? 20), '--sleep' => 7];
+                    if (! empty($data['codes']))   { $params['codes'] = array_values($data['codes']); }
+                    if (! empty($data['missing'])) { $params['--missing'] = true; }
+
+                    $code = Artisan::call('sport:sync-squads', $params);
+                    $this->result('Squads sync', $code, Artisan::output());
+                }),
+
+            Action::make('syncOdds')
+                ->label('Sync odds')
+                ->icon('heroicon-o-currency-dollar')
+                ->color('success')
+                ->form([
+                    Select::make('provider')
+                        ->options(['oddsapi' => 'The Odds API', 'apisports' => 'API-Football'])
+                        ->default(fn () => config('odds.provider', 'oddsapi'))
+                        ->native(false)->live(),
+                    Select::make('codes')
+                        ->label('Competitions')
+                        ->multiple()
+                        ->options(fn ($get) => Competition::query()
+                            ->whereNotNull($get('provider') === 'apisports' ? 'apisports_league_id' : 'oddsapi_sport_key')
+                            ->orderBy('sort_order')
+                            ->get()->mapWithKeys(fn ($c) => [$c->code => $c->code.' — '.$c->translate('name')])->all())
+                        ->placeholder('All with a key for this provider'),
+                    TextInput::make('days')->numeric()->default(3)
+                        ->helperText('Days ahead from today. The Odds API: 1 credit per competition that has matches in the window.'),
+                    TextInput::make('season')->numeric()->placeholder('site season')
+                        ->helperText('API-Football only.'),
+                ])
+                ->action(function (array $data) {
+                    @set_time_limit(0);
+                    $params = [
+                        '--days'     => max(1, (int) ($data['days'] ?? 3)),
+                        '--provider' => $data['provider'] ?? config('odds.provider', 'oddsapi'),
+                    ];
                     if (! empty($data['codes']))  { $params['codes'] = array_values($data['codes']); }
                     if (! empty($data['season'])) { $params['--season'] = (int) $data['season']; }
 

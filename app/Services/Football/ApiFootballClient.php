@@ -95,7 +95,54 @@ class ApiFootballClient
             'area'             => data_get($t, 'area.name'),
             'competition_id'   => $competitionId,
             'competition_code' => $code,
+            // Present on most plans; empty arrays are simply skipped.
+            'squad'            => $this->normaliseSquad(data_get($t, 'squad', [])),
+            'coach'            => $this->normaliseCoach(data_get($t, 'coach')),
         ])->filter(fn ($t) => $t['id'] && $t['name'])->values()->all();
+    }
+
+    /**
+     * One team with its squad and coach (/teams/{id}). Not cached: only the
+     * squad sync calls it.
+     *
+     * @return array{squad: array, coach: ?array}|null
+     */
+    public function teamSquad(int $teamId): ?array
+    {
+        $body = $this->get("/teams/{$teamId}");
+
+        if (! is_array($body) || ! data_get($body, 'id')) {
+            return null;
+        }
+
+        return [
+            'squad' => $this->normaliseSquad(data_get($body, 'squad', [])),
+            'coach' => $this->normaliseCoach(data_get($body, 'coach')),
+        ];
+    }
+
+    protected function normaliseSquad($squad): array
+    {
+        return collect(is_array($squad) ? $squad : [])
+            ->map(fn ($p) => [
+                'id'            => data_get($p, 'id'),
+                'name'          => trim((string) data_get($p, 'name')),
+                'position'      => data_get($p, 'position'),
+                'shirt_number'  => data_get($p, 'shirtNumber'),
+                'date_of_birth' => data_get($p, 'dateOfBirth'),
+                'nationality'   => data_get($p, 'nationality'),
+                'contract_until'=> data_get($p, 'contract.until'),
+            ])
+            ->filter(fn ($p) => $p['name'] !== '')
+            ->values()
+            ->all();
+    }
+
+    protected function normaliseCoach($coach): ?array
+    {
+        $name = trim((string) data_get($coach, 'name'));
+
+        return $name === '' ? null : ['name' => $name, 'nationality' => data_get($coach, 'nationality')];
     }
 
     // ---- Per-team data ------------------------------------------------------

@@ -63,13 +63,14 @@ class TeamResource extends Resource
 
             SeoFields::make(),
             \Filament\Forms\Components\Section::make('SEO per tab')
-                ->description('Optional. Each team page has seven tabs sharing one record, so these let every URL carry its own tags. Empty fields fall back to the team SEO above, then to the global templates in SEO → Meta tags.')
+                ->description('Optional. Each team page has several tabs sharing one record, so these let every URL carry its own tags. Empty fields fall back to the team SEO above, then to the global templates in SEO → Meta tags.')
                 ->collapsed()
                 ->schema([
                     \Filament\Forms\Components\Tabs::make('meta_tabs_tabs')
                         ->columnSpanFull()
                         ->tabs(collect([
                             'dashboard' => 'Overview',
+                            'squad'     => 'Squad',
                             'news'      => 'News',
                             'standings' => 'Standings',
                             'euro_cups' => 'European cups',

@@ -32,6 +32,10 @@ class Settings extends Page implements HasForms
     protected array $keys = [
         'football_data_token',
         'apisports_key',
+        'odds_provider',
+        'oddsapi_key',
+        'oddsapi_regions',
+        'oddsapi_bookmakers',
         'api_football_season',
         'news_provider',
         'news_api_key',
@@ -41,6 +45,7 @@ class Settings extends Page implements HasForms
         'gemini_api_key',
         'gemini_model',
         'gemini_enabled',
+        'news_enabled',
         'gemini_news_prompt',
     ];
 
@@ -50,6 +55,10 @@ class Settings extends Page implements HasForms
         $this->form->fill([
             'football_data_token' => Setting::get('football_data_token', config('football.api.token')),
             'apisports_key'       => Setting::get('apisports_key', config('apisports.key')),
+            'odds_provider'       => Setting::get('odds_provider', config('odds.provider')),
+            'oddsapi_key'         => Setting::get('oddsapi_key', config('odds.oddsapi.key')),
+            'oddsapi_regions'     => Setting::get('oddsapi_regions', config('odds.oddsapi.regions')),
+            'oddsapi_bookmakers'  => Setting::get('oddsapi_bookmakers', config('odds.oddsapi.bookmakers')),
             'api_football_season' => Setting::get('api_football_season', config('football.season')),
             'news_provider'       => Setting::get('news_provider', config('news.provider')),
             'news_api_key'        => Setting::get('news_api_key', config('news.key')),
@@ -58,6 +67,7 @@ class Settings extends Page implements HasForms
             'news_per_team'       => Setting::get('news_per_team', config('news.per_team')),
             'gemini_api_key'      => Setting::get('gemini_api_key', config('gemini.key')),
             'gemini_model'        => Setting::get('gemini_model', config('gemini.model')),
+            'news_enabled'        => filter_var(Setting::get('news_enabled', config('football.news_enabled')), FILTER_VALIDATE_BOOLEAN),
             'gemini_enabled'      => filter_var(Setting::get('gemini_enabled', config('gemini.enabled')), FILTER_VALIDATE_BOOLEAN),
             'gemini_news_prompt'  => Setting::get('gemini_news_prompt', config('gemini.prompt')),
         ]);
@@ -90,9 +100,37 @@ class Settings extends Page implements HasForms
                             ->autocomplete(false),
                     ]),
 
+                Section::make('Odds')
+                    ->description('1X2 odds for upcoming matches (sport:sync-odds). The Odds API free plan gives 500 credits a month; each competition costs 1 credit per sync and empty responses are free.')
+                    ->schema([
+                        Select::make('odds_provider')
+                            ->label('Provider')
+                            ->options([
+                                'oddsapi'   => 'The Odds API (the-odds-api.com)',
+                                'apisports' => 'API-Football (paid plan needed for the current season)',
+                            ])
+                            ->native(false),
+                        TextInput::make('oddsapi_key')
+                            ->label('The Odds API key')
+                            ->password()->revealable()
+                            ->autocomplete(false),
+                        TextInput::make('oddsapi_regions')
+                            ->label('Region')
+                            ->placeholder('eu')
+                            ->helperText('eu, uk, us or au. One region = 1 credit per request.'),
+                        TextInput::make('oddsapi_bookmakers')
+                            ->label('Preferred bookmakers')
+                            ->placeholder('pinnacle,betfair_ex_eu,unibet_eu')
+                            ->helperText('Comma-separated keys, best first.'),
+                    ])->columns(2),
+
                 Section::make('News API')
                     ->description('Pulls team news (API-Football has no news feed).')
                     ->schema([
+                        Toggle::make('news_enabled')
+                            ->label('Show news on the site')
+                            ->helperText('Off: the news feed, article pages, the team "News" tab and all news blocks are hidden; /news URLs redirect to the home page.')
+                            ->columnSpanFull(),
                         Select::make('news_provider')
                             ->label('Provider')
                             ->options(['gnews' => 'GNews (gnews.io)', 'newsapi' => 'NewsAPI (newsapi.org)'])

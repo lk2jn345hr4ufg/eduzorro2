@@ -102,6 +102,7 @@
             @include('football.partials.team-grid', ['teams' => $popular, 'showComp' => true])
         </section>
 
+        @if (config('football.news_enabled'))
         <section class="card dash-wide">
             <div class="card-head">
                 <h2>{{ __('football.latest_news') }}</h2>
@@ -109,5 +110,6 @@
             </div>
             @include('football.partials.news-cards', ['news' => $news, 'showTeam' => true])
         </section>
+        @endif
     </div>
 @endsection

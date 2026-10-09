@@ -21,6 +21,10 @@ class SettingsServiceProvider extends ServiceProvider
         $map = [
             'football_data_token'  => 'football.api.token',
             'apisports_key'        => 'apisports.key',
+            'odds_provider'        => 'odds.provider',
+            'oddsapi_key'          => 'odds.oddsapi.key',
+            'oddsapi_regions'      => 'odds.oddsapi.regions',
+            'oddsapi_bookmakers'   => 'odds.oddsapi.bookmakers',
             'api_football_season'  => 'football.season',
             'news_provider'       => 'news.provider',
             'news_api_key'        => 'news.key',
@@ -31,6 +35,7 @@ class SettingsServiceProvider extends ServiceProvider
             'gemini_model'        => 'gemini.model',
             'gemini_news_prompt'  => 'gemini.prompt',
             'gemini_enabled'      => 'gemini.enabled',
+            'news_enabled'        => 'football.news_enabled',
         ];
 
         try {
@@ -52,7 +57,7 @@ class SettingsServiceProvider extends ServiceProvider
             }
 
             // Boolean toggle stored as '1'/'0'.
-            if ($settingKey === 'gemini_enabled') {
+            if (in_array($settingKey, ['gemini_enabled', 'news_enabled'], true)) {
                 $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
             }
 

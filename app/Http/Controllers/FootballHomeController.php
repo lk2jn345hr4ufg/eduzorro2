@@ -64,7 +64,7 @@ class FootballHomeController extends Controller
             $popular = Team::active()->whereIn('api_id', $topIds)->with('competition.country')->take(12)->get();
         }
 
-        $news = TeamNews::query()
+        $news = ! config('football.news_enabled') ? collect() : TeamNews::query()
             ->active()->published()
             ->with('team')
             ->latest('published_at')

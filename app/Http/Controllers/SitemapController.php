@@ -19,7 +19,9 @@ class SitemapController extends Controller
         $urls      = [];
 
         $urls[] = $this->entry('football.home', [], $languages);
-        $urls[] = $this->entry('sport.news.index', [], $languages);
+        if (config('football.news_enabled')) {
+            $urls[] = $this->entry('sport.news.index', [], $languages);
+        }
 
         foreach (Competition::active()->ordered()->get() as $competition) {
             foreach ($competition->tabs() as $tab) {
@@ -31,13 +33,17 @@ class SitemapController extends Controller
 
         Team::active()->whereNotNull('competition_id')->orderBy('id')->chunk(500, function ($teams) use ($languages, &$urls) {
             foreach ($teams as $team) {
-                foreach (TeamController::TABS as $tab) {
+                foreach (TeamController::tabs() as $tab) {
                     $urls[] = $tab === 'dashboard'
                         ? $this->entry('sport.team', [$team], $languages)
                         : $this->entry('sport.team.tab', [$team, $tab], $languages);
                 }
             }
         });
+
+        if (! config('football.news_enabled')) {
+            return response()->view('sitemap', ['urls' => $urls])->header('Content-Type', 'application/xml');
+        }
 
         TeamNews::query()->active()->published()->latest('published_at')->take(1000)->get()
             ->each(function ($news) use ($languages, &$urls) {

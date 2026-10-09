@@ -102,4 +102,40 @@ class FootballStore
             return null;
         }
     }
+
+    /**
+     * Replace a team's squad. Returns the number of players stored; an empty
+     * squad leaves the existing one untouched (an API hiccup must not wipe it).
+     */
+    public function squad(\App\Models\Team $team, array $players, ?array $coach = null): int
+    {
+        if (empty($players)) {
+            return 0;
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($team, $players, $coach) {
+            $team->players()->delete();
+
+            foreach ($players as $p) {
+                $team->players()->create([
+                    'api_id'         => $p['id'] ?: null,
+                    'name'           => mb_substr($p['name'], 0, 255),
+                    'position'       => $p['position'] ? mb_substr($p['position'], 0, 40) : null,
+                    'line'           => \App\Models\Player::lineFor($p['position']),
+                    'shirt_number'   => is_numeric($p['shirt_number']) ? (int) $p['shirt_number'] : null,
+                    'date_of_birth'  => $p['date_of_birth'] ?: null,
+                    'nationality'    => $p['nationality'] ? mb_substr($p['nationality'], 0, 80) : null,
+                    'contract_until' => $p['contract_until'] ? mb_substr((string) $p['contract_until'], 0, 10) : null,
+                ]);
+            }
+
+            $team->forceFill([
+                'coach_name'        => $coach['name'] ?? $team->coach_name,
+                'coach_nationality' => $coach['nationality'] ?? $team->coach_nationality,
+                'squad_synced_at'   => now(),
+            ])->save();
+        });
+
+        return count($players);
+    }
 }

@@ -59,7 +59,9 @@
                         {{ $nav->translate('name') }}
                     </a>
                 @endforeach
-                <a href="{{ route('sport.news.index', [$navLanguage]) }}" @class(['is-active' => request()->routeIs('sport.news.*')])>{{ __('football.news') }}</a>
+                @if (config('football.news_enabled'))
+                    <a href="{{ route('sport.news.index', [$navLanguage]) }}" @class(['is-active' => request()->routeIs('sport.news.*')])>{{ __('football.news') }}</a>
+                @endif
             </nav>
 
             @if (count($alternates) > 1)

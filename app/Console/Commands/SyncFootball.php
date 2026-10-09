@@ -58,6 +58,7 @@ class SyncFootball extends Command
         $this->info('Importing '.count($leagues).' competition(s) from football-data.org'.($season ? " (season {$season})" : ' (current season)').'...');
 
         $total   = 0;
+        $squads  = 0;
         $skipped = [];
 
         foreach ($leagues as $code => $label) {
@@ -95,7 +96,7 @@ class SyncFootball extends Command
                     ->orderByRaw('char_length(slug) desc')
                     ->first();
 
-                Team::updateOrCreate(
+                $team = Team::updateOrCreate(
                     ['id' => $existing?->id],
                     [
                         'sport_country_id'      => $country->id,
@@ -114,6 +115,9 @@ class SyncFootball extends Command
                     ]
                 );
 
+                // The same response usually carries the squad: store it for free.
+                $squads += app(\App\Services\Football\FootballStore::class)->squad($team, $t['squad'] ?? [], $t['coach'] ?? null) > 0 ? 1 : 0;
+
                 $total++;
             }
 
@@ -125,7 +129,10 @@ class SyncFootball extends Command
         }
 
         $this->newLine();
-        $this->info("Done. {$total} team row(s) upserted.");
+        $this->info("Done. {$total} team row(s) upserted, {$squads} squad(s) stored.");
+        if ($squads < $total) {
+            $this->line('Squads missing for some teams — run: php artisan sport:sync-squads --missing');
+        }
 
         if ($skipped) {
             $this->newLine();

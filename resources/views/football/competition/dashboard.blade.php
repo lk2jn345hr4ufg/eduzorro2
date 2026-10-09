@@ -27,7 +27,8 @@
         @endif
     </section>
 
-    <section class="card">
+    @php($newsOn = config('football.news_enabled'))
+    <section @class(['card', 'dash-wide' => ! $newsOn])>
         <div class="card-head">
             <h2>{{ __('football.recent_results') }}</h2>
             <a class="card-more" href="{{ $tabUrl('results') }}">{{ __('football.all_results') }} →</a>
@@ -43,13 +44,15 @@
         @endif
     </section>
 
-    <section class="card">
-        <div class="card-head">
-            <h2>{{ __('football.latest_news') }}</h2>
-            <a class="card-more" href="{{ route('sport.news.index', [$currentLanguage]) }}">{{ __('football.all_news') }} →</a>
-        </div>
-        @include('football.partials.news-cards', ['news' => $news, 'showTeam' => true])
-    </section>
+    @if ($newsOn)
+        <section class="card">
+            <div class="card-head">
+                <h2>{{ __('football.latest_news') }}</h2>
+                <a class="card-more" href="{{ route('sport.news.index', [$currentLanguage]) }}">{{ __('football.all_news') }} →</a>
+            </div>
+            @include('football.partials.news-cards', ['news' => $news, 'showTeam' => true])
+        </section>
+    @endif
 
     @if ($competition->isLeague())
         <section class="card dash-wide">

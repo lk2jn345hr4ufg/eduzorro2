@@ -21,6 +21,7 @@ class Team extends Model
         'description' => 'array',
         'is_active'   => 'boolean',
         'is_popular'  => 'boolean',
+        'squad_synced_at' => 'datetime',
     ];
 
     public function getRouteKeyName(): string
@@ -41,6 +42,11 @@ class Team extends Model
     public function competition()
     {
         return $this->belongsTo(Competition::class);
+    }
+
+    public function players()
+    {
+        return $this->hasMany(Player::class);
     }
 
     public function news()

@@ -73,11 +73,33 @@
         ])
     </section>
 
-    <section class="card">
-        <div class="card-head">
-            <h2>{{ __('football.news') }}</h2>
-            <a class="card-more" href="{{ $tabUrl('news') }}">{{ __('football.all_news') }} →</a>
-        </div>
-        @include('football.partials.news-cards', ['news' => $news])
-    </section>
+    @if (config('football.news_enabled'))
+        <section class="card">
+            <div class="card-head">
+                <h2>{{ __('football.news') }}</h2>
+                <a class="card-more" href="{{ $tabUrl('news') }}">{{ __('football.all_news') }} →</a>
+            </div>
+            @include('football.partials.news-cards', ['news' => $news])
+        </section>
+    @else
+        <section class="card">
+            <div class="card-head">
+                <h2>{{ __('football.tab_squad') }}</h2>
+                <a class="card-more" href="{{ $tabUrl('squad') }}">{{ __('football.full_squad') }} →</a>
+            </div>
+            @if ($squadCount === 0)
+                <p class="empty">{{ __('football.no_squad') }}</p>
+            @else
+                <ul class="squad-summary">
+                    @if ($team->coach_name)
+                        <li><span>{{ __('football.coach') }}</span><strong>{{ $team->coach_name }}</strong></li>
+                    @endif
+                    @foreach ($squadLines as $line => $count)
+                        <li><span>{{ __('football.pos_' . $line) }}</span><strong>{{ $count }}</strong></li>
+                    @endforeach
+                    <li><span>{{ __('football.players_total') }}</span><strong>{{ $squadCount }}</strong></li>
+                </ul>
+            @endif
+        </section>
+    @endif
 </div>

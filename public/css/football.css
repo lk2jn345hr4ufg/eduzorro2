@@ -392,6 +392,27 @@ a.pill:hover { text-decoration: none; background: #d3efdd; }
 .t-in { background: var(--accent-soft); color: var(--accent-ink); }
 .t-out { background: #fde8e8; color: #b42318; }
 
+/* ---------- Squad ---------- */
+
+.coach-card { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.coach-card strong { font: 700 22px/1.1 var(--display); text-transform: uppercase; }
+.squad-table { table-layout: fixed; }
+.squad-table th:nth-child(1) { width: 60px; }
+.squad-table th:nth-child(2) { width: 30%; }
+.squad-table th:nth-child(5) { width: 80px; }
+.squad-table th:nth-child(6) { width: 130px; }
+.squad-table .c-num { text-align: center; }
+.squad-table td { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 900px) { .squad-table { table-layout: auto; } }
+.shirt {
+    display: inline-grid; place-items: center; min-width: 30px; height: 26px; padding: 0 6px;
+    border-radius: 6px; background: var(--pitch); color: #fff; font-weight: 700; font-size: 13px;
+}
+.squad-summary { list-style: none; margin: 0; padding: 0; }
+.squad-summary li { display: flex; justify-content: space-between; padding: 9px 4px; border-bottom: 1px solid var(--line-2); }
+.squad-summary li:last-child { border-bottom: 0; }
+.squad-summary span { color: var(--ink-2); }
+
 /* ---------- Misc ---------- */
 
 .alert { padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; }
