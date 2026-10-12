@@ -3,6 +3,9 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Team;
+use App\Filament\Support\SyncRunner;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -41,6 +44,17 @@ class TeamFreshness extends BaseWidget
                 CompetitionFreshness::dateColumn('transfers_synced_at', 'Transfers', 'transfers'),
                 CompetitionFreshness::dateColumn('competition.matches_synced_at', 'Matches & table', 'matches'),
                 CompetitionFreshness::dateColumn('updated_at', 'Team record', 'teams'),
+            ])
+            ->actions([
+                ActionGroup::make([
+                    Action::make('squad')->label('Sync squad')->icon('heroicon-o-identification')
+                        ->visible(fn (Team $r) => (bool) $r->api_id)
+                        ->action(fn (Team $r) => SyncRunner::now('Squad — '.$r->slug,
+                            'sport:sync-squads', ['--team' => $r->slug, '--sleep' => 0])),
+                    Action::make('transfers')->label('Sync transfers')->icon('heroicon-o-arrows-right-left')
+                        ->action(fn (Team $r) => SyncRunner::now('Transfers — '.$r->slug,
+                            'sport:sync-transfers', ['--team' => $r->slug])),
+                ])->label('Sync')->icon('heroicon-o-arrow-path')->button()->size('sm')->color('gray'),
             ])
             ->filters([
                 SelectFilter::make('competition_id')->label('Championship')

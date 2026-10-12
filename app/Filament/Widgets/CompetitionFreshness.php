@@ -5,6 +5,9 @@ namespace App\Filament\Widgets;
 use App\Filament\Support\Freshness;
 use App\Models\Competition;
 use App\Models\Fixture;
+use App\Filament\Support\SyncRunner;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -23,6 +26,7 @@ class CompetitionFreshness extends BaseWidget
         return $table
             ->query(
                 Competition::query()
+                    ->with('country')
                     ->withCount(['teams' => fn ($q) => $q->where('is_active', true)])
                     ->withCount(['teams as squads_count' => fn ($q) => $q->where('is_active', true)->whereNotNull('squad_synced_at')])
                     ->withMax('teams', 'squad_synced_at')
@@ -47,6 +51,30 @@ class CompetitionFreshness extends BaseWidget
                     ->description(fn (Competition $r) => $r->teams_count ? "{$r->squads_count}/{$r->teams_count} teams" : null),
                 self::dateColumn('teams_max_transfers_synced_at', 'Transfers (latest)', 'transfers'),
                 self::dateColumn('odds_synced_at', 'Odds', 'odds'),
+            ])
+            ->actions([
+                ActionGroup::make([
+                    Action::make('matches')->label('Sync matches & table')->icon('heroicon-o-table-cells')
+                        ->visible(fn (Competition $r) => (bool) $r->api_id)
+                        ->action(fn (Competition $r) => SyncRunner::now("Matches & table — {$r->code}",
+                            'sport:sync-competition', ['codes' => [$r->code], '--sleep' => 0])),
+                    Action::make('teams')->label('Import teams (+ squads)')->icon('heroicon-o-user-group')
+                        ->visible(fn (Competition $r) => $r->isLeague() && $r->api_id)
+                        ->action(fn (Competition $r) => SyncRunner::now("Teams — {$r->code}",
+                            'sport:sync-football', ['--competition' => $r->code, '--sleep' => 0])),
+                    Action::make('squads')->label('Load missing squads')->icon('heroicon-o-identification')
+                        ->visible(fn (Competition $r) => $r->isLeague() && $r->api_id)
+                        ->action(fn (Competition $r) => SyncRunner::background("Squads — {$r->code}",
+                            [['sport:sync-squads', ['codes' => [$r->code], '--missing' => true, '--sleep' => 7]]])),
+                    Action::make('transfers')->label('Sync transfers')->icon('heroicon-o-arrows-right-left')
+                        ->visible(fn (Competition $r) => $r->isLeague() && $r->country)
+                        ->action(fn (Competition $r) => SyncRunner::background("Transfers — {$r->code}",
+                            [['sport:sync-transfers', ['--country' => $r->country->slug]]])),
+                    Action::make('odds')->label('Sync odds (3 days)')->icon('heroicon-o-currency-dollar')
+                        ->visible(fn (Competition $r) => (bool) ($r->oddsapi_sport_key || $r->apisports_league_id))
+                        ->action(fn (Competition $r) => SyncRunner::now("Odds — {$r->code}",
+                            'sport:sync-odds', ['codes' => [$r->code], '--days' => 3])),
+                ])->label('Sync')->icon('heroicon-o-arrow-path')->button()->size('sm')->color('gray'),
             ]);
     }
 

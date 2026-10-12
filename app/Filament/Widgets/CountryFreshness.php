@@ -3,6 +3,8 @@
 namespace App\Filament\Widgets;
 
 use App\Models\SportCountry;
+use App\Filament\Support\SyncRunner;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -47,6 +49,14 @@ class CountryFreshness extends BaseWidget
                 CompetitionFreshness::dateColumn('teams_max_transfers_synced_at', 'Transfers (latest)', 'transfers'),
                 CompetitionFreshness::dateColumn('teams_min_transfers_synced_at', 'Transfers (oldest team)', 'transfers'),
                 CompetitionFreshness::dateColumn('league.odds_synced_at', 'Odds', 'odds'),
+            ])
+            ->actions([
+                Action::make('transfers')->label('Transfers')->icon('heroicon-o-arrows-right-left')
+                    ->button()->size('sm')->color('gray')
+                    ->requiresConfirmation()
+                    ->modalDescription('Runs in the background: about 1 API-Football request per team (free plan: 100 a day).')
+                    ->action(fn (SportCountry $r) => SyncRunner::background("Transfers — {$r->slug}",
+                        [['sport:sync-transfers', ['--country' => $r->slug]]])),
             ]);
     }
 }
