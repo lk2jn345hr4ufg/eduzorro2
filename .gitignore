@@ -25,3 +25,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Leftovers from the old Ruby/Heroku app in this folder
+/tmp/

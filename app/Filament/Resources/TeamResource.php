@@ -109,6 +109,8 @@ class TeamResource extends Resource
                 TextColumn::make('country.slug')->label('Country')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('api_id')->label('API id'),
                 ToggleColumn::make('is_popular')->label('Popular'),
+                TextColumn::make('squad_synced_at')->label('Squad')->since()->dateTimeTooltip('d.m.Y H:i')->placeholder('never')->sortable()->toggleable(),
+                TextColumn::make('transfers_synced_at')->label('Transfers')->since()->dateTimeTooltip('d.m.Y H:i')->placeholder('never')->sortable()->toggleable(),
                 IconColumn::make('is_active')->boolean(),
             ])
             ->filters([

@@ -32,7 +32,12 @@ class SyncTransfers extends Command
             return self::FAILURE;
         }
 
-        $query = Team::query()->active()->ordered()->with('country');
+        // Least recently synced first, so --limit'ed runs rotate through all teams.
+        $query = Team::query()->active()->with('country')
+            ->orderByRaw('transfers_synced_at is not null')
+            ->orderBy('transfers_synced_at')
+            ->orderBy('sort_order')
+            ->orderBy('id');
 
         if ($slug = $this->option('team')) {
             $query->where('slug', $slug);
@@ -59,6 +64,9 @@ class SyncTransfers extends Command
         $blank   = 0;
 
         $this->info("Syncing transfers for {$teams->count()} team(s)...");
+
+        $startedAt = now();
+        $done      = 0;
 
         foreach ($teams as $team) {
             $name = $team->translate('name') ?: $team->slug;
@@ -97,6 +105,11 @@ class SyncTransfers extends Command
 
             $this->line("   transfers: {$n}");
 
+            if ($n > 0) {
+                $team->forceFill(['transfers_synced_at' => now()])->save();
+                $done++;
+            }
+
             // Five empty answers in a row usually means quota, not "no data".
             if ($blank >= 5) {
                 $this->error('Five empty responses in a row — stopping. Check the quota or key.');
@@ -114,6 +127,15 @@ class SyncTransfers extends Command
 
         $this->newLine();
         $this->info("Done. {$stored} transfer row(s) upserted.");
+
+        \App\Models\SyncLog::record(
+            'transfers',
+            $this->option('team') ?: ($this->option('country') ?: 'all'),
+            $done === $teams->count() ? 'ok' : ($done > 0 ? 'partial' : 'failed'),
+            $stored,
+            "{$done}/{$teams->count()} teams, {$stored} rows",
+            $startedAt
+        );
 
         return self::SUCCESS;
     }

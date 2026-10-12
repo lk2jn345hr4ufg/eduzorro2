@@ -22,6 +22,7 @@ class Team extends Model
         'is_active'   => 'boolean',
         'is_popular'  => 'boolean',
         'squad_synced_at' => 'datetime',
+        'transfers_synced_at' => 'datetime',
     ];
 
     public function getRouteKeyName(): string

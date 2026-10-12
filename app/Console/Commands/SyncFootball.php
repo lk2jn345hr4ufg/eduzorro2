@@ -64,14 +64,19 @@ class SyncFootball extends Command
         foreach ($leagues as $code => $label) {
             $this->line("→ {$code} ({$label})");
 
+            $startedAt = now();
+
             // Championship page this league feeds (null for cups / unknown).
             $competitionId = \App\Models\Competition::leagues()->where('code', $code)->value('id');
             $teams = $api->teamsByCompetition($code, $season);
 
             if (empty($teams)) {
                 $this->warn('  nothing returned (rate limit, token, or competition not in your plan)');
+                \App\Models\SyncLog::record('teams', $code, 'failed', 0, 'Nothing returned (rate limit, token or plan)', $startedAt);
                 continue;
             }
+
+            $squadsBefore = $squads;
 
             foreach ($teams as $t) {
                 $countryName = $t['area'] ?: 'World';
@@ -122,6 +127,12 @@ class SyncFootball extends Command
             }
 
             $this->info('  imported '.count($teams).' team(s)');
+
+            \App\Models\Competition::where('code', $code)->update(['teams_synced_at' => now()]);
+            \App\Models\SyncLog::record('teams', $code, 'ok', count($teams), count($teams).' teams, '.($squads - $squadsBefore).' squads', $startedAt);
+            if ($squads > $squadsBefore) {
+                \App\Models\SyncLog::record('squads', $code, 'ok', $squads - $squadsBefore, 'stored with the teams import', $startedAt);
+            }
 
             if ($sleep > 0 && count($leagues) > 1) {
                 sleep($sleep);

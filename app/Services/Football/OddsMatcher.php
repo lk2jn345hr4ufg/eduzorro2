@@ -58,6 +58,34 @@ class OddsMatcher
         return null;
     }
 
+    /**
+     * Match by kick-off time plus names (providers without shared ids, e.g.
+     * The Odds API). Among our fixtures starting within ±3 hours:
+     *   1. both names match;
+     *   2. otherwise one name matches and that pairing is unique, which covers
+     *      spellings the normaliser can't bridge ("Bayern Munich" vs
+     *      "FC Bayern München") as long as the opponent matches.
+     *
+     * @param  Collection<int, Fixture>  $ours
+     */
+    public function findNear(Collection $ours, string $home, string $away, \DateTimeInterface $kickoff): ?Fixture
+    {
+        $ts = $kickoff->getTimestamp();
+
+        $near = $ours->filter(fn ($f) => $f->kickoff_at
+            && abs($f->kickoff_at->getTimestamp() - $ts) <= 3 * 3600);
+
+        $both = $near->first(fn ($f) => $this->sameTeam($f->home_name, $home) && $this->sameTeam($f->away_name, $away));
+
+        if ($both) {
+            return $both;
+        }
+
+        $one = $near->filter(fn ($f) => $this->sameTeam($f->home_name, $home) || $this->sameTeam($f->away_name, $away));
+
+        return $one->count() === 1 ? $one->first() : null;
+    }
+
     public function sameTeam(?string $a, ?string $b): bool
     {
         $a = $this->normalise($a);

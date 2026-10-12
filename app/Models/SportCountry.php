@@ -30,6 +30,12 @@ class SportCountry extends Model
         return $this->belongsTo(Sport::class);
     }
 
+    /** The country's one championship (see competitions.league_country_id). */
+    public function league()
+    {
+        return $this->hasOne(Competition::class, 'sport_country_id')->where('type', Competition::LEAGUE);
+    }
+
     public function teams()
     {
         return $this->hasMany(Team::class);

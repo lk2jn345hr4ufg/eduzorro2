@@ -52,8 +52,10 @@ class SyncSquads extends Command
             $query->limit($limit);
         }
 
-        $teams = $query->get();
-        $sleep = max(0, (int) $this->option('sleep'));
+        $teams     = $query->get();
+        $sleep     = max(0, (int) $this->option('sleep'));
+        $startedAt = now();
+        $scope     = $this->option('team') ?: (implode(',', $codes) ?: 'all');
         $ok    = 0;
         $fails = 0;
 
@@ -85,6 +87,14 @@ class SyncSquads extends Command
 
         $this->newLine();
         $this->info("Done. {$ok}/{$teams->count()} squad(s) stored.");
+
+        if ($teams->isNotEmpty()) {
+            \App\Models\SyncLog::record(
+                'squads', $scope,
+                $ok === $teams->count() ? 'ok' : ($ok > 0 ? 'partial' : 'failed'),
+                $ok, "{$ok}/{$teams->count()} teams", $startedAt
+            );
+        }
 
         return self::SUCCESS;
     }

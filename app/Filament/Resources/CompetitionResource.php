@@ -85,7 +85,10 @@ class CompetitionResource extends Resource
                 TextInput::make('api_id')->numeric()->label('football-data id')
                     ->helperText('Empty = not covered by football-data (e.g. the Ukrainian league).'),
                 TextInput::make('apisports_league_id')->numeric()->label('API-Football league id')
-                    ->helperText('Used for odds and transfers (e.g. 39 = Premier League).'),
+                    ->helperText('Used for transfers (e.g. 39 = Premier League).'),
+                TextInput::make('oddsapi_sport_key')->label('The Odds API sport key')->maxLength(80)
+                    ->placeholder('soccer_epl')
+                    ->helperText('Odds source. Empty = no odds for this competition.'),
                 TextInput::make('emblem_url')->url()->maxLength(500),
                 TextInput::make('flag')->maxLength(32)->helperText('Emoji flag shown next to the name.'),
                 TextInput::make('sort_order')->numeric()->default(0),
@@ -135,7 +138,10 @@ class CompetitionResource extends Resource
                 TextColumn::make('country.slug')->label('Country'),
                 TextColumn::make('teams_count')->counts('teams')->label('Teams'),
                 TextColumn::make('api_id')->label('FD id')->placeholder('—'),
-                TextColumn::make('apisports_league_id')->label('AS id')->placeholder('—'),
+                TextColumn::make('apisports_league_id')->label('AS id')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('oddsapi_sport_key')->label('Odds key')->placeholder('—')->toggleable(),
+                TextColumn::make('matches_synced_at')->label('Matches synced')->since()->dateTimeTooltip('d.m.Y H:i')->placeholder('never')->sortable()->toggleable(),
+                TextColumn::make('odds_synced_at')->label('Odds synced')->since()->dateTimeTooltip('d.m.Y H:i')->placeholder('never')->sortable()->toggleable(isToggledHiddenByDefault: true),
                 ToggleColumn::make('is_active')->label('Active'),
                 TextColumn::make('sort_order')->sortable(),
             ])

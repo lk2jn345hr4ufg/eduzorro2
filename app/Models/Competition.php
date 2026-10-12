@@ -28,6 +28,9 @@ class Competition extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'teams_synced_at'   => 'datetime',
+        'matches_synced_at' => 'datetime',
+        'odds_synced_at'    => 'datetime',
         'name'             => 'array',
         'meta_title'       => 'array',
         'meta_description' => 'array',

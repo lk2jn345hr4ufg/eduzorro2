@@ -47,6 +47,7 @@ class SyncCompetition extends Command
 
         foreach ($competitions as $i => $competition) {
             $this->line("→ {$competition->code} ".$competition->translate('name'));
+            $startedAt = now();
 
             $result = $api->competitionMatches($competition->code, $season);
             $fx     = $store->fixtures($result['matches'], $result['season'] ?: (int) config('football.season'));
@@ -68,6 +69,10 @@ class SyncCompetition extends Command
 
             if ($fx === 0 && $st === 0) {
                 $this->warn('   nothing returned — rate limit, token, or this competition is not in your plan (see storage/logs/laravel.log)');
+                \App\Models\SyncLog::record('matches', $competition->code, 'failed', 0, 'Nothing returned (rate limit, token or plan)', $startedAt);
+            } else {
+                $competition->forceFill(['matches_synced_at' => now()])->save();
+                \App\Models\SyncLog::record('matches', $competition->code, $fx && $st ? 'ok' : 'partial', $fx + $st, "season {$effectiveSeason}: {$fx} matches, {$st} table rows", $startedAt);
             }
 
             if ($sleep > 0 && $i < $competitions->count() - 1) {

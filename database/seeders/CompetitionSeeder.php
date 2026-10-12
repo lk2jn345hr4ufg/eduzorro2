@@ -19,6 +19,21 @@ use Illuminate\Database\Seeder;
  */
 class CompetitionSeeder extends Seeder
 {
+    /** football-data code => The Odds API sport key (the-odds-api.com). */
+    public const ODDSAPI_KEYS = [
+        'PL'  => 'soccer_epl',
+        'PD'  => 'soccer_spain_la_liga',
+        'SA'  => 'soccer_italy_serie_a',
+        'BL1' => 'soccer_germany_bundesliga',
+        'FL1' => 'soccer_france_ligue_one',
+        'DED' => 'soccer_netherlands_eredivisie',
+        'PPL' => 'soccer_portugal_primeira_liga',
+        'BSA' => 'soccer_brazil_campeonato',
+        'CL'  => 'soccer_uefa_champs_league',
+        'EC'  => 'soccer_uefa_european_championship',
+        'WC'  => 'soccer_fifa_world_cup',
+    ];
+
     public function run(): void
     {
         $sport = Sport::firstOrCreate(
@@ -60,6 +75,12 @@ class CompetitionSeeder extends Seeder
                 'sort_order'          => 100 + $order++,
                 'is_active'           => true,
             ]);
+        }
+
+        // Fill The Odds API keys without overwriting admin edits.
+        foreach (self::ODDSAPI_KEYS as $code => $key) {
+            Competition::where('code', $code)->whereNull('oddsapi_sport_key')
+                ->update(['oddsapi_sport_key' => $key]);
         }
 
         $this->linkTeams();
