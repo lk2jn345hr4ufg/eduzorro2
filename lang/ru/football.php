@@ -81,4 +81,8 @@ return [
     'contract' => 'Контракт до',
     'squad_updated' => 'Состав обновлён :date',
     'role' => 'Амплуа',
+    'match_time_title' => 'Начало в :time по местному времени (:city, :zone)',
+    'your_time' => 'у вас (:zone)',
+    'same_as_yours' => '= ваше время',
+    'day_short' => 'д',
 ];

@@ -81,4 +81,8 @@ return [
     'contract' => 'Contrato hasta',
     'squad_updated' => 'Plantilla actualizada :date',
     'role' => 'Demarcación',
+    'match_time_title' => 'Inicio a las :time hora local (:city, :zone)',
+    'your_time' => 'tu hora (:zone)',
+    'same_as_yours' => '= tu hora',
+    'day_short' => 'd',
 ];

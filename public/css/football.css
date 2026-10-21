@@ -232,14 +232,17 @@ a.pill:hover { text-decoration: none; background: #d3efdd; }
 
 .match-list { display: flex; flex-direction: column; }
 .match {
-    display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 12px;
+    display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; align-items: center; gap: 12px;
     padding: 9px 6px; border-bottom: 1px solid var(--line-2);
 }
 .match:last-child { border-bottom: 0; }
 .match:hover { background: var(--surface-2); }
 
 .match-time { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
-.match-time time { font-weight: 700; color: var(--ink); }
+.match-time time { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.match-time .tz { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.user-time { display: flex; flex-direction: column; font-size: 11px; line-height: 1.25; color: var(--accent-ink); max-width: 100%; overflow-wrap: anywhere; }
+.user-time b { font-size: 12px; font-weight: 700; white-space: nowrap; }
 .match-date { font-size: 12px; color: var(--muted); }
 .comp-code { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--muted); background: var(--line-2); border-radius: 4px; padding: 1px 5px; }
 
@@ -447,7 +450,7 @@ a.pill:hover { text-decoration: none; background: #d3efdd; }
     .hero { padding: 22px 18px; }
     .card, .home-section { padding: 14px; }
     .entity-logo { width: 48px; height: 48px; }
-    .match { grid-template-columns: 48px minmax(0, 1fr); }
+    .match { grid-template-columns: 84px minmax(0, 1fr); }
     .match-odds, .match > .form-badge { grid-column: 2; justify-self: start; }
     .match-odds span { min-width: 42px; }
     .standings .c-form { display: none; }

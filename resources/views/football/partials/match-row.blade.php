@@ -15,6 +15,8 @@
         'home' => [$f->home_api_id, $f->home_name, $f->home_logo, $f->goals_home],
         'away' => [$f->away_api_id, $f->away_name, $f->away_logo, $f->goals_away],
     ];
+    $local    = \App\Support\MatchTime::local($f);
+    $zone     = $local ? $local->getTimezone()->getName() : 'UTC';
     $winner = $played
         ? ($f->goals_home > $f->goals_away ? 'home' : ($f->goals_home < $f->goals_away ? 'away' : null))
         : null;
@@ -23,12 +25,20 @@
     <div class="match-time">
         @if ($live)
             <span class="live-dot">{{ __('football.live') }}</span>
-        @elseif ($f->kickoff_at)
+        @elseif ($local)
             @if (! empty($showDate))
-                <span class="match-date">{{ $f->kickoff_at->translatedFormat('d M') }}</span>
+                <span class="match-date">{{ $local->translatedFormat('d M') }}</span>
             @endif
             @if (! $played)
-                <time datetime="{{ $f->kickoff_at->toIso8601String() }}">{{ $f->kickoff_at->format('H:i') }}</time>
+                {{-- Match-local time + zone; the visitor's time is added by JS (layout). --}}
+                <time class="kickoff"
+                      datetime="{{ $f->kickoff_at->toIso8601ZuluString() }}"
+                      data-kickoff="{{ $f->kickoff_at->toIso8601ZuluString() }}"
+                      data-offset="{{ $local->utcOffset() }}"
+                      title="{{ __('football.match_time_title', ['time' => $local->format('H:i'), 'city' => \App\Support\MatchTime::city($zone), 'zone' => \App\Support\MatchTime::abbr($local)]) }}">
+                    {{ $local->format('H:i') }} <small class="tz">{{ \App\Support\MatchTime::abbr($local) }}</small>
+                </time>
+                <span class="user-time" hidden></span>
             @endif
         @endif
         @if (! empty($showComp) && $f->league_code)

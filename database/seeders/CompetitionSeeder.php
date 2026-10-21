@@ -77,6 +77,13 @@ class CompetitionSeeder extends Seeder
             ]);
         }
 
+        // Local time zones (kick-off times), without overwriting admin edits.
+        foreach (['PL' => 'Europe/London', 'PD' => 'Europe/Madrid', 'SA' => 'Europe/Rome', 'BL1' => 'Europe/Berlin',
+                  'FL1' => 'Europe/Paris', 'DED' => 'Europe/Amsterdam', 'PPL' => 'Europe/Lisbon',
+                  'BSA' => 'America/Sao_Paulo', 'UPL' => 'Europe/Kyiv'] as $code => $zone) {
+            Competition::where('code', $code)->whereNull('timezone')->update(['timezone' => $zone]);
+        }
+
         // Fill The Odds API keys without overwriting admin edits.
         foreach (self::ODDSAPI_KEYS as $code => $key) {
             Competition::where('code', $code)->whereNull('oddsapi_sport_key')

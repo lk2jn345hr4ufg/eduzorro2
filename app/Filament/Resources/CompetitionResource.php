@@ -91,6 +91,11 @@ class CompetitionResource extends Resource
                     ->helperText('Odds source. Empty = no odds for this competition.'),
                 TextInput::make('emblem_url')->url()->maxLength(500),
                 TextInput::make('flag')->maxLength(32)->helperText('Emoji flag shown next to the name.'),
+                Select::make('timezone')
+                    ->label('Time zone')
+                    ->options(fn () => collect(timezone_identifiers_list())->mapWithKeys(fn ($z) => [$z => $z])->all())
+                    ->searchable()
+                    ->helperText('Kick-off times are shown in this zone (cup matches use the home club\'s championship zone).'),
                 TextInput::make('sort_order')->numeric()->default(0),
                 Toggle::make('is_featured')->label('Featured')->default(false),
                 Toggle::make('is_active')->default(true),

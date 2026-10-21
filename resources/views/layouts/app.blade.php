@@ -93,6 +93,57 @@
     </div>
 </footer>
 
+{{-- Adds the visitor's own time under every kick-off time (match zone is
+     rendered server-side). Uses the browser's time zone; nothing is stored. --}}
+<script>
+(function () {
+    var nodes = document.querySelectorAll('time[data-kickoff]');
+    if (!nodes.length || !window.Intl) return;
+    var lang = document.documentElement.lang || 'en';
+    var yours = @json(__('football.your_time'));
+    var same = @json(__('football.same_as_yours'));
+    var userZone = '';
+    try { userZone = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+
+    nodes.forEach(function (el) {
+        var d = new Date(el.getAttribute('data-kickoff'));
+        if (isNaN(d)) return;
+        var out = el.nextElementSibling;
+        if (!out || !out.classList.contains('user-time')) return;
+
+        var userOffset = -d.getTimezoneOffset();            // minutes, at kick-off
+        var matchOffset = parseInt(el.getAttribute('data-offset'), 10);
+        var time, zone;
+        try {
+            time = d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', hour12: false });
+            var parts = new Intl.DateTimeFormat(lang, { timeZoneName: 'short' }).formatToParts(d);
+            zone = (parts.find(function (p) { return p.type === 'timeZoneName'; }) || {}).value || '';
+        } catch (e) { return; }
+
+        // Day shift vs the match-local date (e.g. a late game in Brazil is
+        // already tomorrow for a visitor in Europe).
+        var t = d.getTime(), day = 864e5;
+        var shift = Math.floor((t + userOffset * 6e4) / day) - Math.floor((t + matchOffset * 6e4) / day);
+        var dayMark = shift > 0 ? ' +' + shift + @json(__('football.day_short')) : (shift < 0 ? ' ' + shift + @json(__('football.day_short')) : '');
+
+        out.textContent = '';
+        if (userOffset === matchOffset) {
+            out.textContent = same;
+        } else {
+            var strong = document.createElement('b');
+            strong.textContent = time + dayMark;
+            var label = document.createElement('span');
+            label.textContent = yours.replace(':zone', zone);
+            out.appendChild(strong);
+            out.appendChild(label);
+        }
+        out.title = userZone;
+        out.hidden = false;
+        el.title = el.title + (userZone ? ' · ' + userZone + ': ' + time : '');
+    });
+})();
+</script>
+
 @stack('scripts')
 </body>
 </html>

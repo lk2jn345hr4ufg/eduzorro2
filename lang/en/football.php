@@ -81,4 +81,8 @@ return [
     'contract' => 'Contract until',
     'squad_updated' => 'Squad updated :date',
     'role' => 'Position',
+    'match_time_title' => 'Kick-off :time local time (:city, :zone)',
+    'your_time' => 'your time (:zone)',
+    'same_as_yours' => '= your time',
+    'day_short' => 'd',
 ];
