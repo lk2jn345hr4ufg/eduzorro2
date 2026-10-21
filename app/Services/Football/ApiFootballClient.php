@@ -317,6 +317,7 @@ class ApiFootballClient
                 'name'  => data_get($m, 'competition.name'),
                 'round' => data_get($m, 'matchday'),
             ],
+            'venue' => data_get($m, 'venue'),
             'teams' => [
                 'home' => [
                     'id'   => data_get($m, 'homeTeam.id'),

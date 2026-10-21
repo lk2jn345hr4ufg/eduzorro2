@@ -17,6 +17,7 @@
     ];
     $local    = \App\Support\MatchTime::local($f);
     $zone     = $local ? $local->getTimezone()->getName() : 'UTC';
+    $venue    = \App\Support\MatchVenue::label($f);
     $winner = $played
         ? ($f->goals_home > $f->goals_away ? 'home' : ($f->goals_home < $f->goals_away ? 'away' : null))
         : null;
@@ -62,6 +63,12 @@
                 <span class="match-goals">{{ ($played || $live) && $goals !== null ? $goals : '' }}</span>
             </div>
         @endforeach
+        @if ($venue)
+            <div class="match-venue" title="{{ __('football.venue') }}: {{ $venue }}">
+                <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path fill="currentColor" d="M8 0a5.5 5.5 0 0 0-5.5 5.5C2.5 9.6 8 16 8 16s5.5-6.4 5.5-10.5A5.5 5.5 0 0 0 8 0Zm0 7.8a2.3 2.3 0 1 1 0-4.6 2.3 2.3 0 0 1 0 4.6Z"/></svg>
+                <span>{{ $venue }}</span>
+            </div>
+        @endif
     </div>
 
     @if (! empty($outcome))

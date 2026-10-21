@@ -85,4 +85,5 @@ return [
     'your_time' => 'у вас (:zone)',
     'same_as_yours' => '= ваш час',
     'day_short' => 'д',
+    'venue' => 'Стадіон',
 ];

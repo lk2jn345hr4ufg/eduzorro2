@@ -37,6 +37,7 @@ class FootballStore
                     'away_api_id'   => data_get($row, 'teams.away.id'),
                     'away_name'     => data_get($row, 'teams.away.name'),
                     'away_logo'     => data_get($row, 'teams.away.logo'),
+                    'venue'         => ($v = trim((string) data_get($row, 'venue'))) !== '' ? mb_substr($v, 0, 120) : null,
                     'goals_home'    => data_get($row, 'goals.home'),
                     'goals_away'    => data_get($row, 'goals.away'),
                     'status_short'  => data_get($row, 'fixture.status.short'),

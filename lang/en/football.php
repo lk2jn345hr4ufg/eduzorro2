@@ -85,4 +85,5 @@ return [
     'your_time' => 'your time (:zone)',
     'same_as_yours' => '= your time',
     'day_short' => 'd',
+    'venue' => 'Venue',
 ];
