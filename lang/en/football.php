@@ -86,4 +86,9 @@ return [
     'same_as_yours' => '= your time',
     'day_short' => 'd',
     'venue' => 'Venue',
+    'week_schedule' => 'Fixtures for the week',
+    'week_count' => ':count matches',
+    'all_competitions' => 'All',
+    'no_matches_filter' => 'No matches on this day for the selected tournament.',
+    'full_time' => 'FT',
 ];

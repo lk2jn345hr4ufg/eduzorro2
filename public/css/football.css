@@ -205,6 +205,54 @@ a.pill:hover { text-decoration: none; background: #d3efdd; }
 .comp-list img { width: 28px; height: 28px; object-fit: contain; }
 .comp-list-name { flex: 1; }
 
+/* ---------- Week schedule (home) ---------- */
+
+.week-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
+.week-day-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    padding: 8px 4px; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--surface); color: var(--ink); font: inherit; cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.week-day-btn:hover:not(:disabled) { border-color: var(--accent); }
+.week-day-btn .wd-name { font-size: 12px; font-weight: 700; text-transform: capitalize; }
+.week-day-btn .wd-date { font-size: 11px; color: var(--muted); }
+.week-day-btn .wd-count { font: 700 18px/1.1 var(--display); }
+.week-day-btn.is-active { background: var(--pitch); border-color: var(--pitch); color: #fff; }
+.week-day-btn.is-active .wd-date { color: #c9d6cd; }
+.week-day-btn:disabled, .week-day-btn.is-empty { opacity: .45; cursor: default; }
+
+.week-filter { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-bottom: 14px; padding-bottom: 2px; }
+.week-filter::-webkit-scrollbar { display: none; }
+.chip {
+    display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+    padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--surface); color: var(--ink-2); font: 600 13px var(--font); cursor: pointer; white-space: nowrap;
+}
+.chip:hover { border-color: var(--accent); color: var(--ink); }
+.chip.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.week-panel + .week-panel { margin-top: 18px; }
+.week.is-js .week-panel-head { display: none; }
+.week-comp + .week-comp { margin-top: 14px; }
+.week-comp-head {
+    display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px;
+    background: var(--surface-2); font-weight: 700; font-size: 14px;
+}
+.week-comp-head img { width: 20px; height: 20px; object-fit: contain; }
+.week-comp-head a { color: var(--ink); }
+.week-comp-head a:hover { color: var(--accent-ink); }
+.week-comp-count { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 600; }
+
+.comp-list.is-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 16px; }
+.comp-list.is-row li + li { border-top: 0; }
+.comp-list.is-row li { border-bottom: 1px solid var(--line-2); }
+
+@media (max-width: 640px) {
+    .week-days { grid-template-columns: repeat(7, 64px); overflow-x: auto; scrollbar-width: none; }
+    .week-days::-webkit-scrollbar { display: none; }
+}
+
 /* ---------- Teams ---------- */
 
 .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
@@ -241,6 +289,7 @@ a.pill:hover { text-decoration: none; background: #d3efdd; }
 .match-time { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
 .match-time time { font-weight: 700; color: var(--ink); white-space: nowrap; }
 .match-time .tz { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.ft-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
 .user-time { display: flex; flex-direction: column; font-size: 11px; line-height: 1.25; color: var(--accent-ink); max-width: 100%; overflow-wrap: anywhere; }
 .user-time b { font-size: 12px; font-weight: 700; white-space: nowrap; }
 .match-date { font-size: 12px; color: var(--muted); }

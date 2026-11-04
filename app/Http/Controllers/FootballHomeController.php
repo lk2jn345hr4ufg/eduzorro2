@@ -71,19 +71,38 @@ class FootballHomeController extends Controller
             ->take(8)
             ->get();
 
-        $upcoming = Fixture::query()
+        // Schedule for the next 7 days (today included) across every
+        // competition we show, grouped by day, then by competition.
+        $start = now()->startOfDay();
+        $end   = now()->startOfDay()->addDays(7);
+
+        $week = Fixture::query()
             ->whereIn('league_code', $codes)
-            ->upcoming()
-            ->where('kickoff_at', '>=', now()->startOfDay())
+            ->whereBetween('kickoff_at', [$start, $end])
+            ->whereNotIn('status_short', ['CANCELLED'])
             ->with('odd')
             ->orderBy('kickoff_at')
-            ->take(8)
             ->get();
 
-        $links = TeamLinks::forFixtures($upcoming);
+        $competitions = $leagues->concat($cups)->keyBy('code');
+        $order        = $competitions->keys()->flip();
+
+        $days = collect(range(0, 6))->mapWithKeys(function ($i) use ($start, $week, $order) {
+            $date = $start->copy()->addDays($i)->toDateString();
+
+            $groups = $week
+                ->filter(fn ($f) => $f->kickoff_at->toDateString() === $date)
+                ->groupBy('league_code')
+                ->sortBy(fn ($g, $code) => $order[$code] ?? 999);
+
+            return [$date => $groups];
+        });
+
+        $upcoming = $week->filter(fn ($f) => ! $f->isPlayed())->take(8)->values();
+        $links    = TeamLinks::forFixtures($week);
 
         return view('football.home', compact(
-            'leagues', 'cups', 'leaders', 'today', 'popular', 'news', 'upcoming', 'links'
+            'leagues', 'cups', 'leaders', 'today', 'popular', 'news', 'upcoming', 'links', 'days', 'competitions'
         ));
     }
 }

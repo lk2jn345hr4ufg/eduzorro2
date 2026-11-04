@@ -49,32 +49,22 @@
             @endif
         </section>
 
-        <section class="card">
+        <section class="card dash-wide" id="week">
             <div class="card-head">
-                <h2>{{ __('football.upcoming_matches') }}</h2>
+                <h2>{{ __('football.week_schedule') }}</h2>
+                <span class="card-more is-muted">{{ __('football.week_count', ['count' => $days->sum(fn ($g) => $g->flatten()->count())]) }}</span>
             </div>
-            @if ($upcoming->isEmpty())
-                <p class="empty">{{ __('football.no_fixtures') }}</p>
-            @else
-                <div class="match-list">
-                    @foreach ($upcoming as $f)
-                        @include('football.partials.match-row', ['f' => $f, 'showDate' => true, 'showComp' => true])
-                    @endforeach
-                </div>
-                @if ($upcoming->contains(fn ($f) => $f->odd))
-                    <p class="odds-note">{{ __('football.odds_note') }}</p>
-                @endif
-            @endif
+            @include('football.partials.week-schedule')
         </section>
 
-        <section class="card">
+        <section class="card dash-wide">
             <div class="card-head">
                 <h2>{{ __('football.tournaments') }}</h2>
             </div>
             @if ($cups->isEmpty())
                 <p class="empty">{{ __('football.no_data') }}</p>
             @else
-                <ul class="comp-list">
+                <ul class="comp-list is-row">
                     @foreach ($cups as $cup)
                         @php($leader = $leaders->get($cup->code))
                         <li>

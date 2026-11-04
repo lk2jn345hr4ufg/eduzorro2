@@ -86,4 +86,9 @@ return [
     'same_as_yours' => '= ваше время',
     'day_short' => 'д',
     'venue' => 'Стадион',
+    'week_schedule' => 'Расписание матчей на неделю',
+    'week_count' => ':count матчей',
+    'all_competitions' => 'Все',
+    'no_matches_filter' => 'В этот день нет матчей выбранного турнира.',
+    'full_time' => 'Заверш.',
 ];

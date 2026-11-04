@@ -40,6 +40,8 @@
                     {{ $local->format('H:i') }} <small class="tz">{{ \App\Support\MatchTime::abbr($local) }}</small>
                 </time>
                 <span class="user-time" hidden></span>
+            @else
+                <span class="ft-label">{{ __('football.full_time') }}</span>
             @endif
         @endif
         @if (! empty($showComp) && $f->league_code)

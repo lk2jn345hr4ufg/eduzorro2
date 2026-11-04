@@ -86,4 +86,9 @@ return [
     'same_as_yours' => '= tu hora',
     'day_short' => 'd',
     'venue' => 'Estadio',
+    'week_schedule' => 'Partidos de la semana',
+    'week_count' => ':count partidos',
+    'all_competitions' => 'Todos',
+    'no_matches_filter' => 'No hay partidos de este torneo ese día.',
+    'full_time' => 'Final',
 ];
