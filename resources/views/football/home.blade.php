@@ -54,7 +54,15 @@
                 <h2>{{ __('football.week_schedule') }}</h2>
                 <span class="card-more is-muted">{{ __('football.week_count', ['count' => $days->sum(fn ($g) => $g->flatten()->count())]) }}</span>
             </div>
-            @include('football.partials.week-schedule')
+            @include('football.partials.week-schedule', ['weekDays' => $days, 'mode' => 'upcoming'])
+        </section>
+
+        <section class="card dash-wide" id="results">
+            <div class="card-head">
+                <h2>{{ __('football.recent_results_week') }}</h2>
+                <span class="card-more is-muted">{{ __('football.week_count', ['count' => $pastDays->sum(fn ($g) => $g->flatten()->count())]) }}</span>
+            </div>
+            @include('football.partials.week-schedule', ['weekDays' => $pastDays, 'mode' => 'results'])
         </section>
 
         <section class="card dash-wide">

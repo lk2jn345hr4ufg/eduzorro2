@@ -1,6 +1,8 @@
 {{--
-    Next 7 days, every competition.
-    $days         date => (competition code => Fixtures)
+    Seven days of matches, every competition: the coming week (mode
+    "upcoming") or the past week's results (mode "results").
+    $weekDays     date => (competition code => Fixtures)
+    $mode         upcoming | results
     $competitions code => Competition
     $links        api id => team slug
 
@@ -8,17 +10,22 @@
     becomes a day strip plus competition filter chips.
 --}}
 @php
-    $todayKey    = now()->toDateString();
-    $tomorrowKey = now()->addDay()->toDateString();
+    $days         = $weekDays;
+    $isResults    = ($mode ?? 'upcoming') === 'results';
+    $todayKey     = now()->toDateString();
+    $tomorrowKey  = now()->addDay()->toDateString();
+    $yesterdayKey = now()->subDay()->toDateString();
     $usedCodes   = $days->flatMap(fn ($groups) => $groups->keys())->unique()
         ->sortBy(fn ($code) => $competitions->keys()->search($code))->values();
     $total       = $days->sum(fn ($groups) => $groups->flatten()->count());
-    $firstDay    = $days->search(fn ($groups) => $groups->isNotEmpty()) ?: $todayKey;
+    // Opening day: the first day with matches, or for results the most recent one.
+    $nonEmpty    = $days->filter(fn ($groups) => $groups->isNotEmpty())->keys();
+    $firstDay    = ($isResults ? $nonEmpty->last() : $nonEmpty->first()) ?: $todayKey;
     $hasOdds     = $days->flatten()->contains(fn ($f) => $f->odd);
 @endphp
 
 @if ($total === 0)
-    <p class="empty">{{ __('football.no_fixtures') }}</p>
+    <p class="empty">{{ $isResults ? __('football.no_results') : __('football.no_fixtures') }}</p>
 @else
     <div class="week" data-week data-first="{{ $firstDay }}">
         <div class="week-days" role="tablist" hidden>
@@ -29,6 +36,7 @@
                     <span class="wd-name">
                         @if ($date === $todayKey) {{ __('football.today') }}
                         @elseif ($date === $tomorrowKey) {{ __('football.tomorrow') }}
+                        @elseif ($date === $yesterdayKey) {{ __('football.yesterday') }}
                         @else {{ $d->translatedFormat('D') }}
                         @endif
                     </span>
@@ -60,6 +68,8 @@
                         <span class="day-chip">{{ __('football.today') }}</span>
                     @elseif ($date === $tomorrowKey)
                         <span class="day-chip">{{ __('football.tomorrow') }}</span>
+                    @elseif ($date === $yesterdayKey)
+                        <span class="day-chip">{{ __('football.yesterday') }}</span>
                     @endif
                     {{ $d->translatedFormat('l, j F') }}
                 </h3>
@@ -72,7 +82,7 @@
                                 <img src="{{ $c->emblem_url }}" alt="" width="20" height="20" loading="lazy">
                             @endif
                             @if ($c && $c->is_active)
-                                <a href="{{ route('competition.tab', [$currentLanguage, $c, 'fixtures']) }}">{{ $c->translate('name') }}</a>
+                                <a href="{{ route('competition.tab', [$currentLanguage, $c, $isResults ? 'results' : 'fixtures']) }}">{{ $c->translate('name') }}</a>
                             @else
                                 <span>{{ $matches->first()->league_name ?: $code }}</span>
                             @endif
@@ -81,7 +91,7 @@
                         </div>
                         <div class="match-list">
                             @foreach ($matches as $f)
-                                @include('football.partials.match-row', ['f' => $f])
+                                @include('football.partials.match-row', ['f' => $f, 'showDate' => false])
                             @endforeach
                         </div>
                     </div>
@@ -96,11 +106,10 @@
         @endif
     </div>
 
+    @once
     @push('scripts')
     <script>
-    (function () {
-        var root = document.querySelector('[data-week]');
-        if (!root) return;
+    document.querySelectorAll('[data-week]').forEach(function (root) {
         var dayBtns = root.querySelectorAll('.week-day-btn');
         var chips = root.querySelectorAll('.week-filter .chip');
         var panels = root.querySelectorAll('.week-panel');
@@ -160,7 +169,16 @@
             });
         });
         render();
-    })();
+
+        // On phones the day strip scrolls: bring the opening day into view
+        // (results open on the most recent day, at the right-hand end).
+        var strip = root.querySelector('.week-days');
+        var active = strip.querySelector('.is-active');
+        if (active && strip.scrollWidth > strip.clientWidth) {
+            strip.scrollLeft += active.getBoundingClientRect().left - strip.getBoundingClientRect().left - 8;
+        }
+    });
     </script>
     @endpush
+    @endonce
 @endif

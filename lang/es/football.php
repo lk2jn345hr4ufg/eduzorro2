@@ -91,4 +91,6 @@ return [
     'all_competitions' => 'Todos',
     'no_matches_filter' => 'No hay partidos de este torneo ese día.',
     'full_time' => 'Final',
+    'recent_results_week' => 'Resultados de la última semana',
+    'yesterday' => 'Ayer',
 ];

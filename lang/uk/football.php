@@ -91,4 +91,6 @@ return [
     'all_competitions' => 'Усі',
     'no_matches_filter' => 'Цього дня немає матчів обраного турніру.',
     'full_time' => 'Заверш.',
+    'recent_results_week' => 'Результати за минулий тиждень',
+    'yesterday' => 'Вчора',
 ];

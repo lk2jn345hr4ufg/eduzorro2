@@ -91,4 +91,6 @@ return [
     'all_competitions' => 'All',
     'no_matches_filter' => 'No matches on this day for the selected tournament.',
     'full_time' => 'FT',
+    'recent_results_week' => 'Results of the past week',
+    'yesterday' => 'Yesterday',
 ];

@@ -98,11 +98,30 @@ class FootballHomeController extends Controller
             return [$date => $groups];
         });
 
+        // Results of the previous 7 days (oldest → yesterday), same grouping.
+        $pastStart = now()->startOfDay()->subDays(7);
+
+        $played = Fixture::query()
+            ->whereIn('league_code', $codes)
+            ->played()
+            ->whereBetween('kickoff_at', [$pastStart, now()->startOfDay()])
+            ->orderBy('kickoff_at')
+            ->get();
+
+        $pastDays = collect(range(7, 1))->mapWithKeys(function ($i) use ($played, $order) {
+            $date = now()->startOfDay()->subDays($i)->toDateString();
+
+            return [$date => $played
+                ->filter(fn ($f) => $f->kickoff_at->toDateString() === $date)
+                ->groupBy('league_code')
+                ->sortBy(fn ($g, $code) => $order[$code] ?? 999)];
+        });
+
         $upcoming = $week->filter(fn ($f) => ! $f->isPlayed())->take(8)->values();
-        $links    = TeamLinks::forFixtures($week);
+        $links    = TeamLinks::forFixtures($week->concat($played));
 
         return view('football.home', compact(
-            'leagues', 'cups', 'leaders', 'today', 'popular', 'news', 'upcoming', 'links', 'days', 'competitions'
+            'leagues', 'cups', 'leaders', 'today', 'popular', 'news', 'upcoming', 'links', 'days', 'pastDays', 'competitions'
         ));
     }
 }
