@@ -49,6 +49,7 @@ return [
      */
     'euro_competitions' => [
         'CL' => 'UEFA Champions League',
+        'EL' => 'UEFA Europa League',
     ],
 
     'cache' => [

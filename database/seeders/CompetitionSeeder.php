@@ -30,6 +30,7 @@ class CompetitionSeeder extends Seeder
         'PPL' => 'soccer_portugal_primeira_liga',
         'BSA' => 'soccer_brazil_campeonato',
         'CL'  => 'soccer_uefa_champs_league',
+        'EL'  => 'soccer_uefa_europa_league',
         'EC'  => 'soccer_uefa_european_championship',
         'WC'  => 'soccer_fifa_world_cup',
     ];
@@ -200,6 +201,11 @@ class CompetitionSeeder extends Seeder
             'CL' => [
                 'slug' => 'champions-league', 'api_id' => 2001, 'apisports' => 2, 'flag' => '🇪🇺',
                 'name' => $n('UEFA Champions League', 'Ліга чемпіонів УЄФА', 'Лига чемпионов УЕФА', 'Liga de Campeones'),
+            ],
+            // football-data paid plans only (not in the free tier).
+            'EL' => [
+                'slug' => 'europa-league', 'api_id' => 2146, 'apisports' => 3, 'flag' => '🇪🇺',
+                'name' => $n('UEFA Europa League', 'Ліга Європи УЄФА', 'Лига Европы УЕФА', 'Liga Europa'),
             ],
             'EC' => [
                 'slug' => 'euro', 'api_id' => 2018, 'apisports' => 4, 'flag' => '🇪🇺',
