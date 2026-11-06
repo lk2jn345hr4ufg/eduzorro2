@@ -50,8 +50,11 @@ class Dashboard extends BaseDashboard
                 ->icon('heroicon-o-table-cells')
                 ->form([
                     Select::make('codes')->label('Competitions')->multiple()
-                        ->options(fn () => $leagueOptions('api_id'))
-                        ->placeholder('All with a football-data id'),
+                        ->options(fn () => Competition::query()
+                            ->where(fn ($q) => $q->whereNotNull('api_id')->orWhereNotNull('bbc_slug'))
+                            ->orderBy('sort_order')->get()
+                            ->mapWithKeys(fn ($c) => [$c->code => trim($c->flag.' '.$c->code.' — '.$c->translate('name'))])->all())
+                        ->placeholder('All'),
                 ])
                 ->modalDescription('football-data.org, 2 requests per competition, ~7 s apart. All 11 competitions take about 3 minutes.')
                 ->action(function (array $data) {
@@ -59,7 +62,14 @@ class Dashboard extends BaseDashboard
                     if (! empty($data['codes'])) {
                         $params['codes'] = array_values($data['codes']);
                     }
-                    SyncRunner::background('Matches & tables', [['sport:sync-competition', $params]]);
+                    $bbc = ['--delay' => 3];
+                    if (! empty($data['codes'])) {
+                        $bbc['codes'] = array_values($data['codes']);
+                    }
+                    SyncRunner::background('Matches & tables', [
+                        ['sport:sync-competition', $params],
+                        ['sport:sync-bbc', $bbc],   // competitions with a BBC slug (Europa League)
+                    ]);
                 }),
 
             Action::make('syncOdds')

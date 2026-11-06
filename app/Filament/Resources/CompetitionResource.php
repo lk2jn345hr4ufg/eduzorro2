@@ -86,6 +86,9 @@ class CompetitionResource extends Resource
                     ->helperText('Empty = not covered by football-data (e.g. the Ukrainian league).'),
                 TextInput::make('apisports_league_id')->numeric()->label('API-Football league id')
                     ->helperText('Used for transfers (e.g. 39 = Premier League).'),
+                TextInput::make('bbc_slug')->label('BBC Sport slug')->maxLength(80)
+                    ->placeholder('europa-league')
+                    ->helperText('Fixtures & results from bbc.com/sport/football/{slug}/scores-fixtures (sport:sync-bbc). For competitions football-data doesn\'t cover.'),
                 TextInput::make('oddsapi_sport_key')->label('The Odds API sport key')->maxLength(80)
                     ->placeholder('soccer_epl')
                     ->helperText('Odds source. Empty = no odds for this competition.'),

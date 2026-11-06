@@ -54,6 +54,10 @@ class CompetitionFreshness extends BaseWidget
             ])
             ->actions([
                 ActionGroup::make([
+                    Action::make('bbc')->label('Sync matches (BBC)')->icon('heroicon-o-table-cells')
+                        ->visible(fn (Competition $r) => (bool) $r->bbc_slug)
+                        ->action(fn (Competition $r) => SyncRunner::now("Matches (BBC) — {$r->code}",
+                            'sport:sync-bbc', ['codes' => [$r->code], '--delay' => 1])),
                     Action::make('matches')->label('Sync matches & table')->icon('heroicon-o-table-cells')
                         ->visible(fn (Competition $r) => (bool) $r->api_id)
                         ->action(fn (Competition $r) => SyncRunner::now("Matches & table — {$r->code}",
