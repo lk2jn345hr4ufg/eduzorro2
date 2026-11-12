@@ -176,6 +176,34 @@ class ApiFootballClient
     }
 
     /** Standings table for a competition code, in the app's internal shape. */
+    /**
+     * Top scorers of a competition season (not cached: only the sync calls it).
+     *
+     * @return array{season: ?int, scorers: array}
+     */
+    public function scorers(string $code, ?int $season = null, int $limit = 20): array
+    {
+        $body = $this->get("/competitions/{$code}/scorers", array_filter(['season' => $season, 'limit' => $limit]));
+
+        $start = data_get($body, 'season.startDate');
+
+        return [
+            'season'  => $start ? (int) substr($start, 0, 4) : $season,
+            'scorers' => collect(data_get($body, 'scorers', []))->map(fn ($s) => [
+                'player_id'   => data_get($s, 'player.id'),
+                'name'        => trim((string) data_get($s, 'player.name')),
+                'nationality' => data_get($s, 'player.nationality'),
+                'team_id'     => data_get($s, 'team.id'),
+                'team'        => data_get($s, 'team.name'),
+                'crest'       => data_get($s, 'team.crest'),
+                'goals'       => (int) data_get($s, 'goals', 0),
+                'assists'     => data_get($s, 'assists'),
+                'penalties'   => data_get($s, 'penalties'),
+                'played'      => data_get($s, 'playedMatches'),
+            ])->filter(fn ($s) => $s['name'] !== '')->values()->all(),
+        ];
+    }
+
     public function standings(string $code, ?int $season = null): array
     {
         $ttl = (int) config('football.cache.standings');

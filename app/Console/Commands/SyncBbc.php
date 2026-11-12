@@ -71,6 +71,7 @@ class SyncBbc extends Command
             $unmatched = [];
             $errors    = [];
             $seen      = [];
+            $notFound  = 0;
 
             foreach ($months as $i => $month) {
                 if ($i > 0 && $delay) {
@@ -83,6 +84,10 @@ class SyncBbc extends Command
                     $errors[] = "{$month}: ".$bbc->lastError();
                     $this->error("   {$month}: ".$bbc->lastError());
                     continue;
+                }
+
+                if ($bbc->lastNotFound()) {
+                    $notFound++;
                 }
 
                 foreach ($rows as $row) {
@@ -106,15 +111,36 @@ class SyncBbc extends Command
                 $this->line('   not our clubs (shown as text): '.implode(', ', $unmatched));
             }
 
-            $status = $errors ? ($saved ? 'partial' : 'failed') : 'ok';
+            // Every month 404: the BBC slug is wrong — or the competition
+            // hasn't started yet (e.g. Euro qualifying before its draw).
+            $pageMissing = $notFound === count($months);
+
+            if ($pageMissing && Fixture::where('league_code', $competition->code)->exists()) {
+                $errors[] = "no BBC page at …/{$competition->bbc_slug}/scores-fixtures — check the BBC slug in the admin";
+                $this->error('   '.end($errors));
+            } elseif ($pageMissing) {
+                $this->warn("   no BBC page yet at …/{$competition->bbc_slug}/scores-fixtures (not started, or check the slug)");
+            }
+
+            $status = $errors ? ($saved ? 'partial' : 'failed') : ($saved ? 'ok' : 'skipped');
+
+            $tableRows = 0;
 
             if ($saved) {
                 $competition->forceFill(['matches_synced_at' => now()])->save();
+
+                // BBC gives no tables: compute group tables from the results.
+                foreach (Fixture::where('league_code', $competition->code)->distinct()->pluck('season') as $season) {
+                    $tableRows += app(\App\Services\Football\StandingsCalculator::class)->rebuild($competition, (int) $season);
+                }
+
+                $this->line("   table rows computed: {$tableRows}");
             }
 
             SyncLog::record('matches', $competition->code, $status, $saved,
-                'BBC '.implode(', ', $months).": {$saved} matches"
-                    .($unmatched ? ', '.count($unmatched).' clubs not on the site' : '')
+                'BBC '.implode(', ', $months).": {$saved} matches, {$tableRows} table rows"
+                    .($unmatched && ! $competition->is_national ? ', '.count($unmatched).' clubs not on the site' : '')
+                    .($pageMissing && ! $errors ? ' · no BBC page yet' : '')
                     .($errors ? ' · '.implode(' · ', $errors) : ''),
                 $startedAt
             );
@@ -148,7 +174,7 @@ class SyncBbc extends Command
             ['api_id' => $this->matchId($row['event_id'])],
             [
                 'source'        => 'bbc',
-                'league_api_id' => (int) ($competition->api_id ?? 0),
+                'league_api_id' => \App\Services\Football\StandingsCalculator::leagueId($competition),
                 'league_code'   => $competition->code,
                 'league_name'   => $competition->translate('name', 'en'),
                 'league_round'  => $row['stage'] ? mb_substr($row['stage'], 0, 190) : null,

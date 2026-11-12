@@ -16,7 +16,7 @@ class SyncFreshness extends BaseWidget
 
     protected function getColumns(): int
     {
-        return 5;
+        return 3;
     }
 
     protected function getStats(): array

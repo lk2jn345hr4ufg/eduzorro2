@@ -21,7 +21,7 @@ return new class extends Migration
         }
 
         $cl    = DB::table('competitions')->where('code', 'CL')->first();
-        $after = $cl->sort_order ?? DB::table('competitions')->max('sort_order');
+        $after = (int) ($cl->sort_order ?? DB::table('competitions')->max('sort_order') ?? 0);
 
         // Make room right after the Champions League.
         DB::table('competitions')->where('sort_order', '>', $after)->increment('sort_order');

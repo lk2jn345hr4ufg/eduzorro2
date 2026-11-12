@@ -65,6 +65,33 @@
             @include('football.partials.week-schedule', ['weekDays' => $pastDays, 'mode' => 'results'])
         </section>
 
+        @if ($nationalGroups->isNotEmpty())
+            <section class="card dash-wide" id="national-groups">
+                <div class="card-head">
+                    <h2>{{ __('football.national_groups') }}</h2>
+                </div>
+                @include('football.partials.home-national-groups')
+            </section>
+        @endif
+
+        @if ($leaderTables->isNotEmpty())
+            <section class="card dash-wide" id="leaders">
+                <div class="card-head">
+                    <h2>{{ __('football.championship_leaders') }}</h2>
+                </div>
+                @include('football.partials.home-leaders')
+            </section>
+        @endif
+
+        @if ($scorers->isNotEmpty())
+            <section class="card dash-wide" id="scorers">
+                <div class="card-head">
+                    <h2>{{ __('football.top_scorers') }}</h2>
+                </div>
+                @include('football.partials.home-scorers')
+            </section>
+        @endif
+
         <section class="card dash-wide">
             <div class="card-head">
                 <h2>{{ __('football.tournaments') }}</h2>

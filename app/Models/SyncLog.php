@@ -21,6 +21,7 @@ class SyncLog extends Model
         'squads'    => 'Squads',
         'transfers' => 'Transfers',
         'odds'      => 'Odds',
+        'scorers'   => 'Top scorers',
     ];
 
     /** Record a finished run. Never lets logging break a sync. */

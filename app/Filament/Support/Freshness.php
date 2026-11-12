@@ -14,6 +14,7 @@ class Freshness
     public const LIMITS = [
         'matches'   => [12, 72],
         'odds'      => [36, 96],
+        'scorers'   => [36, 120],
         'teams'     => [24 * 30, 24 * 90],
         'squads'    => [24 * 14, 24 * 45],
         'transfers' => [24 * 14, 24 * 45],

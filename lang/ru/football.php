@@ -93,4 +93,10 @@ return [
     'full_time' => 'Заверш.',
     'recent_results_week' => 'Результаты за прошедшую неделю',
     'yesterday' => 'Вчера',
+    'national_groups' => 'Сборные — таблицы групп',
+    'championship_leaders' => 'Лидеры чемпионатов',
+    'top_scorers' => 'Лучшие бомбардиры',
+    'goals' => 'Голы',
+    'assists' => 'Ассисты',
+    'penalties' => 'Пен.',
 ];

@@ -101,6 +101,8 @@ class CompetitionResource extends Resource
                     ->helperText('Kick-off times are shown in this zone (cup matches use the home club\'s championship zone).'),
                 TextInput::make('sort_order')->numeric()->default(0),
                 Toggle::make('is_featured')->label('Featured')->default(false),
+                Toggle::make('is_national')->label('National teams')
+                    ->helperText('Its group tables are shown on the home page ("National teams — group tables").'),
                 Toggle::make('is_active')->default(true),
             ]),
 

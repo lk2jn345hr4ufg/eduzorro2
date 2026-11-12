@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Competition;
 use App\Models\Fixture;
+use App\Models\Scorer;
 use App\Models\Language;
 use App\Models\Standing;
 use App\Models\Team;
@@ -118,10 +119,50 @@ class FootballHomeController extends Controller
         });
 
         $upcoming = $week->filter(fn ($f) => ! $f->isPlayed())->take(8)->values();
-        $links    = TeamLinks::forFixtures($week->concat($played));
+
+        // ---- Stats ------------------------------------------------------
+        // Top 3 of every championship (newest season we hold).
+        $leaderTables = $leagues->mapWithKeys(function ($league) {
+            $season = Standing::where('league_code', $league->code)->max('season');
+
+            return [$league->code => $season
+                ? Standing::where('league_code', $league->code)->where('season', $season)
+                    ->orderBy('rank')->take(3)->get()
+                : collect()];
+        })->filter(fn ($rows) => $rows->isNotEmpty());
+
+        // Top scorers per championship (top 10, newest season).
+        $scorers = $leagues->mapWithKeys(function ($league) {
+            $season = Scorer::where('league_code', $league->code)->max('season');
+
+            return [$league->code => $season
+                ? Scorer::where('league_code', $league->code)->where('season', $season)
+                    ->orderBy('rank')->take(10)->get()
+                : collect()];
+        })->filter(fn ($rows) => $rows->isNotEmpty());
+
+        // Group tables of national-team tournaments (Nations League, Euro
+        // qualifying, Euro, World Cup) — newest season with a table.
+        $nationalGroups = $cups->filter(fn ($c) => $c->is_national)->mapWithKeys(function ($cup) {
+            $season = Standing::where('league_code', $cup->code)->max('season');
+
+            return [$cup->code => $season
+                ? Standing::where('league_code', $cup->code)->where('season', $season)
+                    ->orderBy('group_label')->orderBy('rank')->get()
+                    ->groupBy(fn ($r) => $r->group_label ?: '')
+                    ->sortKeysUsing('strnatcasecmp')
+                : collect()];
+        })->filter(fn ($groups) => $groups->isNotEmpty());
+
+        $links = TeamLinks::forIds(
+            $week->concat($played)->flatMap(fn ($f) => [$f->home_api_id, $f->away_api_id])
+                ->merge($leaderTables->flatten()->pluck('team_api_id'))
+                ->merge($scorers->flatten()->pluck('team_api_id'))
+        );
 
         return view('football.home', compact(
-            'leagues', 'cups', 'leaders', 'today', 'popular', 'news', 'upcoming', 'links', 'days', 'pastDays', 'competitions'
+            'leagues', 'cups', 'leaders', 'today', 'popular', 'news', 'upcoming', 'links', 'days', 'pastDays', 'competitions',
+            'leaderTables', 'scorers', 'nationalGroups'
         ));
     }
 }

@@ -51,6 +51,7 @@ class CompetitionFreshness extends BaseWidget
                     ->description(fn (Competition $r) => $r->teams_count ? "{$r->squads_count}/{$r->teams_count} teams" : null),
                 self::dateColumn('teams_max_transfers_synced_at', 'Transfers (latest)', 'transfers'),
                 self::dateColumn('odds_synced_at', 'Odds', 'odds'),
+                self::dateColumn('scorers_synced_at', 'Scorers', 'scorers'),
             ])
             ->actions([
                 ActionGroup::make([
@@ -74,6 +75,10 @@ class CompetitionFreshness extends BaseWidget
                         ->visible(fn (Competition $r) => $r->isLeague() && $r->country)
                         ->action(fn (Competition $r) => SyncRunner::background("Transfers — {$r->code}",
                             [['sport:sync-transfers', ['--country' => $r->country->slug]]])),
+                    Action::make('scorers')->label('Sync top scorers')->icon('heroicon-o-trophy')
+                        ->visible(fn (Competition $r) => (bool) $r->api_id)
+                        ->action(fn (Competition $r) => SyncRunner::now("Top scorers — {$r->code}",
+                            'sport:sync-scorers', ['codes' => [$r->code], '--sleep' => 0])),
                     Action::make('odds')->label('Sync odds (3 days)')->icon('heroicon-o-currency-dollar')
                         ->visible(fn (Competition $r) => (bool) ($r->oddsapi_sport_key || $r->apisports_league_id))
                         ->action(fn (Competition $r) => SyncRunner::now("Odds — {$r->code}",

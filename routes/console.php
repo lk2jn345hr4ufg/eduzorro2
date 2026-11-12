@@ -19,3 +19,6 @@ Schedule::command('sport:sync-squads --limit=60 --sleep=7')->weeklyOn(1, '04:20'
 // Competitions football-data's free plan lacks (Europa League) from BBC Sport:
 // 3 pages per competition (last/this/next month), a few seconds apart.
 Schedule::command('sport:sync-bbc --delay=3')->everyThreeHours()->withoutOverlapping();
+
+// Top scorers: 1 request per championship, twice a day.
+Schedule::command('sport:sync-scorers --sleep=7')->twiceDaily(6, 18)->withoutOverlapping();

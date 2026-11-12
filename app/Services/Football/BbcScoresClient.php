@@ -20,6 +20,14 @@ class BbcScoresClient
 
     protected ?string $lastError = null;
 
+    protected bool $lastNotFound = false;
+
+    /** True when the last month() hit a 404 (wrong slug, or no page for that month). */
+    public function lastNotFound(): bool
+    {
+        return $this->lastNotFound;
+    }
+
     public function lastError(): ?string
     {
         return $this->lastError;
@@ -32,7 +40,8 @@ class BbcScoresClient
      */
     public function month(string $slug, ?string $month = null): ?array
     {
-        $this->lastError = null;
+        $this->lastError    = null;
+        $this->lastNotFound = false;
         $url = sprintf(self::BASE, rawurlencode($slug)).($month ? '/'.$month : '');
 
         $html = $this->fetch($url);
@@ -42,6 +51,8 @@ class BbcScoresClient
         }
 
         if ($html === '') {
+            $this->lastNotFound = true;
+
             return []; // 404: no page for that month
         }
 

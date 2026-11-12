@@ -91,6 +91,24 @@ class Dashboard extends BaseDashboard
                 }),
 
             ActionGroup::make([
+                Action::make('syncScorers')
+                    ->label('Top scorers')
+                    ->icon('heroicon-o-trophy')
+                    ->form([
+                        Select::make('codes')->label('Championships')->multiple()
+                            ->options(fn () => Competition::query()->leagues()->whereNotNull('api_id')->orderBy('sort_order')->get()
+                                ->mapWithKeys(fn ($c) => [$c->code => trim($c->flag.' '.$c->code.' — '.$c->translate('name'))])->all())
+                            ->placeholder('All championships'),
+                    ])
+                    ->modalDescription('football-data.org, 1 request per championship, ~7 s apart.')
+                    ->action(function (array $data) {
+                        $params = ['--sleep' => 7];
+                        if (! empty($data['codes'])) {
+                            $params['codes'] = array_values($data['codes']);
+                        }
+                        SyncRunner::background('Top scorers', [['sport:sync-scorers', $params]]);
+                    }),
+
                 Action::make('importTeams')
                     ->label('Import teams (+ squads)')
                     ->icon('heroicon-o-user-group')

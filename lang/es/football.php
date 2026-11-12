@@ -93,4 +93,10 @@ return [
     'full_time' => 'Final',
     'recent_results_week' => 'Resultados de la última semana',
     'yesterday' => 'Ayer',
+    'national_groups' => 'Selecciones — tablas de grupos',
+    'championship_leaders' => 'Líderes de las ligas',
+    'top_scorers' => 'Máximos goleadores',
+    'goals' => 'Goles',
+    'assists' => 'Asistencias',
+    'penalties' => 'Pen.',
 ];

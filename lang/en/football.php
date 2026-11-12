@@ -93,4 +93,10 @@ return [
     'full_time' => 'FT',
     'recent_results_week' => 'Results of the past week',
     'yesterday' => 'Yesterday',
+    'national_groups' => 'National teams — group tables',
+    'championship_leaders' => 'Championship leaders',
+    'top_scorers' => 'Top scorers',
+    'goals' => 'Goals',
+    'assists' => 'Assists',
+    'penalties' => 'Pens',
 ];
