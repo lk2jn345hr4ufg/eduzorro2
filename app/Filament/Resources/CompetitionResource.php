@@ -86,6 +86,10 @@ class CompetitionResource extends Resource
                     ->helperText('Empty = not covered by football-data (e.g. the Ukrainian league).'),
                 TextInput::make('apisports_league_id')->numeric()->label('API-Football league id')
                     ->helperText('Used for transfers (e.g. 39 = Premier League).'),
+                TextInput::make('uefa_competition_id')->label('UEFA competition id')->numeric()
+                    ->helperText('uefa.com JSON source (sport:sync-uefa): 2014 = Nations League, 14 = Europa League, 1 = Champions League.'),
+                TextInput::make('uefa_phase')->label('UEFA phase filter')->maxLength(20)->placeholder('TOURNAMENT')
+                    ->helperText('Only matches whose round.phase equals this (TOURNAMENT skips qualifying). Empty = all.'),
                 TextInput::make('bbc_slug')->label('BBC Sport slug')->maxLength(80)
                     ->placeholder('europa-league')
                     ->helperText('Fixtures & results from bbc.com/sport/football/{slug}/scores-fixtures (sport:sync-bbc). For competitions football-data doesn\'t cover.'),

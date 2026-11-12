@@ -22,3 +22,7 @@ Schedule::command('sport:sync-bbc --delay=3')->everyThreeHours()->withoutOverlap
 
 // Top scorers: 1 request per championship, twice a day.
 Schedule::command('sport:sync-scorers --sleep=7')->twiceDaily(6, 18)->withoutOverlapping();
+
+// Nations League & Europa League from uefa.com (official tables): hourly,
+// ~3–4 requests per competition.
+Schedule::command('sport:sync-uefa --delay=3')->hourly()->withoutOverlapping();

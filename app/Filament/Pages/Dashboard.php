@@ -51,7 +51,7 @@ class Dashboard extends BaseDashboard
                 ->form([
                     Select::make('codes')->label('Competitions')->multiple()
                         ->options(fn () => Competition::query()
-                            ->where(fn ($q) => $q->whereNotNull('api_id')->orWhereNotNull('bbc_slug'))
+                            ->where(fn ($q) => $q->whereNotNull('api_id')->orWhereNotNull('bbc_slug')->orWhereNotNull('uefa_competition_id'))
                             ->orderBy('sort_order')->get()
                             ->mapWithKeys(fn ($c) => [$c->code => trim($c->flag.' '.$c->code.' — '.$c->translate('name'))])->all())
                         ->placeholder('All'),
@@ -68,7 +68,8 @@ class Dashboard extends BaseDashboard
                     }
                     SyncRunner::background('Matches & tables', [
                         ['sport:sync-competition', $params],
-                        ['sport:sync-bbc', $bbc],   // competitions with a BBC slug (Europa League)
+                        ['sport:sync-uefa', $bbc],  // competitions with a UEFA id (Nations League, Europa League)
+                        ['sport:sync-bbc', $bbc],   // competitions with a BBC slug (Euro qualifying)
                     ]);
                 }),
 
