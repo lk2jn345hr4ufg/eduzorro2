@@ -28,7 +28,8 @@ class SyncBbc extends Command
                             {--months=* : Months to fetch, YYYY-MM (default: previous, current, next)}
                             {--from= : First month YYYY-MM (with --to: a range)}
                             {--to= : Last month YYYY-MM}
-                            {--delay=2 : Seconds between page requests}';
+                            {--delay=2 : Seconds between page requests}
+                            {--debug : Save each fetched page to storage/app/bbc-debug/ and print what was found in it}';
 
     protected $description = 'Import fixtures & results from BBC Sport scores-fixtures pages';
 
@@ -84,6 +85,10 @@ class SyncBbc extends Command
                     $errors[] = "{$month}: ".$bbc->lastError();
                     $this->error("   {$month}: ".$bbc->lastError());
                     continue;
+                }
+
+                if ($this->option('debug')) {
+                    $this->debugPage($bbc, $competition->bbc_slug, $month, $rows);
                 }
 
                 if ($bbc->lastNotFound()) {
@@ -193,6 +198,22 @@ class SyncBbc extends Command
         );
 
         return true;
+    }
+
+    protected function debugPage(BbcScoresClient $bbc, string $slug, string $month, array $rows): void
+    {
+        $html = (string) $bbc->lastHtml();
+        $dir  = storage_path('app/bbc-debug');
+        @mkdir($dir, 0775, true);
+        $file = "{$dir}/{$slug}-{$month}.html";
+        file_put_contents($file, $html);
+
+        $this->line('     url: '.sprintf(BbcScoresClient::BASE, $slug).'/'.$month);
+        $this->line('     html: '.strlen($html).' bytes → '.$file);
+        $this->line('     __INITIAL_DATA__: '.(str_contains($html, 'window.__INITIAL_DATA__') ? 'yes' : 'NO'));
+        $this->line('     data keys: '.(implode(' | ', array_map(fn ($k) => mb_substr((string) $k, 0, 90), $bbc->lastKeys())) ?: '—'));
+        $this->line('     events parsed: '.count($rows)
+            .($rows ? ' · rounds: '.implode(', ', array_unique(array_column($rows, 'stage'))) : ''));
     }
 
     /** BBC status/period → our status codes (see Fixture::FINISHED / LIVE). */

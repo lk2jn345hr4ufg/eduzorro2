@@ -22,6 +22,10 @@ class BbcScoresClient
 
     protected bool $lastNotFound = false;
 
+    protected array $lastKeys = [];
+
+    protected ?string $lastHtml = null;
+
     /** True when the last month() hit a 404 (wrong slug, or no page for that month). */
     public function lastNotFound(): bool
     {
@@ -45,6 +49,8 @@ class BbcScoresClient
         $url = sprintf(self::BASE, rawurlencode($slug)).($month ? '/'.$month : '');
 
         $html = $this->fetch($url);
+        $this->lastHtml = $html;
+        $this->lastKeys = [];
 
         if ($html === null) {
             return null;
@@ -143,13 +149,52 @@ class BbcScoresClient
             throw new \RuntimeException('window.__INITIAL_DATA__ is not valid JSON');
         }
 
+        $this->lastKeys = array_keys((array) ($data['data'] ?? []));
+
+        // The usual block…
         foreach ((array) ($data['data'] ?? []) as $key => $block) {
-            if (str_starts_with((string) $key, 'sport-data-scores-fixtures')) {
-                return (array) (($block['data'] ?? null) ?: []);
+            if (str_starts_with((string) $key, 'sport-data-scores-fixtures') && ! empty($block['data']['eventGroups'])) {
+                return (array) $block['data'];
             }
         }
 
-        return [];
+        // …otherwise any block that carries eventGroups (BBC renames these
+        // keys between page types and redesigns).
+        $found = self::findEventGroups($data);
+
+        return $found !== null ? ['eventGroups' => $found] : [];
+    }
+
+    /** Data keys seen on the last parsed page (for --debug). */
+    public function lastKeys(): array
+    {
+        return $this->lastKeys;
+    }
+
+    /** Raw HTML of the last fetched page (for --debug). */
+    public function lastHtml(): ?string
+    {
+        return $this->lastHtml;
+    }
+
+    /** Depth-first search for a non-empty "eventGroups" list. */
+    protected static function findEventGroups($node, int $depth = 0): ?array
+    {
+        if (! is_array($node) || $depth > 8) {
+            return null;
+        }
+
+        if (! empty($node['eventGroups']) && is_array($node['eventGroups'])) {
+            return $node['eventGroups'];
+        }
+
+        foreach ($node as $child) {
+            if (is_array($child) && ($hit = self::findEventGroups($child, $depth + 1)) !== null) {
+                return $hit;
+            }
+        }
+
+        return null;
     }
 
     /** @return array<int, array> flat rows, one per match */
