@@ -3,6 +3,20 @@
 return [
 
     /*
+     | Automatic sync (sport:auto-sync, every 15 minutes): each run refreshes
+     | ONE competition — the one updated longest ago — so championships are
+     | done one by one with a 15-minute break, and each once a day.
+     | Overridable in the admin: Settings → Auto sync.
+     */
+    'auto_sync' => [
+        'enabled'         => (bool) env('FOOTBALL_AUTO_SYNC', true),
+        'every_hours'     => (int) env('FOOTBALL_AUTO_SYNC_HOURS', 24),   // how often each competition
+        'weekly_days'     => 7,     // squads & transfers: at most this often per championship
+        'transfers_limit' => 10,    // teams per run (API-Football free plan: 100 requests a day)
+        'squads_limit'    => 25,    // teams per run (football-data: ~10 requests a minute)
+    ],
+
+    /*
      | Team news on the site (feed, article pages, news tab and blocks).
      | Off: everything news-related is hidden and /news URLs redirect home.
      | Overridable in the admin: Settings → News API → "Show news on the site".

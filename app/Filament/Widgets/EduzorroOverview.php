@@ -34,10 +34,35 @@ class EduzorroOverview extends BaseWidget
                 ->color($withSquads < $teams ? 'warning' : 'success')
                 ->url(route('filament.admin.resources.teams.index')),
 
+            $this->autoSyncStat(),
+
             Stat::make('Matches in the next 7 days', $nextWeek)
                 ->icon('heroicon-o-calendar-days')
                 ->description("with odds: {$withOdds}")
                 ->color($nextWeek && ! $withOdds ? 'warning' : 'success'),
         ];
+    }
+
+    /** Which competition the 15-minute rotation refreshes next, and when. */
+    protected function autoSyncStat(): Stat
+    {
+        if (! config('football.auto_sync.enabled')) {
+            return Stat::make('Auto sync', 'off')
+                ->description('Settings → Auto sync')
+                ->icon('heroicon-o-pause-circle')
+                ->color('gray');
+        }
+
+        $due  = \App\Console\Commands\AutoSync::nextDue();
+        $next = $due ?? \App\Console\Commands\AutoSync::queue()->first();
+
+        // The scheduler fires at :00, :15, :30 and :45.
+        $tick = now()->copy()->addMinutes(15 - now()->minute % 15)->startOfMinute();
+        $when = $due ? $tick : ($next?->auto_synced_at?->copy()->addHours((int) config('football.auto_sync.every_hours', 24))->max($tick));
+
+        return Stat::make('Auto sync — next', $next ? trim($next->flag.' '.$next->code) : '—')
+            ->description($next ? 'at '.$when?->format('H:i').' ('.$when?->diffForHumans().')' : 'no competition with a data source')
+            ->icon('heroicon-o-arrow-path')
+            ->color('success');
     }
 }

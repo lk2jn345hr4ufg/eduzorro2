@@ -22,6 +22,7 @@ class SyncLog extends Model
         'transfers' => 'Transfers',
         'odds'      => 'Odds',
         'scorers'   => 'Top scorers',
+        'auto'      => 'Auto sync',
     ];
 
     /** Record a finished run. Never lets logging break a sync. */

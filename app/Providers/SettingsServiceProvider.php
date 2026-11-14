@@ -36,6 +36,8 @@ class SettingsServiceProvider extends ServiceProvider
             'gemini_news_prompt'  => 'gemini.prompt',
             'gemini_enabled'      => 'gemini.enabled',
             'news_enabled'        => 'football.news_enabled',
+            'auto_sync_enabled'   => 'football.auto_sync.enabled',
+            'auto_sync_hours'     => 'football.auto_sync.every_hours',
         ];
 
         try {
@@ -57,7 +59,7 @@ class SettingsServiceProvider extends ServiceProvider
             }
 
             // Boolean toggle stored as '1'/'0'.
-            if (in_array($settingKey, ['gemini_enabled', 'news_enabled'], true)) {
+            if (in_array($settingKey, ['gemini_enabled', 'news_enabled', 'auto_sync_enabled'], true)) {
                 $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
             }
 

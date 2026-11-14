@@ -52,6 +52,7 @@ class CompetitionFreshness extends BaseWidget
                 self::dateColumn('teams_max_transfers_synced_at', 'Transfers (latest)', 'transfers'),
                 self::dateColumn('odds_synced_at', 'Odds', 'odds'),
                 self::dateColumn('scorers_synced_at', 'Scorers', 'scorers'),
+                self::dateColumn('auto_synced_at', 'Auto sync', 'auto'),
             ])
             ->actions([
                 ActionGroup::make([

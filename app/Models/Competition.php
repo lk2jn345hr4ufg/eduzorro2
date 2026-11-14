@@ -32,6 +32,7 @@ class Competition extends Model
         'matches_synced_at' => 'datetime',
         'odds_synced_at'    => 'datetime',
         'scorers_synced_at' => 'datetime',
+        'auto_synced_at'    => 'datetime',
         'is_national'       => 'boolean',
         'name'             => 'array',
         'meta_title'       => 'array',

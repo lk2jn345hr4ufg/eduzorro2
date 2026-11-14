@@ -46,6 +46,8 @@ class Settings extends Page implements HasForms
         'gemini_model',
         'gemini_enabled',
         'news_enabled',
+        'auto_sync_enabled',
+        'auto_sync_hours',
         'gemini_news_prompt',
     ];
 
@@ -67,6 +69,8 @@ class Settings extends Page implements HasForms
             'news_per_team'       => Setting::get('news_per_team', config('news.per_team')),
             'gemini_api_key'      => Setting::get('gemini_api_key', config('gemini.key')),
             'gemini_model'        => Setting::get('gemini_model', config('gemini.model')),
+            'auto_sync_enabled'   => filter_var(Setting::get('auto_sync_enabled', config('football.auto_sync.enabled')), FILTER_VALIDATE_BOOLEAN),
+            'auto_sync_hours'     => Setting::get('auto_sync_hours', config('football.auto_sync.every_hours')),
             'news_enabled'        => filter_var(Setting::get('news_enabled', config('football.news_enabled')), FILTER_VALIDATE_BOOLEAN),
             'gemini_enabled'      => filter_var(Setting::get('gemini_enabled', config('gemini.enabled')), FILTER_VALIDATE_BOOLEAN),
             'gemini_news_prompt'  => Setting::get('gemini_news_prompt', config('gemini.prompt')),
@@ -99,6 +103,14 @@ class Settings extends Page implements HasForms
                             ->password()->revealable()
                             ->autocomplete(false),
                     ]),
+
+                Section::make('Auto sync')
+                    ->description('Every 15 minutes one competition is refreshed — the one updated longest ago: matches & table, top scorers, odds, and once a week squads & transfers. Needs the server cron: * * * * * cd ~/laravel-app && php artisan schedule:run')
+                    ->schema([
+                        Toggle::make('auto_sync_enabled')->label('Enabled'),
+                        TextInput::make('auto_sync_hours')->label('Refresh each competition every (hours)')
+                            ->numeric()->minValue(4)->maxValue(168)->placeholder('24'),
+                    ])->columns(2),
 
                 Section::make('Odds')
                     ->description('1X2 odds for upcoming matches (sport:sync-odds). The Odds API free plan gives 500 credits a month; each competition costs 1 credit per sync and empty responses are free.')
