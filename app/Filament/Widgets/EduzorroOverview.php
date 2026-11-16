@@ -56,8 +56,11 @@ class EduzorroOverview extends BaseWidget
         $due  = \App\Console\Commands\AutoSync::nextDue();
         $next = $due ?? \App\Console\Commands\AutoSync::queue()->first();
 
-        // The scheduler fires at :00, :15, :30 and :45.
-        $tick = now()->copy()->addMinutes(15 - now()->minute % 15)->startOfMinute();
+        // Next possible run: 15 minutes after the previous one (or now).
+        $last = Competition::max('auto_synced_at');
+        $tick = $last
+            ? \Illuminate\Support\Carbon::parse($last)->addMinutes((int) config('football.auto_sync.gap_minutes', 15))->max(now())
+            : now();
         $when = $due ? $tick : ($next?->auto_synced_at?->copy()->addHours((int) config('football.auto_sync.every_hours', 24))->max($tick));
 
         return Stat::make('Auto sync — next', $next ? trim($next->flag.' '.$next->code) : '—')

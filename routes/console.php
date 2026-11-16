@@ -12,4 +12,8 @@ use Illuminate\Support\Facades\Schedule;
  * synced once a day, one at a time, 15 minutes apart. See sport:auto-sync and
  * Settings → Auto sync.
  */
-Schedule::command('sport:auto-sync')->everyFifteenMinutes()->withoutOverlapping(60);
+//
+// Called every minute; the command itself waits until 15 minutes have passed
+// since the previous competition, so it works even when the host's cron
+// fires irregularly or every few minutes.
+Schedule::command('sport:auto-sync')->everyMinute()->withoutOverlapping(60);

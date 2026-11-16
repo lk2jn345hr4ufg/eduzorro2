@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Services\Football\ApiSportsTransfersClient;
 use App\Services\Odds\OddsApiClient;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
@@ -38,6 +39,24 @@ class AutoSync extends Command
         if (! config('football.auto_sync.enabled') && ! $this->option('force') && ! $this->option('code')) {
             $this->line('Auto sync is switched off (Settings → Auto sync).');
             return self::SUCCESS;
+        }
+
+        // The scheduler calls this every minute, but shared hosting may run
+        // cron less often or irregularly. So the 15-minute pause is kept
+        // here: skip quietly until the gap since the last auto run has passed.
+        $gap  = max(1, (int) config('football.auto_sync.gap_minutes', 15));
+        $last = Competition::max('auto_synced_at');
+
+        if (! $this->option('code') && $last && Carbon::parse($last)->gt(now()->subMinutes($gap)->addSeconds(30))) {
+            $wait = (int) ceil(now()->diffInMinutes(Carbon::parse($last)->addMinutes($gap), true));
+
+            if ($this->option('dry-run') || $this->output->isVerbose()) {
+                $this->line("Waiting: last auto sync ".Carbon::parse($last)->diffForHumans().", next in ~{$wait} min.");
+            }
+
+            if (! $this->option('dry-run')) {
+                return self::SUCCESS;
+            }
         }
 
         $competition = $this->option('code')
