@@ -12,6 +12,8 @@ return [
         'enabled'         => (bool) env('FOOTBALL_AUTO_SYNC', true),
         'every_hours'     => (int) env('FOOTBALL_AUTO_SYNC_HOURS', 24),   // how often each competition
         'gap_minutes'     => (int) env('FOOTBALL_AUTO_SYNC_GAP', 15),     // pause between competitions
+        // Secret for the web cron URL /cron/auto-sync/{token} (empty = off).
+        'cron_token'      => env('FOOTBALL_CRON_TOKEN', ''),
         'weekly_days'     => 7,     // squads & transfers: at most this often per championship
         'transfers_limit' => 10,    // teams per run (API-Football free plan: 100 requests a day)
         'squads_limit'    => 25,    // teams per run (football-data: ~10 requests a minute)

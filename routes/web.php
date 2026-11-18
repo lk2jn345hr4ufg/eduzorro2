@@ -29,6 +29,13 @@ Route::get('/', [FootballHomeController::class, 'root'])->name('home');
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
+// Web cron for the rotating data sync (see CronController). Throttled so a
+// leaked URL can't be hammered.
+Route::get('/cron/auto-sync/{token}', [\App\Http\Controllers\CronController::class, 'autoSync'])
+    ->where('token', '[A-Za-z0-9]{16,128}')
+    ->middleware('throttle:10,1')
+    ->name('cron.auto-sync');
+
 /*
  * {language} is constrained to two letters so it can never swallow an old
  * region slug, and parameters after it carry no explicit key ({team}, not
