@@ -99,4 +99,9 @@ return [
     'goals' => 'Goles',
     'assists' => 'Asistencias',
     'penalties' => 'Pen.',
+    'playing_today' => 'Hoy juegan',
+    'today_left' => ':count por jugar',
+    'today_played' => ':count terminados',
+    'no_matches_today' => 'Hoy no hay partidos en nuestras competiciones.',
+    'next_match_day' => 'Próximos partidos: :date',
 ];

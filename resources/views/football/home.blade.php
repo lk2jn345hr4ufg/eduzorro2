@@ -11,6 +11,10 @@
     </header>
 
     <div class="dash">
+        <section class="card dash-wide today-card" id="today">
+            @include('football.partials.home-today')
+        </section>
+
         <section class="card dash-wide">
             <div class="card-head">
                 <h2>{{ __('football.championships') }}</h2>

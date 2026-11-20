@@ -99,4 +99,9 @@ return [
     'goals' => 'Goals',
     'assists' => 'Assists',
     'penalties' => 'Pens',
+    'playing_today' => 'Playing today',
+    'today_left' => ':count to play',
+    'today_played' => ':count finished',
+    'no_matches_today' => 'No matches in our competitions today.',
+    'next_match_day' => 'Next matches: :date',
 ];

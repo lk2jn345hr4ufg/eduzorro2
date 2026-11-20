@@ -205,6 +205,19 @@ a.pill:hover { text-decoration: none; background: #d3efdd; }
 .comp-list img { width: 28px; height: 28px; object-fit: contain; }
 .comp-list-name { flex: 1; }
 
+/* ---------- Playing today (home) ---------- */
+
+.today-card { border-top: 4px solid var(--accent); }
+.today-card .card-head { flex-wrap: wrap; }
+.today-date { margin-left: 6px; font: 600 14px/1 var(--font); text-transform: none; letter-spacing: 0; color: var(--muted); }
+.today-counts { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.today-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; align-items: start; }
+.today-groups .week-comp + .week-comp { margin-top: 0; }
+.today-empty { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 14px; border-radius: var(--radius-sm); background: var(--surface-2); }
+.today-empty p { margin: 0; color: var(--ink-2); }
+@media (max-width: 900px) { .today-groups { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .today-card .card-head h2 { flex-wrap: wrap; } .today-date { flex-basis: 100%; margin: 4px 0 0; } }
+
 /* ---------- Week schedule (home) ---------- */
 
 .week-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }

@@ -99,4 +99,9 @@ return [
     'goals' => 'Голи',
     'assists' => 'Асисти',
     'penalties' => 'Пен.',
+    'playing_today' => 'Сьогодні грають',
+    'today_left' => ':count попереду',
+    'today_played' => ':count завершено',
+    'no_matches_today' => 'Сьогодні матчів у наших турнірах немає.',
+    'next_match_day' => 'Найближчі матчі: :date',
 ];

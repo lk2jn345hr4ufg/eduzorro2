@@ -99,4 +99,9 @@ return [
     'goals' => 'Голы',
     'assists' => 'Ассисты',
     'penalties' => 'Пен.',
+    'playing_today' => 'Сегодня играют',
+    'today_left' => ':count впереди',
+    'today_played' => ':count завершено',
+    'no_matches_today' => 'Сегодня матчей в наших турнирах нет.',
+    'next_match_day' => 'Ближайшие матчи: :date',
 ];

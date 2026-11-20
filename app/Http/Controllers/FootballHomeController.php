@@ -99,6 +99,13 @@ class FootballHomeController extends Controller
             return [$date => $groups];
         });
 
+        // "Playing today": today's matches by competition, plus the next
+        // match day when there is nothing today.
+        $todayGroups = $days->get($start->toDateString(), collect());
+        $nextDay     = $todayGroups->isEmpty()
+            ? $days->filter(fn ($g) => $g->isNotEmpty())->keys()->first()
+            : null;
+
         // Results of the previous 7 days (oldest → yesterday), same grouping.
         $pastStart = now()->startOfDay()->subDays(7);
 
@@ -162,7 +169,7 @@ class FootballHomeController extends Controller
 
         return view('football.home', compact(
             'leagues', 'cups', 'leaders', 'today', 'popular', 'news', 'upcoming', 'links', 'days', 'pastDays', 'competitions',
-            'leaderTables', 'scorers', 'nationalGroups'
+            'leaderTables', 'scorers', 'nationalGroups', 'todayGroups', 'nextDay'
         ));
     }
 }
