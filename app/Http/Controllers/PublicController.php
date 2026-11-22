@@ -60,7 +60,10 @@ class PublicController extends Controller
 
         $compOrder = ['АПЛ' => 0, 'Лига чемпионов' => 1];
 
+        // В блоке — только матчи «Ливерпуля». Тур АПЛ/ЛЧ из league_matches
+        // нужен лишь как более свежий источник счёта (обновление каждые 10 минут).
         $todayMatches = $league->concat($club)
+            ->filter(fn ($m) => str_contains(mb_strtolower($m->home_team . ' ' . $m->away_team), 'liverpool'))
             ->sortBy(fn ($m) => [$compOrder[$m->competitionName()] ?? 2, $m->kickoff_at?->timestamp ?? 0])
             ->groupBy(fn ($m) => $m->competitionName());
 

@@ -6,7 +6,7 @@
     .today .th .date{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
     .today .th .rule{flex:1;height:3px;background:var(--red)}
     .today .th a{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--red)}
-    .today .groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
+    .today .groups{display:grid;grid-template-columns:1fr;gap:18px;max-width:760px}
     .today .grp{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
     .today .grp h3{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);padding:11px 16px;border-bottom:1px solid var(--line);background:#faf7f2}
     .today .row{display:grid;grid-template-columns:1fr auto 1fr auto;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
@@ -46,7 +46,14 @@
     </div>
 
     @if($todayMatches->isEmpty())
-        <div class="empty">Сегодня матчей нет. Ближайшие игры «Ливерпуля» — в <a href="{{ route('fixtures') }}" style="color:var(--red);font-weight:700">расписании</a>.</div>
+        <div class="empty">
+            Сегодня «Ливерпуль» не играет.
+            @if(! empty($nextFixture))
+                Следующий матч: <strong>{{ $nextFixture->home_team }} — {{ $nextFixture->away_team }}</strong>,
+                {{ $nextFixture->venueKickoff()?->isoFormat('dd, D MMMM') }}.
+            @endif
+            <a href="{{ route('fixtures') }}" style="color:var(--red);font-weight:700">Расписание →</a>
+        </div>
     @else
         <div class="groups">
             @foreach($todayMatches as $code => $matches)
