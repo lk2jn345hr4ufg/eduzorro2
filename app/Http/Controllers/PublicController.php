@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Article;
 use App\Models\Category;
 use App\Models\Fixture;
+use App\Models\LeagueMatch;
 use App\Models\Post;
+use App\Models\Setting;
 use App\Models\Standing;
 use App\Models\Transfer;
 use Illuminate\Support\Carbon;
@@ -18,14 +20,60 @@ class PublicController extends Controller
         $featured = $latest->first();
         $articles = $latest->skip(1)->values();
 
-        $fixtures    = Fixture::upcoming()->limit(5)->get();
-        $nextFixture = $fixtures->first();
-
         $categories = Category::ordered()->get();
 
+        /* ---------- Дашборд ---------- */
+
+        $upcoming = Fixture::upcoming()->limit(5)->get();
+        $nextFixture = $upcoming->first();
+
+        $recentResults = Fixture::query()
+            ->whereNotNull('home_score')
+            ->whereBetween('kickoff_at', [now()->subMonth(), now()])
+            ->orderByDesc('kickoff_at')
+            ->get();
+
+        // Таблица АПЛ.
+        $plSeason  = Standing::seasons('PL')->first();
+        $standings = $plSeason ? Standing::tableFor((int) $plSeason, 'PL') : collect();
+
+        // Таблица Лиги чемпионов (если загружена).
+        $clSeason    = Standing::seasons('CL')->first();
+        $clStandings = $clSeason ? Standing::tableFor((int) $clSeason, 'CL') : collect();
+
+        /*
+         | Матчи дня = весь тур АПЛ + ЛЧ (league_matches)
+         |           + матчи «Ливерпуля» из расписания (fixtures) из любого турнира.
+         | Один и тот же матч может быть в обеих таблицах — убираем дубли
+         | по external_id (id football-data одинаковый) или по паре команд.
+         */
+        [$dayFrom, $dayTo] = LeagueMatch::todayRange();
+
+        $league = LeagueMatch::whereBetween('kickoff_at', [$dayFrom, $dayTo])->get();
+
+        $seenIds   = $league->pluck('external_id')->filter()->all();
+        $seenPairs = $league->map(fn ($m) => mb_strtolower($m->home_team . '|' . $m->away_team))->all();
+
+        $club = Fixture::whereBetween('kickoff_at', [$dayFrom, $dayTo])->get()
+            ->reject(fn ($f) => ($f->external_id && in_array($f->external_id, $seenIds))
+                || in_array(mb_strtolower($f->home_team . '|' . $f->away_team), $seenPairs));
+
+        $compOrder = ['АПЛ' => 0, 'Лига чемпионов' => 1];
+
+        $todayMatches = $league->concat($club)
+            ->sortBy(fn ($m) => [$compOrder[$m->competitionName()] ?? 2, $m->kickoff_at?->timestamp ?? 0])
+            ->groupBy(fn ($m) => $m->competitionName());
+
         return view('public.home', array_merge([
-            'featured' => $featured, 'articles' => $articles, 'fixtures' => $fixtures,
-            'nextFixture' => $nextFixture, 'categories' => $categories,
+            'todayMatches'  => $todayMatches,
+            'featured'      => $featured,
+            'articles'      => $articles,
+            'categories'    => $categories,
+            'upcoming'      => $upcoming,
+            'nextFixture'   => $nextFixture,
+            'recentResults' => $recentResults,
+            'standings'     => $standings,
+            'clStandings'   => $clStandings,
         ], $this->seo('home')));
     }
 
@@ -69,7 +117,6 @@ class PublicController extends Controller
             'articles'   => $articles,
             'categories' => Category::ordered()->get(),
         ], [
-            // Мета для страницы категории — на основе её названия.
             'metaTitle'       => "{$category->name} — новости «Ливерпуля» | LiverpoolIn",
             'metaDescription' => "Материалы «Ливерпуля» в категории «{$category->name}»: "
                 . ($category->description ?: 'свежие новости и статьи по теме.'),
@@ -118,7 +165,6 @@ class PublicController extends Controller
 
         $next = Fixture::upcoming()->first();
 
-        // Динамика в описание: ближайший матч.
         $meta = $this->seo('fixtures');
         if ($next) {
             $meta['metaDescription'] .= ' Ближайший матч: '
@@ -134,7 +180,7 @@ class PublicController extends Controller
             'stats'        => $this->summarise($ordered),
             'categories'   => Category::ordered()->get(),
             'title'        => 'Расписание',
-            'intro'        => 'Матчи «Ливерпуля»: ближайшие сверху, сыгранные ниже.',
+            'intro'        => 'Матчи «Ливерпуля»: ближайшие сверху, сыгранные ниже. Время — по месту проведения и в вашем часовом поясе.',
             'isIntl'       => false,
             'seasons'      => collect(),
             'activeSeason' => null,
@@ -191,7 +237,7 @@ class PublicController extends Controller
             'stats'        => $this->summarise($filtered),
             'categories'   => Category::ordered()->get(),
             'title'        => 'Международные матчи',
-            'intro'        => 'Еврокубки «Ливерпуля»: Лига чемпионов, Лига Европы, Лига конференций и Суперкубок УЕФА.',
+            'intro'        => 'Еврокубки «Ливерпуля». Время — по месту проведения и в вашем часовом поясе.',
             'isIntl'       => true,
             'seasons'      => $seasons,
             'activeSeason' => $activeSeason,
@@ -203,29 +249,38 @@ class PublicController extends Controller
         ], $this->seo('euro')));
     }
 
+    /* ==================== ТУРНИРНАЯ ТАБЛИЦА ==================== */
+
     public function table()
     {
-        $seasons = Standing::seasons();
+        $comps = Standing::competitions();
 
-        if ($seasons->isEmpty()) {
+        if ($comps->isEmpty()) {
             return view('public.table', array_merge([
-                'rows' => collect(), 'seasons' => $seasons, 'season' => null,
+                'rows' => collect(), 'seasons' => collect(), 'season' => null,
                 'matchday' => 0, 'history' => [], 'lfc' => null,
+                'comps' => collect(), 'code' => 'PL',
                 'categories' => Category::ordered()->get(),
             ], $this->seo('standings')));
         }
 
-        $season = (int) (request('season') ?: $seasons->first());
+        // Выбранный турнир.
+        $code = request('comp');
+        if (! $comps->contains($code)) {
+            $code = $comps->contains('PL') ? 'PL' : $comps->first();
+        }
 
+        $seasons = Standing::seasons($code);
+        $season  = (int) (request('season') ?: $seasons->first());
         if (! $seasons->contains($season)) {
             $season = (int) $seasons->first();
         }
 
-        $rows = Standing::tableFor($season);
+        $rows = Standing::tableFor($season, $code);
         $lfc  = $rows->first(fn ($r) => $r->isLiverpool());
 
         $meta = $this->seo('standings');
-        if ($lfc) {
+        if ($code === 'PL' && $lfc) {
             $meta['metaDescription'] .= " Сейчас «Ливерпуль» на {$lfc->position}-м месте, {$lfc->points} очк.";
         }
 
@@ -233,9 +288,11 @@ class PublicController extends Controller
             'rows'       => $rows,
             'seasons'    => $seasons,
             'season'     => $season,
-            'matchday'   => Standing::latestMatchday($season),
-            'history'    => Standing::historyFor($season, Standing::LIVERPOOL_TEAM_ID),
+            'matchday'   => Standing::latestMatchday($season, $code),
+            'history'    => $code === 'PL' ? Standing::historyFor($season, Standing::LIVERPOOL_TEAM_ID, $code) : [],
             'lfc'        => $lfc,
+            'comps'      => $comps,
+            'code'       => $code,
             'categories' => Category::ordered()->get(),
         ], $meta));
     }
@@ -275,18 +332,14 @@ class PublicController extends Controller
 
     /* -------- SEO -------- */
 
-    /**
-     * Достаёт шаблон мета-тегов из config/seo.php и возвращает
-     * пару metaTitle/metaDescription для передачи во вьюху.
-     */
     private function seo(string $key): array
     {
         $cfg = config("seo.$key", []);
 
-        return [
-            'metaTitle'       => $cfg['title'] ?? 'LiverpoolIn',
-            'metaDescription' => $cfg['description'] ?? '',
-        ];
+        $title = Setting::get("seo.$key.title") ?: ($cfg['title'] ?? 'LiverpoolIn');
+        $desc  = Setting::get("seo.$key.description") ?: ($cfg['description'] ?? '');
+
+        return ['metaTitle' => $title, 'metaDescription' => $desc];
     }
 
     /* -------- helpers -------- */
