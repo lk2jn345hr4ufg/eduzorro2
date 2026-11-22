@@ -17,39 +17,26 @@
 
         <section class="card dash-wide">
             <div class="card-head">
-                <h2>{{ __('football.championships') }}</h2>
+                <h2>{{ __('football.championships_and_cups') }}</h2>
             </div>
-            @if ($leagues->isEmpty())
+            @if ($leagues->isEmpty() && $cups->isEmpty())
                 <p class="empty">{{ __('football.no_data') }}</p>
             @else
                 <div class="comp-grid">
-                    @foreach ($leagues as $league)
-                        @php($leader = $leaders->get($league->code))
-                        <a class="comp-card" href="{{ route('competition.show', [$currentLanguage, $league]) }}">
-                            <span class="comp-card-top">
-                                @if ($league->emblem_url)
-                                    <img src="{{ $league->emblem_url }}" alt="" width="36" height="36" loading="lazy">
-                                @endif
-                                <span>
-                                    <strong>{{ $league->translate('name') }}</strong>
-                                    <span class="comp-country">{{ $league->flag }} {{ $league->country?->translate('name') }}</span>
-                                </span>
-                            </span>
-                            <span class="comp-card-foot">
-                                @if ($leader)
-                                    <span class="comp-leader" title="{{ __('football.leader') }}">
-                                        🏆 {{ $leader->team_name }} · {{ $leader->points }}
-                                    </span>
-                                @else
-                                    <span class="comp-leader is-muted">—</span>
-                                @endif
-                                @if ($n = $today->get($league->code))
-                                    <span class="badge">{{ __('football.today_count', ['count' => $n]) }}</span>
-                                @endif
-                            </span>
-                        </a>
+                    @foreach ($leagues as $competition)
+                        @include('football.partials.comp-card', ['competition' => $competition])
                     @endforeach
                 </div>
+
+                @if ($cups->isNotEmpty())
+                    <h3 class="comp-subhead">{{ __('football.cups_heading') }}</h3>
+                    <div class="comp-grid">
+                        {{-- Club competitions first, then national teams. --}}
+                        @foreach ($cups->sortBy(fn ($c) => [(int) $c->is_national, $c->sort_order]) as $competition)
+                            @include('football.partials.comp-card', ['competition' => $competition])
+                        @endforeach
+                    </div>
+                @endif
             @endif
         </section>
 
@@ -95,34 +82,6 @@
                 @include('football.partials.home-scorers')
             </section>
         @endif
-
-        <section class="card dash-wide">
-            <div class="card-head">
-                <h2>{{ __('football.tournaments') }}</h2>
-            </div>
-            @if ($cups->isEmpty())
-                <p class="empty">{{ __('football.no_data') }}</p>
-            @else
-                <ul class="comp-list is-row">
-                    @foreach ($cups as $cup)
-                        @php($leader = $leaders->get($cup->code))
-                        <li>
-                            <a href="{{ route('competition.show', [$currentLanguage, $cup]) }}">
-                                @if ($cup->emblem_url)
-                                    <img src="{{ $cup->emblem_url }}" alt="" width="28" height="28" loading="lazy">
-                                @else
-                                    <span class="flag">{{ $cup->flag }}</span>
-                                @endif
-                                <span class="comp-list-name">{{ $cup->translate('name') }}</span>
-                                @if ($n = $today->get($cup->code))
-                                    <span class="badge">{{ __('football.today_count', ['count' => $n]) }}</span>
-                                @endif
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            @endif
-        </section>
 
         <section class="card dash-wide">
             <div class="card-head">

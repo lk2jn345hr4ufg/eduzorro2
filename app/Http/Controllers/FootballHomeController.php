@@ -33,13 +33,17 @@ class FootballHomeController extends Controller
         $codes   = $leagues->pluck('code')->merge($cups->pluck('code'));
 
         // Current leader of each competition (newest season we hold).
+        // Group tournaments (Nations League…) have one leader per group, so
+        // only single-table competitions get a "leader" on their card.
         $leaders = Standing::query()
             ->whereIn('league_code', $codes)
             ->where('rank', 1)
             ->orderByDesc('season')
             ->get()
-            ->unique('league_code')
-            ->keyBy('league_code');
+            ->groupBy('league_code')
+            ->map(fn ($rows) => $rows->where('season', $rows->max('season')))
+            ->filter(fn ($rows) => $rows->count() === 1 && ! $rows->first()->group_label)
+            ->map->first();
 
         // Matches today per competition, for the "live now / today" badges.
         $today = Fixture::query()

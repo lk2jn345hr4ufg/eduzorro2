@@ -104,4 +104,8 @@ return [
     'today_played' => ':count завершено',
     'no_matches_today' => 'Сьогодні матчів у наших турнірах немає.',
     'next_match_day' => 'Найближчі матчі: :date',
+    'championships_and_cups' => 'Чемпіонати та турніри',
+    'cups_heading' => 'Єврокубки та міжнародні турніри',
+    'national_teams' => 'Збірні',
+    'club_tournament' => 'Клубний турнір',
 ];

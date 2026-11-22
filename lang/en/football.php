@@ -104,4 +104,8 @@ return [
     'today_played' => ':count finished',
     'no_matches_today' => 'No matches in our competitions today.',
     'next_match_day' => 'Next matches: :date',
+    'championships_and_cups' => 'Championships and tournaments',
+    'cups_heading' => 'European cups and international tournaments',
+    'national_teams' => 'National teams',
+    'club_tournament' => 'Club tournament',
 ];
