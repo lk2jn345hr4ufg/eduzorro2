@@ -12,6 +12,8 @@ return [
         'enabled'         => (bool) env('FOOTBALL_AUTO_SYNC', true),
         'every_hours'     => (int) env('FOOTBALL_AUTO_SYNC_HOURS', 24),   // how often each competition
         'gap_minutes'     => (int) env('FOOTBALL_AUTO_SYNC_GAP', 15),     // pause between competitions
+        // Run the sync after ordinary page views (no cron needed).
+        'on_visits'       => (bool) env('FOOTBALL_AUTO_SYNC_ON_VISITS', true),
         // Secret for the web cron URL /cron/auto-sync/{token} (empty = off).
         'cron_token'      => env('FOOTBALL_CRON_TOKEN', ''),
         'weekly_days'     => 7,     // squads & transfers: at most this often per championship

@@ -25,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->prepend(HandleRedirects::class);
 
+        // Rotating data sync triggered by ordinary page views (after the
+        // response is sent) — see App\Http\Middleware\TriggerAutoSync.
+        $middleware->appendToGroup('web', \App\Http\Middleware\TriggerAutoSync::class);
+
         // Alias used by the localized route group in routes/web.php.
         $middleware->alias([
             'region.locale' => SetRegionAndLocale::class,

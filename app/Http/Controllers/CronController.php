@@ -22,7 +22,7 @@ class CronController extends Controller
 
         abort_if($expected === '' || ! hash_equals($expected, $token), 404);
 
-        $lock = Cache::lock('web-cron:auto-sync', 1800);
+        $lock = Cache::lock(\App\Http\Middleware\TriggerAutoSync::LOCK_KEY, 1800);
 
         if (! $lock->get()) {
             return response('busy', 200)->header('Cache-Control', 'no-store');
